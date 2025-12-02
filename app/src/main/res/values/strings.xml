@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Crocdb Friends</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Cerca</string>
+    <string name="nav_explore">Esplora</string>
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_favorites">Preferiti</string>
+    <string name="nav_settings">Impostazioni</string>
+    
+    <!-- Common -->
+    <string name="search">Cerca</string>
+    <string name="cancel">Annulla</string>
+    <string name="ok">OK</string>
+    <string name="back">Indietro</string>
+    <string name="loading">Caricamento…</string>
+    <string name="error">Errore</string>
+    <string name="retry">Riprova</string>
+    
+    <!-- Home -->
+    <string name="home_welcome">Esplora il mondo</string>
+    <string name="home_subtitle">del retro gaming</string>
+    <string name="home_featured">In Evidenza</string>
+    <string name="home_popular_platforms">Piattaforme Popolari</string>
+    <string name="see_all">Vedi tutti</string>
+    
+    <!-- Search -->
+    <string name="search_hint">Cerca ROM per titolo…</string>
+    <string name="search_no_results">Nessun risultato per \"%1$s\"</string>
+    <string name="search_filters">Filtri</string>
+    <string name="search_clear_filters">Cancella filtri</string>
+    
+    <!-- Downloads -->
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_active">Download attivi</string>
+    <string name="downloads_completed">Completati</string>
+    <string name="downloads_failed">Falliti</string>
+    <string name="downloads_empty">Nessun download attivo</string>
+    <string name="download_cancel">Annulla download</string>
+    <string name="download_retry">Riprova</string>
+    
+    <!-- Settings -->
+    <string name="settings_download_path">Percorso Download</string>
+    <string name="settings_auto_extract">Estrazione automatica</string>
+    <string name="settings_auto_extract_desc">Estrai automaticamente file ZIP dopo il download</string>
+    <string name="settings_delete_archives">Elimina archivi</string>
+    <string name="settings_delete_archives_desc">Elimina archivi ZIP dopo l\'estrazione</string>
+    <string name="settings_wifi_only">Solo WiFi</string>
+    <string name="settings_wifi_only_desc">Scarica solo quando connesso a WiFi</string>
+    <string name="settings_notifications">Notifiche download</string>
+    <string name="settings_notifications_desc">Mostra notifiche durante e dopo i download</string>
+    
+    <!-- Notifications -->
+    <string name="notif_download_progress">Download in corso</string>
+    <string name="notif_download_completed">Download completato</string>
+    <string name="notif_download_failed">Download fallito</string>
+    <string name="notif_extracting">Estrazione in corso…</string>
+    <string name="notif_extraction_completed">Estrazione completata</string>
+</resources>
