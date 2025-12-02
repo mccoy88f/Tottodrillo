@@ -1,5 +1,6 @@
 package com.crocdb.friends.presentation.search
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +18,7 @@ import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Search
@@ -58,10 +59,19 @@ fun SearchScreen(
     onNavigateBack: () -> Unit,
     onNavigateToRomDetail: (String) -> Unit,
     onShowFilters: () -> Unit,
+    initialPlatformCode: String? = null,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val gridState = rememberLazyGridState()
+    
+    // Inizializza con piattaforma se specificata
+    LaunchedEffect(initialPlatformCode) {
+        initialPlatformCode?.let { platformCode ->
+            android.util.Log.d("SearchScreen", "🔍 Inizializzazione con piattaforma: $platformCode")
+            viewModel.initializeWithPlatform(platformCode)
+        }
+    }
 
     // Detect when user scrolls near bottom for pagination
     val shouldLoadMore by remember {
@@ -87,7 +97,7 @@ fun SearchScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
@@ -126,6 +136,7 @@ fun SearchScreen(
                 ActiveFiltersBar(
                     platformCount = uiState.filters.selectedPlatforms.size,
                     regionCount = uiState.filters.selectedRegions.size,
+                    resultsCount = uiState.results.size,
                     onClearAll = viewModel::clearFilters,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
@@ -210,11 +221,14 @@ private fun SearchBar(
 private fun ActiveFiltersBar(
     platformCount: Int,
     regionCount: Int,
+    resultsCount: Int,
     onClearAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier.fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth()
+            .clickable { onClearAll() },
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
@@ -248,10 +262,10 @@ private fun ActiveFiltersBar(
         }
 
         Text(
-            text = "Cancella",
+            text = if (resultsCount == 1) "$resultsCount ROM" else "$resultsCount ROMs",
             style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.error,
-            modifier = Modifier.padding(4.dp)
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
         )
     }
 }
@@ -266,11 +280,11 @@ private fun SearchResults(
 ) {
     Box(modifier = modifier) {
         LazyVerticalGrid(
-            columns = GridCells.Adaptive(160.dp),
+            columns = GridCells.Adaptive(180.dp),
             state = gridState,
             contentPadding = PaddingValues(
-                start = 20.dp,
-                end = 20.dp,
+                start = 16.dp,
+                end = 16.dp,
                 bottom = 20.dp
             ),
             horizontalArrangement = Arrangement.spacedBy(12.dp),

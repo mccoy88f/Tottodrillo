@@ -49,7 +49,7 @@ fun RomCard(
 ) {
     Card(
         modifier = modifier
-            .width(160.dp)
+            .fillMaxWidth()
             .clickable(onClick = onClick),
         shape = RoundedCornerShape(12.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),

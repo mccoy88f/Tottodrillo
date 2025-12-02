@@ -1,5 +1,7 @@
 package com.crocdb.friends.presentation.common
 
+import com.crocdb.friends.domain.model.DownloadStatus
+import com.crocdb.friends.domain.model.ExtractionStatus
 import com.crocdb.friends.domain.model.PlatformInfo
 import com.crocdb.friends.domain.model.RegionInfo
 import com.crocdb.friends.domain.model.Rom
@@ -20,6 +22,7 @@ sealed class UiState<out T> {
  */
 data class HomeUiState(
     val featuredRoms: List<Rom> = emptyList(),
+    val favoriteRoms: List<Rom> = emptyList(),
     val recentPlatforms: List<PlatformInfo> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null
@@ -66,7 +69,11 @@ data class RomDetailUiState(
     val rom: Rom? = null,
     val isFavorite: Boolean = false,
     val isLoading: Boolean = false,
-    val error: String? = null
+    val error: String? = null,
+    val downloadStatus: DownloadStatus = DownloadStatus.Idle,
+    val extractionStatus: ExtractionStatus = ExtractionStatus.Idle,
+    // Mappa di stati per ogni link (URL -> Pair<DownloadStatus, ExtractionStatus>)
+    val linkStatuses: Map<String, Pair<DownloadStatus, ExtractionStatus>> = emptyMap()
 )
 
 /**

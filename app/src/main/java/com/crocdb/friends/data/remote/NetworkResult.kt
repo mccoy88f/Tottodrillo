@@ -1,5 +1,7 @@
 package com.crocdb.friends.data.remote
 
+import retrofit2.Response
+
 /**
  * Rappresenta il risultato di un'operazione di rete
  */

@@ -1,8 +1,10 @@
 package com.crocdb.friends.data.remote
 
 import com.crocdb.friends.data.model.ApiResponse
-import com.crocdb.friends.data.model.Platform
-import com.crocdb.friends.data.model.Region
+import com.crocdb.friends.data.model.DatabaseInfo
+import com.crocdb.friends.data.model.EntryResponse
+import com.crocdb.friends.data.model.PlatformsResponse
+import com.crocdb.friends.data.model.RegionsResponse
 import com.crocdb.friends.data.model.SearchResults
 import retrofit2.Response
 import retrofit2.http.Body
@@ -31,25 +33,55 @@ interface CrocdbApiService {
     @GET("search")
     suspend fun searchRomsGet(
         @Query("search_key") searchKey: String? = null,
-        @Query("platforms") platforms: String? = null, // JSON array string
-        @Query("regions") regions: String? = null, // JSON array string
+        @Query("platforms") platforms: String? = null, // JSON array string (non documentato)
+        @Query("regions") regions: String? = null, // JSON array string (non documentato)
         @Query("max_results") maxResults: Int = 50,
         @Query("page") page: Int = 1
     ): Response<ApiResponse<SearchResults>>
+
+    /**
+     * Ottieni una entry specifica per slug
+     * Endpoint: POST /entry
+     */
+    @POST("entry")
+    suspend fun getEntry(
+        @Body request: EntryRequestBody
+    ): Response<ApiResponse<EntryResponse>>
+
+    /**
+     * Ottieni una entry casuale
+     * Endpoint: POST /entry/random
+     */
+    @POST("entry/random")
+    suspend fun getRandomEntryPost(): Response<ApiResponse<EntryResponse>>
+
+    /**
+     * Ottieni una entry casuale
+     * Endpoint: GET /entry/random
+     */
+    @GET("entry/random")
+    suspend fun getRandomEntryGet(): Response<ApiResponse<EntryResponse>>
 
     /**
      * Ottieni lista piattaforme disponibili
      * Endpoint: GET /platforms
      */
     @GET("platforms")
-    suspend fun getPlatforms(): Response<ApiResponse<List<Platform>>>
+    suspend fun getPlatforms(): Response<ApiResponse<PlatformsResponse>>
 
     /**
      * Ottieni lista regioni disponibili
      * Endpoint: GET /regions
      */
     @GET("regions")
-    suspend fun getRegions(): Response<ApiResponse<List<Region>>>
+    suspend fun getRegions(): Response<ApiResponse<RegionsResponse>>
+
+    /**
+     * Ottieni informazioni sul database
+     * Endpoint: GET /info
+     */
+    @GET("info")
+    suspend fun getDatabaseInfo(): Response<ApiResponse<DatabaseInfo>>
 }
 
 /**
@@ -57,8 +89,16 @@ interface CrocdbApiService {
  */
 data class SearchRequestBody(
     val search_key: String? = null,
-    val platforms: List<String>? = null,
-    val regions: List<String>? = null,
+    val platforms: List<String> = emptyList(),
+    val regions: List<String> = emptyList(),
+    val rom_id: String? = null,
     val max_results: Int = 50,
     val page: Int = 1
+)
+
+/**
+ * Request body per /entry
+ */
+data class EntryRequestBody(
+    val slug: String
 )

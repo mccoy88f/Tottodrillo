@@ -6,7 +6,7 @@ Grazie per il tuo interesse nel contribuire a Crocdb Friends! 🎉
 
 ### Segnalare Bug
 
-Se trovi un bug, apri una [issue](https://github.com/tuousername/crocdb-friends/issues) includendo:
+Se trovi un bug, apri una [issue](https://github.com/mccoy88f/Tottodrillo/issues) includendo:
 - Descrizione del problema
 - Steps per riprodurlo
 - Comportamento atteso vs attuale
@@ -16,7 +16,7 @@ Se trovi un bug, apri una [issue](https://github.com/tuousername/crocdb-friends/
 ### Proporre Feature
 
 Per proporre nuove feature:
-1. Controlla che non sia già stata proposta nelle [issues](https://github.com/tuousername/crocdb-friends/issues)
+1. Controlla che non sia già stata proposta nelle [issues](https://github.com/mccoy88f/Tottodrillo/issues)
 2. Apri una nuova issue con tag "enhancement"
 3. Descrivi la feature e il suo valore aggiunto
 
@@ -73,6 +73,6 @@ chore: update dependencies
 
 ## Domande?
 
-Apri una [discussion](https://github.com/tuousername/crocdb-friends/discussions) per domande generali.
+Apri una [discussion](https://github.com/mccoy88f/Tottodrillo/discussions) per domande generali.
 
 Grazie per contribuire! 🙏

@@ -34,7 +34,6 @@ object NetworkModule {
     fun provideGson(): Gson {
         return GsonBuilder()
             .setLenient()
-            .serializeNulls()
             .create()
     }
 

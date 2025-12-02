@@ -36,6 +36,19 @@ class SearchViewModel @Inject constructor(
         loadFiltersData()
         observeSearchQuery()
     }
+    
+    /**
+     * Inizializza i filtri con una piattaforma specifica
+     */
+    fun initializeWithPlatform(platformCode: String) {
+        _uiState.update { state ->
+            state.copy(
+                filters = state.filters.copy(selectedPlatforms = listOf(platformCode)),
+                currentPage = 1
+            )
+        }
+        performSearch()
+    }
 
     /**
      * Osserva le modifiche alla query con debounce
@@ -211,15 +224,18 @@ class SearchViewModel @Inject constructor(
      * Pulisce tutti i filtri
      */
     fun clearFilters() {
+        android.util.Log.d("SearchViewModel", "🧹 clearFilters chiamato")
         _uiState.update { 
             it.copy(
                 filters = SearchFilters(),
-                currentPage = 1
+                currentPage = 1,
+                results = emptyList(),
+                canLoadMore = false,
+                hasSearched = false
             )
         }
-        if (_uiState.value.query.isNotEmpty()) {
-            performSearch()
-        }
+        android.util.Log.d("SearchViewModel", "🧹 Filtri resettati, stato aggiornato")
+        // Non eseguire ricerca automatica quando si cancellano i filtri
     }
 
     /**

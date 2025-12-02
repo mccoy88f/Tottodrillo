@@ -20,11 +20,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -32,6 +35,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
@@ -39,8 +43,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.foundation.Image
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.crocdb.friends.domain.model.PlatformInfo
+import com.crocdb.friends.presentation.common.HomeUiState
 import com.crocdb.friends.presentation.components.EmptyState
 import com.crocdb.friends.presentation.components.LoadingIndicator
 import com.crocdb.friends.presentation.components.RomCard
@@ -55,9 +61,15 @@ fun HomeScreen(
     onNavigateToExplore: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
     onNavigateToRomDetail: (String) -> Unit,
+    onNavigateToSettings: () -> Unit,
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
+
+    // Ricarica i preferiti quando si torna alla home
+    LaunchedEffect(Unit) {
+        viewModel.loadFavoriteRoms()
+    }
 
     Scaffold(
         topBar = {
@@ -66,21 +78,26 @@ fun HomeScreen(
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.SportsEsports,
+                        androidx.compose.foundation.Image(
+                            painter = painterResource(id = com.crocdb.friends.R.mipmap.ic_launcher_foreground),
                             contentDescription = null,
-                            modifier = Modifier.size(28.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            modifier = Modifier.size(28.dp)
                         )
                         Spacer(modifier = Modifier.size(12.dp))
                         Text(
-                            text = "Crocdb Friends",
+                            text = "Tottodrillo",
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.Bold
                         )
                     }
                 },
                 actions = {
+                    IconButton(onClick = onNavigateToSettings) {
+                        Icon(
+                            imageVector = Icons.Default.Settings,
+                            contentDescription = "Settings"
+                        )
+                    }
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(
                             imageVector = Icons.Default.Search,
@@ -183,6 +200,25 @@ private fun HomeContent(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 items(uiState.featuredRoms) { rom ->
+                    RomCard(
+                        rom = rom,
+                        onClick = { onNavigateToRomDetail(rom.slug) }
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // ROM preferiti
+        if (uiState.favoriteRoms.isNotEmpty()) {
+            SectionHeader(title = "Preferiti")
+
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(uiState.favoriteRoms) { rom ->
                     RomCard(
                         rom = rom,
                         onClick = { onNavigateToRomDetail(rom.slug) }

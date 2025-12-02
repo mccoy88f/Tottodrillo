@@ -1,6 +1,9 @@
 package com.crocdb.friends.data.repository
 
 import com.crocdb.friends.data.mapper.toDomain
+import com.crocdb.friends.data.mapper.toRegionInfo
+import com.crocdb.friends.data.model.EntryResponse
+import com.crocdb.friends.data.remote.EntryRequestBody
 import com.crocdb.friends.data.remote.CrocdbApiService
 import com.crocdb.friends.data.remote.NetworkResult
 import com.crocdb.friends.data.remote.SearchRequestBody
@@ -39,8 +42,8 @@ class RomRepositoryImpl @Inject constructor(
     ): NetworkResult<List<Rom>> {
         val requestBody = SearchRequestBody(
             search_key = filters.query.takeIf { it.isNotEmpty() },
-            platforms = filters.selectedPlatforms.takeIf { it.isNotEmpty() },
-            regions = filters.selectedRegions.takeIf { it.isNotEmpty() },
+            platforms = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList(),
+            regions = filters.selectedRegions.takeIf { it.isNotEmpty() } ?: emptyList(),
             max_results = 50,
             page = page
         )
@@ -63,13 +66,14 @@ class RomRepositoryImpl @Inject constructor(
         }
 
         return when (val result = safeApiCall { apiService.getPlatforms() }.extractData()) {
-            is NetworkResult.Success -> {
-                val platforms = result.data.map { it.toDomain() }
+            is NetworkResult.Success<*> -> {
+                val data = result.data as com.crocdb.friends.data.model.PlatformsResponse
+                val platforms = data.platforms.map { it.toDomain() }
                 platformsCache = platforms // Salva in cache
                 NetworkResult.Success(platforms)
             }
             is NetworkResult.Error -> result
-            is NetworkResult.Loading -> result
+            is NetworkResult.Loading -> NetworkResult.Loading
         }
     }
 
@@ -80,13 +84,14 @@ class RomRepositoryImpl @Inject constructor(
         }
 
         return when (val result = safeApiCall { apiService.getRegions() }.extractData()) {
-            is NetworkResult.Success -> {
-                val regions = result.data.map { it.toDomain() }
+            is NetworkResult.Success<*> -> {
+                val data = result.data as com.crocdb.friends.data.model.RegionsResponse
+                val regions = data.regions.map { it.toRegionInfo() }
                 regionsCache = regions // Salva in cache
                 NetworkResult.Success(regions)
             }
             is NetworkResult.Error -> result
-            is NetworkResult.Loading -> result
+            is NetworkResult.Loading -> NetworkResult.Loading
         }
     }
 
@@ -112,10 +117,48 @@ class RomRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {
+        val requestBody = EntryRequestBody(slug = slug)
+
+        return when (val result = safeApiCall { apiService.getEntry(requestBody) }.extractData()) {
+            is NetworkResult.Success<*> -> {
+                val data = result.data as EntryResponse
+                val rom = data.entry.toDomain()
+                    .copy(isFavorite = isFavorite(data.entry.slug))
+                NetworkResult.Success(rom)
+            }
+            is NetworkResult.Error -> result
+            is NetworkResult.Loading -> NetworkResult.Loading
+        }
+    }
+
     override fun getFavoriteRoms(): Flow<List<Rom>> = flow {
-        // TODO: Implementare con Room Database
-        // Per ora ritorna lista vuota
-        emit(emptyList())
+        // Recupera le ROM preferite dai loro slug
+        val favoriteSlugs = favoritesSet.toList()
+        
+        if (favoriteSlugs.isEmpty()) {
+            emit(emptyList())
+            return@flow
+        }
+        
+        // Carica i dettagli per ogni ROM preferita
+        val favoriteRoms = mutableListOf<Rom>()
+        for (slug in favoriteSlugs) {
+            try {
+                when (val result = getRomBySlug(slug)) {
+                    is NetworkResult.Success -> {
+                        favoriteRoms.add(result.data)
+                    }
+                    else -> {
+                        // Se una ROM non viene trovata (es. eliminata), continua con le altre
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignora errori per singole ROM e continua
+            }
+        }
+        
+        emit(favoriteRoms)
     }
 
     override suspend fun addToFavorites(rom: Rom): Result<Unit> {

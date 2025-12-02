@@ -28,12 +28,14 @@ data class ApiInfo(
 data class SearchResults(
     @SerializedName("results")
     val results: List<RomEntry>,
-    @SerializedName("total")
-    val total: Int? = null,
-    @SerializedName("page")
-    val page: Int? = null,
-    @SerializedName("max_results")
-    val maxResults: Int? = null
+    @SerializedName("current_results")
+    val currentResults: Int? = null,
+    @SerializedName("total_results")
+    val totalResults: Int? = null,
+    @SerializedName("current_page")
+    val currentPage: Int? = null,
+    @SerializedName("total_pages")
+    val totalPages: Int? = null
 )
 
 /**
@@ -68,31 +70,58 @@ data class RomLink(
     val format: String,
     @SerializedName("url")
     val url: String,
+    @SerializedName("filename")
+    val filename: String? = null,
+    @SerializedName("host")
+    val host: String? = null,
     @SerializedName("size")
-    val size: String? = null
+    val size: Long? = null,
+    @SerializedName("size_str")
+    val sizeStr: String? = null,
+    @SerializedName("source_url")
+    val sourceUrl: String? = null
+)
+
+/**
+ * Risposta piattaforme dall'API
+ */
+data class PlatformsResponse(
+    @SerializedName("platforms")
+    val platforms: Map<String, PlatformData>
+)
+
+/**
+ * Dati piattaforma dall'API
+ */
+data class PlatformData(
+    @SerializedName("brand")
+    val brand: String,
+    @SerializedName("name")
+    val name: String
 )
 
 /**
  * Piattaforma
  */
 data class Platform(
-    @SerializedName("code")
     val code: String,
-    @SerializedName("name")
     val name: String,
-    @SerializedName("manufacturer")
-    val manufacturer: String? = null,
-    @SerializedName("generation")
-    val generation: Int? = null
+    val manufacturer: String
+)
+
+/**
+ * Risposta regioni dall'API
+ */
+data class RegionsResponse(
+    @SerializedName("regions")
+    val regions: Map<String, String>
 )
 
 /**
  * Regione
  */
 data class Region(
-    @SerializedName("code")
     val code: String,
-    @SerializedName("name")
     val name: String
 )
 
@@ -103,6 +132,23 @@ data class SearchRequest(
     val searchKey: String? = null,
     val platforms: List<String>? = null,
     val regions: List<String>? = null,
-    val maxResults: Int = 50,
+    val romId: String? = null,
+    val maxResults: Int = 100,
     val page: Int = 1
+)
+
+/**
+ * Risposta dettaglio entry (endpoint /entry e /entry/random)
+ */
+data class EntryResponse(
+    @SerializedName("entry")
+    val entry: RomEntry
+)
+
+/**
+ * Info generali sul database (endpoint /info)
+ */
+data class DatabaseInfo(
+    @SerializedName("total_entries")
+    val totalEntries: Int
 )

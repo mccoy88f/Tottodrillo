@@ -1,7 +1,6 @@
 package com.crocdb.friends.data.mapper
 
-import com.crocdb.friends.data.model.Platform
-import com.crocdb.friends.data.model.Region
+import com.crocdb.friends.data.model.PlatformData
 import com.crocdb.friends.data.model.RomEntry
 import com.crocdb.friends.domain.model.DownloadLink
 import com.crocdb.friends.domain.model.PlatformInfo
@@ -28,7 +27,7 @@ fun RomEntry.toDomain(): Rom {
                 type = link.type,
                 format = link.format,
                 url = link.url,
-                size = link.size
+                size = link.sizeStr
             )
         }
     )
@@ -37,20 +36,19 @@ fun RomEntry.toDomain(): Rom {
 /**
  * Mapper per Platform
  */
-fun Platform.toDomain(): PlatformInfo {
+fun Map.Entry<String, PlatformData>.toDomain(): PlatformInfo {
     return PlatformInfo(
-        code = this.code,
-        displayName = this.name,
-        manufacturer = this.manufacturer
+        code = this.key,
+        displayName = this.value.name,
+        manufacturer = this.value.brand
     )
 }
 
 /**
  * Mapper per Region
  */
-fun Region.toDomain(): RegionInfo {
-    return RegionInfo.fromCode(this.code)
-}
+fun Map.Entry<String, String>.toRegionInfo(): RegionInfo =
+    RegionInfo.fromCode(this.key)
 
 /**
  * Helper per ottenere il display name della piattaforma

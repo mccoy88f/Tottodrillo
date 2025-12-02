@@ -1,5 +1,6 @@
 package com.crocdb.friends.presentation.detail
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -18,11 +19,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BrokenImage
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Download
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.FavoriteBorder
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Unarchive
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,28 +41,109 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.SubcomposeAsyncImage
 import com.crocdb.friends.domain.model.DownloadLink
 import com.crocdb.friends.domain.model.Rom
+import com.crocdb.friends.presentation.common.RomDetailUiState
+import com.crocdb.friends.presentation.components.EmptyState
+import com.crocdb.friends.presentation.components.LoadingIndicator
 
 /**
- * Schermata dettaglio ROM
- * Placeholder - da implementare con ViewModel dedicato
+ * Entry point composable per la schermata di dettaglio ROM.
+ * Qui colleghiamo il ViewModel alla UI.
+ */
+@Composable
+fun RomDetailRoute(
+    romSlug: String,
+    onNavigateBack: () -> Unit,
+    onNavigateToPlatform: (String) -> Unit,
+    onRequestExtraction: (String, String, String) -> Unit,
+    viewModel: RomDetailViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val isRefreshing = uiState.isLoading && uiState.rom != null
+
+    // Ricarica lo stato quando si rientra nella schermata
+    LaunchedEffect(romSlug) {
+        // Aspetta che la ROM sia caricata prima di fare il refresh
+        kotlinx.coroutines.delay(300)
+        val currentState = viewModel.uiState.value
+        if (currentState.rom != null) {
+            android.util.Log.d("RomDetailScreen", "🔄 Ricarico stato ROM al rientro nella schermata")
+            viewModel.refreshRomStatus()
+        }
+    }
+
+    val rom = uiState.rom
+
+    when {
+        uiState.isLoading && rom == null -> {
+            LoadingIndicator()
+        }
+        uiState.error != null && rom == null -> {
+            EmptyState(
+                message = uiState.error ?: "Errore nel caricamento",
+                modifier = Modifier.padding(24.dp)
+            )
+        }
+        rom != null -> {
+            RomDetailScreen(
+                rom = rom,
+                isFavorite = uiState.isFavorite,
+                downloadStatus = uiState.downloadStatus,
+                extractionStatus = uiState.extractionStatus,
+                linkStatuses = uiState.linkStatuses,
+                onNavigateBack = onNavigateBack,
+                onNavigateToPlatform = onNavigateToPlatform,
+                onToggleFavorite = { viewModel.toggleFavorite() },
+                onDownloadClick = { link -> viewModel.onDownloadButtonClick(link) },
+                onExtractClick = { archivePath, romTitle ->
+                    // Apri il picker per scegliere la cartella, passando anche lo slug
+                    onRequestExtraction(archivePath, romTitle, romSlug)
+                },
+                onOpenExtractionFolder = { extractionPath ->
+                    // Apri la cartella di estrazione
+                    viewModel.openExtractionFolder(extractionPath)
+                },
+                onRefresh = {
+                    viewModel.refreshRomDetail()
+                },
+                isRefreshing = isRefreshing
+            )
+        }
+    }
+}
+
+/**
+ * Schermata dettaglio ROM (UI pura)
  */
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun RomDetailScreen(
     rom: Rom,
     isFavorite: Boolean,
+    downloadStatus: com.crocdb.friends.domain.model.DownloadStatus,
+    extractionStatus: com.crocdb.friends.domain.model.ExtractionStatus,
+    linkStatuses: Map<String, Pair<com.crocdb.friends.domain.model.DownloadStatus, com.crocdb.friends.domain.model.ExtractionStatus>> = emptyMap(),
     onNavigateBack: () -> Unit,
+    onNavigateToPlatform: (String) -> Unit,
     onToggleFavorite: () -> Unit,
-    onDownload: (DownloadLink) -> Unit,
+    onDownloadClick: (DownloadLink) -> Unit,
+    onExtractClick: (String, String) -> Unit,
+    onOpenExtractionFolder: (String) -> Unit = {},
+    onRefresh: () -> Unit = {},
+    isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Scaffold(
@@ -68,12 +153,26 @@ fun RomDetailScreen(
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                            imageVector = Icons.Filled.ArrowBack,
                             contentDescription = "Back"
                         )
                     }
                 },
                 actions = {
+                    IconButton(onClick = onRefresh) {
+                        if (isRefreshing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                strokeWidth = 2.dp
+                            )
+                        } else {
+                            Icon(
+                                imageVector = Icons.Filled.Refresh,
+                                contentDescription = "Ricarica",
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
+                    }
                     IconButton(onClick = onToggleFavorite) {
                         Icon(
                             imageVector = if (isFavorite) {
@@ -152,11 +251,14 @@ fun RomDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Platform
+                // Platform (cliccabile)
                 Text(
                     text = rom.platform.displayName,
                     style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier
+                        .clickable { onNavigateToPlatform(rom.platform.code) }
+                        .padding(vertical = 4.dp, horizontal = 4.dp)
                 )
 
                 Spacer(modifier = Modifier.height(16.dp))
@@ -210,9 +312,17 @@ fun RomDetailScreen(
                     Spacer(modifier = Modifier.height(12.dp))
 
                     rom.downloadLinks.forEach { link ->
+                        // Usa lo stato specifico per questo link se disponibile, altrimenti usa lo stato generale
+                        val (linkDownloadStatus, linkExtractionStatus) = linkStatuses[link.url] 
+                            ?: Pair(downloadStatus, extractionStatus)
+                        
                         DownloadLinkCard(
                             link = link,
-                            onDownload = { onDownload(link) },
+                            downloadStatus = linkDownloadStatus,
+                            extractionStatus = linkExtractionStatus,
+                            onDownloadClick = { onDownloadClick(link) },
+                            onExtractClick = onExtractClick,
+                            onOpenExtractionFolder = onOpenExtractionFolder,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
                     }
@@ -225,7 +335,11 @@ fun RomDetailScreen(
 @Composable
 private fun DownloadLinkCard(
     link: DownloadLink,
-    onDownload: () -> Unit,
+    downloadStatus: com.crocdb.friends.domain.model.DownloadStatus,
+    extractionStatus: com.crocdb.friends.domain.model.ExtractionStatus,
+    onDownloadClick: () -> Unit,
+    onExtractClick: (String, String) -> Unit,
+    onOpenExtractionFolder: (String) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -269,18 +383,143 @@ private fun DownloadLinkCard(
                 }
             }
 
-            Button(
-                onClick = onDownload,
-                modifier = Modifier.padding(start = 12.dp)
+            Row(
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Icon(
-                    imageVector = Icons.Default.Download,
-                    contentDescription = null,
-                    modifier = Modifier.size(18.dp)
-                )
-                Spacer(modifier = Modifier.size(8.dp))
-                Text("Download")
+                Button(
+                    onClick = onDownloadClick,
+                    modifier = Modifier.padding(start = 12.dp)
+                ) {
+                    when (downloadStatus) {
+                        is com.crocdb.friends.domain.model.DownloadStatus.InProgress -> {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(18.dp),
+                                strokeWidth = 2.dp
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text("${downloadStatus.progress}%")
+                        }
+                        is com.crocdb.friends.domain.model.DownloadStatus.Completed -> {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text("Scaricato")
+                        }
+                        is com.crocdb.friends.domain.model.DownloadStatus.Failed -> {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text("Riprova")
+                        }
+                        else -> {
+                            Icon(
+                                imageVector = Icons.Default.Download,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.size(8.dp))
+                            Text("Download")
+                        }
+                    }
+                }
+
+                if (downloadStatus is com.crocdb.friends.domain.model.DownloadStatus.Completed) {
+                    val completed = downloadStatus as com.crocdb.friends.domain.model.DownloadStatus.Completed
+                    // Mostra pulsante "Estrai" solo se il file ha un'estensione supportata
+                    // completed.romTitle contiene il percorso completo del file scaricato
+                    if (isSupportedArchiveFile(completed.romTitle)) {
+                        when (extractionStatus) {
+                            is com.crocdb.friends.domain.model.ExtractionStatus.InProgress -> {
+                                // Mostra progresso estrazione
+                                Row(
+                                    modifier = Modifier.padding(start = 8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp
+                                    )
+                                    Text(
+                                        text = "${extractionStatus.progress}%",
+                                        style = MaterialTheme.typography.bodySmall
+                                    )
+                                }
+                            }
+                            is com.crocdb.friends.domain.model.ExtractionStatus.Completed -> {
+                                // Log quando viene mostrata l'icona verde
+                                LaunchedEffect(extractionStatus) {
+                                    Log.i("RomDetailScreen", "✅ [PASSO 4] UI: Mostrando icona verde Unarchive - Estrazione completata! Path: ${extractionStatus.extractedPath}, Files: ${extractionStatus.filesCount}")
+                                }
+                                // Mostra icona estrazione verde cliccabile per aprire la cartella
+                                androidx.compose.material3.IconButton(
+                                    onClick = {
+                                        onOpenExtractionFolder(extractionStatus.extractedPath)
+                                    },
+                                    modifier = Modifier.padding(start = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Unarchive,
+                                        contentDescription = "Apri cartella estrazione",
+                                        modifier = Modifier.size(24.dp),
+                                        tint = androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde
+                                    )
+                                }
+                            }
+                            is com.crocdb.friends.domain.model.ExtractionStatus.Failed -> {
+                                // Mostra icona errore (opzionale, o mostra di nuovo il pulsante)
+                                androidx.compose.material3.IconButton(
+                                    onClick = {
+                                        // completed.romTitle è il percorso completo del file
+                                        onExtractClick(completed.romTitle, completed.filePath)
+                                    },
+                                    modifier = Modifier.padding(start = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Unarchive,
+                                        contentDescription = "Riprova estrazione",
+                                        modifier = Modifier.size(20.dp),
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            }
+                            else -> {
+                                // Mostra pulsante "Estrai"
+                                androidx.compose.material3.IconButton(
+                                    onClick = {
+                                        // completed.romTitle è il percorso completo del file
+                                        onExtractClick(completed.romTitle, completed.filePath)
+                                    },
+                                    modifier = Modifier.padding(start = 8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Unarchive,
+                                        contentDescription = "Estrai archivio",
+                                        modifier = Modifier.size(20.dp)
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
             }
         }
     }
+}
+
+/**
+ * Verifica se un file ha un'estensione di archivio supportata (.zip, .rar, .7z)
+ */
+private fun isSupportedArchiveFile(filePath: String): Boolean {
+    val fileName = filePath.lowercase()
+    return fileName.endsWith(".zip") || 
+           fileName.endsWith(".rar") || 
+           fileName.endsWith(".7z")
 }

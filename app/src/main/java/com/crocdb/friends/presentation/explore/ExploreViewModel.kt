@@ -31,6 +31,16 @@ class ExploreViewModel @Inject constructor(
 
     private val _platformRoms = MutableStateFlow<Map<String, List<Rom>>>(emptyMap())
     val platformRoms: StateFlow<Map<String, List<Rom>>> = _platformRoms.asStateFlow()
+    
+    // Traccia la paginazione per ogni piattaforma
+    private val _platformPages = MutableStateFlow<Map<String, Int>>(emptyMap())
+    val platformPages: StateFlow<Map<String, Int>> = _platformPages.asStateFlow()
+    
+    private val _canLoadMore = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val canLoadMore: StateFlow<Map<String, Boolean>> = _canLoadMore.asStateFlow()
+    
+    private val _isLoadingMore = MutableStateFlow<Map<String, Boolean>>(emptyMap())
+    val isLoadingMore: StateFlow<Map<String, Boolean>> = _isLoadingMore.asStateFlow()
 
     init {
         loadExploreData()
@@ -78,18 +88,73 @@ class ExploreViewModel @Inject constructor(
     }
 
     /**
-     * Carica ROM per una specifica piattaforma
+     * Carica ROM per una specifica piattaforma (prima pagina)
      */
     fun loadRomsForPlatform(platformCode: String) {
         viewModelScope.launch {
-            when (val result = repository.getRomsByPlatform(platformCode, page = 1, limit = 20)) {
+            // Se già caricato, non ricaricare
+            if (_platformRoms.value.containsKey(platformCode)) return@launch
+            
+            _uiState.update { it.copy(isLoading = true) }
+            
+            when (val result = repository.getRomsByPlatform(platformCode, page = 1, limit = 25)) {
                 is NetworkResult.Success -> {
                     _platformRoms.update { map ->
                         map + (platformCode to result.data)
                     }
+                    _platformPages.update { map ->
+                        map + (platformCode to 1)
+                    }
+                    _canLoadMore.update { map ->
+                        map + (platformCode to (result.data.size >= 25))
+                    }
+                    _uiState.update { it.copy(isLoading = false) }
                 }
                 is NetworkResult.Error -> {
-                    // Errore silenzioso
+                    _uiState.update { it.copy(isLoading = false) }
+                }
+                is NetworkResult.Loading -> {}
+            }
+        }
+    }
+    
+    /**
+     * Carica più ROM per una specifica piattaforma (paginazione)
+     */
+    fun loadMoreRomsForPlatform(platformCode: String) {
+        viewModelScope.launch {
+            val currentPage = _platformPages.value[platformCode] ?: 1
+            val canLoad = _canLoadMore.value[platformCode] ?: false
+            val isLoading = _isLoadingMore.value[platformCode] ?: false
+            
+            if (!canLoad || isLoading) return@launch
+            
+            _isLoadingMore.update { map ->
+                map + (platformCode to true)
+            }
+            
+            val nextPage = currentPage + 1
+            
+            when (val result = repository.getRomsByPlatform(platformCode, page = nextPage, limit = 25)) {
+                is NetworkResult.Success -> {
+                    _platformRoms.update { map ->
+                        val existing = map[platformCode] ?: emptyList()
+                        map + (platformCode to (existing + result.data))
+                    }
+                    _platformPages.update { map ->
+                        map + (platformCode to nextPage)
+                    }
+                    _canLoadMore.update { map ->
+                        map + (platformCode to (result.data.size >= 25))
+                    }
+                    _isLoadingMore.update { map ->
+                        map + (platformCode to false)
+                    }
+                }
+                is NetworkResult.Error -> {
+                    _isLoadingMore.update { map ->
+                        map + (platformCode to false)
+                    }
                 }
                 is NetworkResult.Loading -> {}
             }

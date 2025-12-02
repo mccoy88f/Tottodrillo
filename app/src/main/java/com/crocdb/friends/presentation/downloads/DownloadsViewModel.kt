@@ -105,6 +105,31 @@ class DownloadsViewModel @Inject constructor(
     }
 
     /**
+     * Avvia estrazione manuale
+     */
+    fun startExtraction(
+        archivePath: String,
+        extractionPath: String,
+        romTitle: String,
+        romSlug: String? = null
+    ) {
+        viewModelScope.launch {
+            try {
+                downloadManager.startExtraction(
+                    archivePath = archivePath,
+                    extractionPath = extractionPath,
+                    romTitle = romTitle,
+                    romSlug = romSlug
+                )
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(error = e.message ?: "Errore durante l'estrazione")
+                }
+            }
+        }
+    }
+
+    /**
      * Aggiorna path download
      */
     fun updateDownloadPath(path: String) {
@@ -123,9 +148,7 @@ class DownloadsViewModel @Inject constructor(
      * Aggiorna estrazione automatica
      */
     fun updateAutoExtract(enabled: Boolean) {
-        viewModelScope.launch {
-            configRepository.setAutoExtract(enabled)
-        }
+        // Opzione disabilitata: l'estrazione è sempre manuale
     }
 
     /**

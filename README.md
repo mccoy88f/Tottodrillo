@@ -1,11 +1,11 @@
-# Crocdb Friends 🎮
+# Tottodrillo 🎮
 
 ![Android](https://img.shields.io/badge/Platform-Android-green.svg)
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
 
-**Crocdb Friends** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da [CrocDB](https://crocdb.net), il database pubblico di giochi retro.
+**Tottodrillo** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da [CrocDB](https://crocdb.net), il database pubblico di giochi retro.
 
 ## ✨ Features
 
@@ -21,7 +21,7 @@
 - **Progress tracking** real-time (bytes, percentuale)
 - **Notifiche** durante e dopo il download
 - **Path personalizzato** per salvare i file
-- **Estrazione automatica** di archivi ZIP
+- **Estrazione manuale** di archivi ZIP/RAR/7z con picker cartelle
 - **Eliminazione automatica** archivi dopo estrazione (opzionale)
 - **Solo WiFi** mode per risparmiare dati mobili
 - **Gestione spazio** con verifica disponibilità
@@ -102,8 +102,8 @@ app/
 
 1. **Clone del repository**
 ```bash
-git clone https://github.com/tuousername/crocdb-friends.git
-cd crocdb-friends
+git clone https://github.com/mccoy88f/Tottodrillo.git
+cd Tottodrillo
 ```
 
 2. **Apri in Android Studio**
@@ -177,9 +177,17 @@ Questo progetto è rilasciato sotto licenza MIT. Vedi il file [LICENSE](LICENSE)
 
 ## 📞 Contatti
 
-Antonello - Adecco Cassino Branch Director
+**Autore**: mccoy88f
 
-Project Link: [https://github.com/tuousername/crocdb-friends](https://github.com/tuousername/crocdb-friends)
+**Project Link**: [https://github.com/mccoy88f/Tottodrillo](https://github.com/mccoy88f/Tottodrillo)
+
+## ☕ Supportami
+
+Se ti piace questo progetto e vuoi supportarmi, puoi offrirmi una birra! 🍺
+
+<a href="https://www.buymeacoffee.com/mccoy88f"><img src="https://img.buymeacoffee.com/button-api/?text=Offrimi una birra&emoji=🍺&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
+
+[Puoi anche offrirmi una birra con PayPal 🍻](https://paypal.me/mccoy88f?country.x=IT&locale.x=it_IT)
 
 ---
 

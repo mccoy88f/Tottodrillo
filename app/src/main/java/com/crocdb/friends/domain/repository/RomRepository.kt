@@ -41,6 +41,11 @@ interface RomRepository {
     ): NetworkResult<List<Rom>>
     
     /**
+     * Ottieni il dettaglio di una ROM a partire dallo slug
+     */
+    suspend fun getRomBySlug(slug: String): NetworkResult<Rom>
+    
+    /**
      * Stream di ROM preferite (Flow per reattività)
      */
     fun getFavoriteRoms(): Flow<List<Rom>>

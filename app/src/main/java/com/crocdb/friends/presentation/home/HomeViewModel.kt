@@ -11,6 +11,7 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -50,6 +51,8 @@ class HomeViewModel @Inject constructor(
                     
                     // Carica alcuni ROM in evidenza
                     loadFeaturedRoms()
+                    // Carica preferiti
+                    loadFavoriteRoms()
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { 
@@ -85,6 +88,23 @@ class HomeViewModel @Inject constructor(
                     // Non blocca l'interfaccia
                 }
                 is NetworkResult.Loading -> {}
+            }
+        }
+    }
+
+    /**
+     * Carica ROM preferiti
+     */
+    fun loadFavoriteRoms() {
+        viewModelScope.launch {
+            try {
+                val favorites = repository.getFavoriteRoms().first()
+                _uiState.update { state ->
+                    state.copy(favoriteRoms = favorites.take(10))
+                }
+            } catch (e: Exception) {
+                // Errore silenzioso per preferiti
+                android.util.Log.e("HomeViewModel", "Errore nel caricamento preferiti", e)
             }
         }
     }
