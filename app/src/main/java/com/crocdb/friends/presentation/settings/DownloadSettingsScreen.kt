@@ -46,7 +46,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import com.crocdb.friends.presentation.downloads.DownloadsViewModel
 
 /**
@@ -68,9 +70,9 @@ fun DownloadSettingsScreen(
     if (showClearHistoryDialog) {
         AlertDialog(
             onDismissRequest = { viewModel.hideClearHistoryDialog() },
-            title = { Text("Cancella storico download ed estrazioni") },
+            title = { Text(stringResource(R.string.settings_clear_history_dialog_title)) },
             text = { 
-                Text("Questa azione eliminerà tutti i file .status nella cartella di download predefinita. Questa operazione non può essere annullata.")
+                Text(stringResource(R.string.settings_clear_history_dialog_message))
             },
             confirmButton = {
                 Button(
@@ -79,12 +81,12 @@ fun DownloadSettingsScreen(
                         containerColor = MaterialTheme.colorScheme.error
                     )
                 ) {
-                    Text("Cancella")
+                    Text(stringResource(R.string.settings_clear_history_dialog_confirm))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { viewModel.hideClearHistoryDialog() }) {
-                    Text("Annulla")
+                    Text(stringResource(R.string.settings_clear_history_dialog_cancel))
                 }
             }
         )
@@ -93,12 +95,12 @@ fun DownloadSettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Impostazioni") },
+                title = { Text(stringResource(R.string.settings_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -119,7 +121,7 @@ fun DownloadSettingsScreen(
 
             // Path di download section
             Text(
-                text = "Percorso Download",
+                text = stringResource(R.string.settings_download_path),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -151,7 +153,7 @@ fun DownloadSettingsScreen(
 
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = "Cartella di download",
+                            text = stringResource(R.string.settings_download_folder),
                             style = MaterialTheme.typography.bodyMedium,
                             fontWeight = FontWeight.Medium
                         )
@@ -168,7 +170,7 @@ fun DownloadSettingsScreen(
             Spacer(modifier = Modifier.height(8.dp))
 
             Text(
-                text = "Spazio disponibile: ${formatBytes(viewModel.getAvailableSpace(config.downloadPath))}",
+                text = stringResource(R.string.settings_available_space, formatBytes(viewModel.getAvailableSpace(config.downloadPath))),
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -177,7 +179,7 @@ fun DownloadSettingsScreen(
 
             // Opzioni rete
             Text(
-                text = "Rete",
+                text = stringResource(R.string.settings_network),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -185,8 +187,8 @@ fun DownloadSettingsScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SettingItem(
-                title = "Solo WiFi",
-                description = "Scarica solo quando connesso a WiFi",
+                title = stringResource(R.string.settings_wifi_only),
+                description = stringResource(R.string.settings_wifi_only_desc),
                 checked = config.useWifiOnly,
                 onCheckedChange = viewModel::updateWifiOnly
             )
@@ -195,7 +197,7 @@ fun DownloadSettingsScreen(
 
             // Notifiche
             Text(
-                text = "Notifiche",
+                text = stringResource(R.string.settings_notifications),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -203,8 +205,8 @@ fun DownloadSettingsScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SettingItem(
-                title = "Notifiche",
-                description = "Mostra notifiche durante e dopo download ed estrazioni",
+                title = stringResource(R.string.settings_notifications),
+                description = stringResource(R.string.settings_notifications_desc),
                 checked = config.notificationsEnabled,
                 onCheckedChange = viewModel::updateNotifications
             )
@@ -213,7 +215,7 @@ fun DownloadSettingsScreen(
 
             // Opzioni estrazione
             Text(
-                text = "Estrazione",
+                text = stringResource(R.string.settings_installation),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -221,8 +223,8 @@ fun DownloadSettingsScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SettingItem(
-                title = "Cancella file originale dopo l'estrazione",
-                description = "Elimina il file scaricato dopo l'estrazione completata",
+                title = stringResource(R.string.settings_delete_after_extraction),
+                description = stringResource(R.string.settings_delete_after_extraction_desc),
                 checked = config.deleteArchiveAfterExtraction,
                 onCheckedChange = viewModel::updateDeleteAfterExtract
             )
@@ -231,7 +233,7 @@ fun DownloadSettingsScreen(
 
             // Compatibilità ES-DE
             Text(
-                text = "Compatibilità ES-DE",
+                text = stringResource(R.string.settings_esde_compatibility),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -239,8 +241,8 @@ fun DownloadSettingsScreen(
             Spacer(modifier = Modifier.height(12.dp))
 
             SettingItem(
-                title = "Abilita compatibilità con ES-DE",
-                description = "Estrai/sposta le ROM nella struttura cartelle di ES-DE",
+                title = stringResource(R.string.settings_esde_compatibility),
+                description = stringResource(R.string.settings_esde_compatibility_desc),
                 checked = config.enableEsDeCompatibility,
                 onCheckedChange = viewModel::updateEsDeCompatibility
             )
@@ -273,13 +275,13 @@ fun DownloadSettingsScreen(
 
                         Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = "Cartella ROMs di ES-DE",
+                                text = stringResource(R.string.settings_esde_folder),
                                 style = MaterialTheme.typography.bodyMedium,
                                 fontWeight = FontWeight.Medium
                             )
                             Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = config.esDeRomsPath ?: "Non selezionata",
+                                text = config.esDeRomsPath ?: stringResource(R.string.settings_esde_folder_not_selected),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -292,7 +294,7 @@ fun DownloadSettingsScreen(
 
             // Gestione storico
             Text(
-                text = "Gestione Storico",
+                text = stringResource(R.string.settings_clear_history),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -314,14 +316,14 @@ fun DownloadSettingsScreen(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "Cancella storico download ed estrazioni",
+                        text = stringResource(R.string.settings_clear_history),
                         style = MaterialTheme.typography.bodyLarge,
                         fontWeight = FontWeight.Medium,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Elimina tutti i file .status nella cartella di download predefinita",
+                        text = stringResource(R.string.settings_clear_history_desc),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -336,7 +338,7 @@ fun DownloadSettingsScreen(
             
             // Sorgenti
             Text(
-                text = "Sorgenti",
+                text = stringResource(R.string.settings_sources),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold
             )
@@ -359,7 +361,7 @@ fun DownloadSettingsScreen(
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "Sorgente principale",
+                        text = stringResource(R.string.settings_main_source),
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -402,7 +404,7 @@ fun DownloadSettingsScreen(
                 }
                 
                 Text(
-                    text = "Versione $versionName",
+                    text = stringResource(R.string.settings_version_label, versionName),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -410,7 +412,7 @@ fun DownloadSettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Autore: McCoy88f",
+                    text = stringResource(R.string.settings_author_label, "McCoy88f"),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -432,7 +434,7 @@ fun DownloadSettingsScreen(
                     )
                     Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                     Text(
-                        text = "GitHub",
+                        text = stringResource(R.string.settings_github),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textDecoration = TextDecoration.Underline
@@ -447,7 +449,7 @@ fun DownloadSettingsScreen(
                 
                 // Sezione Supporto
                 Text(
-                    text = "Supportami",
+                    text = stringResource(R.string.settings_support_me),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
@@ -456,7 +458,7 @@ fun DownloadSettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Se ti piace questo progetto, sostienilo con ora!",
+                    text = stringResource(R.string.settings_support_message),
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -482,7 +484,7 @@ fun DownloadSettingsScreen(
                     )
                     Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                     Text(
-                        text = "Buy me a coffee 🍺",
+                        text = stringResource(R.string.settings_buy_me_coffee),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textDecoration = TextDecoration.Underline
@@ -510,7 +512,7 @@ fun DownloadSettingsScreen(
                     )
                     Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                     Text(
-                        text = "PayPal 🍻",
+                        text = stringResource(R.string.settings_paypal),
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textDecoration = TextDecoration.Underline

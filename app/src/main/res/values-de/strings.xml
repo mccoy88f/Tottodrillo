@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tottodrillo</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Startseite</string>
+    <string name="nav_search">Suchen</string>
+    <string name="nav_explore">Entdecken</string>
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_favorites">Favoriten</string>
+    <string name="nav_settings">Einstellungen</string>
+    
+    <!-- Common -->
+    <string name="search">Suchen</string>
+    <string name="cancel">Abbrechen</string>
+    <string name="ok">OK</string>
+    <string name="back">Zurück</string>
+    <string name="loading">Lädt…</string>
+    <string name="error">Fehler</string>
+    <string name="retry">Wiederholen</string>
+    <string name="refresh">Aktualisieren</string>
+    <string name="favorite">Favorit</string>
+    <string name="settings">Einstellungen</string>
+    
+    <!-- Home -->
+    <string name="home_welcome">Entdecke die Welt</string>
+    <string name="home_subtitle">des Retro-Gaming</string>
+    <string name="home_featured">Empfohlen</string>
+    <string name="home_popular_platforms">Beliebte Plattformen</string>
+    <string name="home_recent">Kürzlich</string>
+    <string name="home_favorites">Favoriten</string>
+    <string name="see_all">Alle anzeigen</string>
+    
+    <!-- Search -->
+    <string name="search_hint">ROM nach Titel suchen…</string>
+    <string name="search_no_results">Keine Ergebnisse für \"%1$s\"</string>
+    <string name="search_filters">Filter</string>
+    <string name="search_clear_filters">Filter löschen</string>
+    <string name="search_platforms">Plattformen</string>
+    <string name="search_regions">Regionen</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_title">ROM-Details</string>
+    <string name="rom_detail_platform">Plattform</string>
+    <string name="rom_detail_region">Region</string>
+    <string name="rom_detail_release_date">Veröffentlichungsdatum</string>
+    <string name="rom_detail_download">Herunterladen</string>
+    <string name="rom_detail_downloaded">Heruntergeladen</string>
+    <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_cancel_download">Abbrechen</string>
+    <string name="rom_detail_extract">Extrahieren</string>
+    <string name="rom_detail_copy">Kopieren</string>
+    <string name="rom_detail_extract_archive">Archiv extrahieren</string>
+    <string name="rom_detail_copy_file">Datei kopieren</string>
+    <string name="rom_detail_extraction_progress">%1$d%%</string>
+    <string name="rom_detail_extraction_completed">Extraktion abgeschlossen</string>
+    <string name="rom_detail_extraction_failed">Extraktion fehlgeschlagen</string>
+    <string name="rom_detail_open_folder">Extraktionsordner öffnen</string>
+    <string name="rom_detail_retry_extraction">Extraktion wiederholen</string>
+    <string name="rom_detail_no_download_links">Keine Download-Links verfügbar</string>
+    <string name="rom_detail_downloading">Wird heruntergeladen…</string>
+    <string name="rom_detail_installing">Wird installiert…</string>
+    
+    <!-- Downloads -->
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_active">Aktive Downloads</string>
+    <string name="downloads_completed">Abgeschlossen</string>
+    <string name="downloads_failed">Fehlgeschlagen</string>
+    <string name="downloads_empty">Keine aktiven Downloads</string>
+    <string name="download_cancel">Download abbrechen</string>
+    <string name="download_retry">Wiederholen</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Einstellungen</string>
+    <string name="settings_download_path">Download-Pfad</string>
+    <string name="settings_download_path_desc">Wähle den Ordner aus, in dem heruntergeladene Dateien gespeichert werden</string>
+    <string name="settings_download_folder">Download-Ordner</string>
+    <string name="settings_available_space">Verfügbarer Speicherplatz: %1$s</string>
+    <string name="settings_auto_extract">Automatische Extraktion</string>
+    <string name="settings_auto_extract_desc">ZIP-Dateien nach dem Download automatisch extrahieren</string>
+    <string name="settings_delete_archives">Archive löschen</string>
+    <string name="settings_delete_archives_desc">ZIP-Archive nach der Extraktion löschen</string>
+    <string name="settings_delete_after_extraction">Originaldatei nach Installation löschen</string>
+    <string name="settings_delete_after_extraction_desc">Die heruntergeladene Datei nach erfolgreicher Installation löschen</string>
+    <string name="settings_wifi_only">Nur WiFi</string>
+    <string name="settings_wifi_only_desc">Nur bei WiFi-Verbindung herunterladen</string>
+    <string name="settings_notifications">Download-Benachrichtigungen</string>
+    <string name="settings_notifications_desc">Benachrichtigungen während und nach Downloads anzeigen</string>
+    <string name="settings_installation">Installation</string>
+    <string name="settings_clear_history">Download- und Installationsverlauf löschen</string>
+    <string name="settings_clear_history_desc">Alle .status-Dateien im Standard-Download-Ordner löschen</string>
+    <string name="settings_clear_history_confirm">Löschen</string>
+    <string name="settings_clear_history_dialog_title">Download- und Installationsverlauf löschen</string>
+    <string name="settings_clear_history_dialog_message">Diese Aktion löscht alle .status-Dateien im Standard-Download-Ordner. Diese Operation kann nicht rückgängig gemacht werden.</string>
+    <string name="settings_clear_history_dialog_confirm">Löschen</string>
+    <string name="settings_clear_history_dialog_cancel">Abbrechen</string>
+    <string name="settings_esde_compatibility">ES-DE-Kompatibilität aktivieren</string>
+    <string name="settings_esde_compatibility_desc">ROMs automatisch in der ES-DE-Ordnerstruktur installieren</string>
+    <string name="settings_esde_folder">ES-DE-ROMs-Ordner</string>
+    <string name="settings_esde_folder_not_selected">Nicht ausgewählt</string>
+    <string name="settings_network">Netzwerk</string>
+    <string name="settings_app_info">App-Informationen</string>
+    <string name="settings_version">Version</string>
+    <string name="settings_author">Autor</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_support_me">Unterstütze mich</string>
+    <string name="settings_buy_me_coffee">Kauf mir einen Kaffee</string>
+    <string name="settings_paypal">PayPal</string>
+    <string name="settings_sources">Quellen</string>
+    <string name="settings_main_source">Hauptquelle</string>
+    <string name="settings_version_label">Version %1$s</string>
+    <string name="settings_author_label">Autor: %1$s</string>
+    <string name="settings_support_message">Wenn dir dieses Projekt gefällt, unterstütze es jetzt!</string>
+    
+    <!-- Notifications -->
+    <string name="notif_download_progress">Download läuft</string>
+    <string name="notif_download_completed">Download abgeschlossen</string>
+    <string name="notif_download_failed">Download fehlgeschlagen</string>
+    <string name="notif_extracting">Extraktion läuft…</string>
+    <string name="notif_extraction_completed">Extraktion abgeschlossen</string>
+    <string name="notif_installation_progress">Installation läuft</string>
+    <string name="notif_installation_completed">Installation abgeschlossen</string>
+    <string name="notif_installation_failed">Installation fehlgeschlagen</string>
+    <string name="notif_cancel_download">Download abbrechen</string>
+    <string name="notif_cancel_installation">Installation abbrechen</string>
+    
+    <!-- Explore -->
+    <string name="explore_title">Plattformen erkunden</string>
+    <string name="explore_no_platforms">Keine Plattformen verfügbar</string>
+    
+    <!-- Common Actions -->
+    <string name="action_open">Öffnen</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_share">Teilen</string>
+    <string name="action_select">Auswählen</string>
+    
+    <!-- Errors -->
+    <string name="error_loading">Fehler beim Laden</string>
+    <string name="error_network">Netzwerkfehler</string>
+    <string name="error_unknown">Unbekannter Fehler</string>
+    <string name="error_download_failed">Download fehlgeschlagen</string>
+    <string name="error_extraction_failed">Extraktion fehlgeschlagen</string>
+    <string name="error_no_storage">Nicht genügend Speicherplatz</string>
+    
+    <!-- Empty States -->
+    <string name="empty_no_results">Keine Ergebnisse gefunden</string>
+    <string name="empty_no_favorites">Noch keine Favoriten</string>
+    <string name="empty_no_recent">Keine kürzlichen ROMs</string>
+    <string name="empty_no_downloads">Keine Downloads</string>
+</resources>
+

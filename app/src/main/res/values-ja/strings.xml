@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tottodrillo</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">ホーム</string>
+    <string name="nav_search">検索</string>
+    <string name="nav_explore">探索</string>
+    <string name="nav_downloads">ダウンロード</string>
+    <string name="nav_favorites">お気に入り</string>
+    <string name="nav_settings">設定</string>
+    
+    <!-- Common -->
+    <string name="search">検索</string>
+    <string name="cancel">キャンセル</string>
+    <string name="ok">OK</string>
+    <string name="back">戻る</string>
+    <string name="loading">読み込み中…</string>
+    <string name="error">エラー</string>
+    <string name="retry">再試行</string>
+    <string name="refresh">更新</string>
+    <string name="favorite">お気に入り</string>
+    <string name="settings">設定</string>
+    
+    <!-- Home -->
+    <string name="home_welcome">レトロゲームの世界を</string>
+    <string name="home_subtitle">探索しよう</string>
+    <string name="home_featured">おすすめ</string>
+    <string name="home_popular_platforms">人気のプラットフォーム</string>
+    <string name="home_recent">最近</string>
+    <string name="home_favorites">お気に入り</string>
+    <string name="see_all">すべて表示</string>
+    
+    <!-- Search -->
+    <string name="search_hint">タイトルでROMを検索…</string>
+    <string name="search_no_results">「%1$s」の検索結果が見つかりませんでした</string>
+    <string name="search_filters">フィルター</string>
+    <string name="search_clear_filters">フィルターをクリア</string>
+    <string name="search_platforms">プラットフォーム</string>
+    <string name="search_regions">地域</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_title">ROM詳細</string>
+    <string name="rom_detail_platform">プラットフォーム</string>
+    <string name="rom_detail_region">地域</string>
+    <string name="rom_detail_release_date">発売日</string>
+    <string name="rom_detail_download">ダウンロード</string>
+    <string name="rom_detail_downloaded">ダウンロード済み</string>
+    <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_cancel_download">キャンセル</string>
+    <string name="rom_detail_extract">展開</string>
+    <string name="rom_detail_copy">コピー</string>
+    <string name="rom_detail_extract_archive">アーカイブを展開</string>
+    <string name="rom_detail_copy_file">ファイルをコピー</string>
+    <string name="rom_detail_extraction_progress">%1$d%%</string>
+    <string name="rom_detail_extraction_completed">展開完了</string>
+    <string name="rom_detail_extraction_failed">展開失敗</string>
+    <string name="rom_detail_open_folder">展開フォルダを開く</string>
+    <string name="rom_detail_retry_extraction">展開を再試行</string>
+    <string name="rom_detail_no_download_links">ダウンロードリンクがありません</string>
+    <string name="rom_detail_downloading">ダウンロード中…</string>
+    <string name="rom_detail_installing">インストール中…</string>
+    
+    <!-- Downloads -->
+    <string name="downloads_title">ダウンロード</string>
+    <string name="downloads_active">アクティブなダウンロード</string>
+    <string name="downloads_completed">完了</string>
+    <string name="downloads_failed">失敗</string>
+    <string name="downloads_empty">アクティブなダウンロードはありません</string>
+    <string name="download_cancel">ダウンロードをキャンセル</string>
+    <string name="download_retry">再試行</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">設定</string>
+    <string name="settings_download_path">ダウンロードパス</string>
+    <string name="settings_download_path_desc">ダウンロードしたファイルを保存するフォルダを選択</string>
+    <string name="settings_download_folder">ダウンロードフォルダ</string>
+    <string name="settings_available_space">利用可能な容量: %1$s</string>
+    <string name="settings_auto_extract">自動展開</string>
+    <string name="settings_auto_extract_desc">ダウンロード後にZIPファイルを自動的に展開</string>
+    <string name="settings_delete_archives">アーカイブを削除</string>
+    <string name="settings_delete_archives_desc">展開後にZIPアーカイブを削除</string>
+    <string name="settings_delete_after_extraction">インストール後に元のファイルを削除</string>
+    <string name="settings_delete_after_extraction_desc">インストール完了後にダウンロードしたファイルを削除</string>
+    <string name="settings_wifi_only">WiFiのみ</string>
+    <string name="settings_wifi_only_desc">WiFi接続時のみダウンロード</string>
+    <string name="settings_notifications">ダウンロード通知</string>
+    <string name="settings_notifications_desc">ダウンロード中およびダウンロード後に通知を表示</string>
+    <string name="settings_installation">インストール</string>
+    <string name="settings_clear_history">ダウンロードとインストールの履歴をクリア</string>
+    <string name="settings_clear_history_desc">デフォルトのダウンロードフォルダ内のすべての.statusファイルを削除</string>
+    <string name="settings_clear_history_confirm">履歴をクリア</string>
+    <string name="settings_clear_history_dialog_title">ダウンロードとインストールの履歴をクリア</string>
+    <string name="settings_clear_history_dialog_message">この操作により、デフォルトのダウンロードフォルダ内のすべての.statusファイルが削除されます。この操作は元に戻せません。</string>
+    <string name="settings_clear_history_dialog_confirm">クリア</string>
+    <string name="settings_clear_history_dialog_cancel">キャンセル</string>
+    <string name="settings_esde_compatibility">ES-DE互換性を有効化</string>
+    <string name="settings_esde_compatibility_desc">ES-DEフォルダ構造にROMを自動インストール</string>
+    <string name="settings_esde_folder">ES-DE ROMsフォルダ</string>
+    <string name="settings_esde_folder_not_selected">未選択</string>
+    <string name="settings_network">ネットワーク</string>
+    <string name="settings_app_info">アプリ情報</string>
+    <string name="settings_version">バージョン</string>
+    <string name="settings_author">作者</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_support_me">サポート</string>
+    <string name="settings_buy_me_coffee">コーヒーを奢る</string>
+    <string name="settings_paypal">PayPal</string>
+    <string name="settings_sources">ソース</string>
+    <string name="settings_main_source">メインソース</string>
+    <string name="settings_version_label">バージョン %1$s</string>
+    <string name="settings_author_label">作者: %1$s</string>
+    <string name="settings_support_message">このプロジェクトを気に入ったら、今すぐサポートしてください！</string>
+    
+    <!-- Notifications -->
+    <string name="notif_download_progress">ダウンロード中</string>
+    <string name="notif_download_completed">ダウンロード完了</string>
+    <string name="notif_download_failed">ダウンロード失敗</string>
+    <string name="notif_extracting">展開中…</string>
+    <string name="notif_extraction_completed">展開完了</string>
+    <string name="notif_installation_progress">インストール中</string>
+    <string name="notif_installation_completed">インストール完了</string>
+    <string name="notif_installation_failed">インストール失敗</string>
+    <string name="notif_cancel_download">ダウンロードをキャンセル</string>
+    <string name="notif_cancel_installation">インストールをキャンセル</string>
+    
+    <!-- Explore -->
+    <string name="explore_title">プラットフォームを探索</string>
+    <string name="explore_no_platforms">利用可能なプラットフォームがありません</string>
+    
+    <!-- Common Actions -->
+    <string name="action_open">開く</string>
+    <string name="action_delete">削除</string>
+    <string name="action_share">共有</string>
+    <string name="action_select">選択</string>
+    
+    <!-- Errors -->
+    <string name="error_loading">読み込みエラー</string>
+    <string name="error_network">ネットワークエラー</string>
+    <string name="error_unknown">不明なエラー</string>
+    <string name="error_download_failed">ダウンロード失敗</string>
+    <string name="error_extraction_failed">展開失敗</string>
+    <string name="error_no_storage">ストレージ容量が不足しています</string>
+    
+    <!-- Empty States -->
+    <string name="empty_no_results">結果が見つかりませんでした</string>
+    <string name="empty_no_favorites">お気に入りはまだありません</string>
+    <string name="empty_no_recent">最近のROMはありません</string>
+    <string name="empty_no_downloads">ダウンロードはありません</string>
+</resources>
+

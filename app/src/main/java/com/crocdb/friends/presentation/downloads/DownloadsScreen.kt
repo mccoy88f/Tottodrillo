@@ -38,7 +38,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import com.crocdb.friends.domain.model.DownloadStatus
 import com.crocdb.friends.domain.model.DownloadTask
 import com.crocdb.friends.presentation.components.EmptyState
@@ -58,12 +60,12 @@ fun DownloadsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Downloads") },
+                title = { Text(stringResource(R.string.downloads_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -75,7 +77,7 @@ fun DownloadsScreen(
     ) { padding ->
         if (activeDownloads.isEmpty()) {
             EmptyState(
-                message = "Nessun download attivo",
+                message = stringResource(R.string.downloads_empty),
                 modifier = Modifier.padding(padding)
             )
         } else {

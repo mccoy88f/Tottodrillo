@@ -45,7 +45,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import com.crocdb.friends.presentation.components.EmptyState
 import com.crocdb.friends.presentation.components.LoadingIndicator
 import com.crocdb.friends.presentation.components.RomCard
@@ -93,12 +95,12 @@ fun SearchScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Ricerca") },
+                title = { Text(stringResource(R.string.nav_search)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -107,7 +109,7 @@ fun SearchScreen(
                         IconButton(onClick = onShowFilters) {
                             Icon(
                                 imageVector = Icons.Default.FilterList,
-                                contentDescription = "Filters"
+                                contentDescription = stringResource(R.string.search_filters)
                             )
                         }
                     }
@@ -150,14 +152,14 @@ fun SearchScreen(
                 uiState.showEmptyState -> {
                     EmptyState(
                         message = if (uiState.query.isEmpty()) {
-                            "Inizia a cercare ROM"
+                            stringResource(R.string.search_hint)
                         } else {
-                            "Nessun risultato per \"${uiState.query}\""
+                            stringResource(R.string.search_no_results, uiState.query)
                         }
                     )
                 }
                 uiState.error != null && uiState.results.isEmpty() -> {
-                    EmptyState(message = uiState.error ?: "Errore nella ricerca")
+                    EmptyState(message = uiState.error ?: stringResource(R.string.error_loading))
                 }
                 else -> {
                     SearchResults(
@@ -186,7 +188,7 @@ private fun SearchBar(
         modifier = modifier.fillMaxWidth(),
         placeholder = {
             Text(
-                text = "Cerca ROM per titolo...",
+                text = stringResource(R.string.search_hint),
                 style = MaterialTheme.typography.bodyLarge
             )
         },

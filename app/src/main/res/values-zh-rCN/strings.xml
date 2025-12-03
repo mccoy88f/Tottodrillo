@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tottodrillo</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">首页</string>
+    <string name="nav_search">搜索</string>
+    <string name="nav_explore">探索</string>
+    <string name="nav_downloads">下载</string>
+    <string name="nav_favorites">收藏</string>
+    <string name="nav_settings">设置</string>
+    
+    <!-- Common -->
+    <string name="search">搜索</string>
+    <string name="cancel">取消</string>
+    <string name="ok">确定</string>
+    <string name="back">返回</string>
+    <string name="loading">加载中…</string>
+    <string name="error">错误</string>
+    <string name="retry">重试</string>
+    <string name="refresh">刷新</string>
+    <string name="favorite">收藏</string>
+    <string name="settings">设置</string>
+    
+    <!-- Home -->
+    <string name="home_welcome">探索</string>
+    <string name="home_subtitle">复古游戏的世界</string>
+    <string name="home_featured">精选</string>
+    <string name="home_popular_platforms">热门平台</string>
+    <string name="home_recent">最近</string>
+    <string name="home_favorites">收藏</string>
+    <string name="see_all">查看全部</string>
+    
+    <!-- Search -->
+    <string name="search_hint">按标题搜索ROM…</string>
+    <string name="search_no_results">未找到 \"%1$s\" 的结果</string>
+    <string name="search_filters">筛选</string>
+    <string name="search_clear_filters">清除筛选</string>
+    <string name="search_platforms">平台</string>
+    <string name="search_regions">地区</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_title">ROM详情</string>
+    <string name="rom_detail_platform">平台</string>
+    <string name="rom_detail_region">地区</string>
+    <string name="rom_detail_release_date">发布日期</string>
+    <string name="rom_detail_download">下载</string>
+    <string name="rom_detail_downloaded">已下载</string>
+    <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_cancel_download">取消</string>
+    <string name="rom_detail_extract">解压</string>
+    <string name="rom_detail_copy">复制</string>
+    <string name="rom_detail_extract_archive">解压存档</string>
+    <string name="rom_detail_copy_file">复制文件</string>
+    <string name="rom_detail_extraction_progress">%1$d%%</string>
+    <string name="rom_detail_extraction_completed">解压完成</string>
+    <string name="rom_detail_extraction_failed">解压失败</string>
+    <string name="rom_detail_open_folder">打开解压文件夹</string>
+    <string name="rom_detail_retry_extraction">重试解压</string>
+    <string name="rom_detail_no_download_links">没有可用的下载链接</string>
+    <string name="rom_detail_downloading">下载中…</string>
+    <string name="rom_detail_installing">安装中…</string>
+    
+    <!-- Downloads -->
+    <string name="downloads_title">下载</string>
+    <string name="downloads_active">活动下载</string>
+    <string name="downloads_completed">已完成</string>
+    <string name="downloads_failed">失败</string>
+    <string name="downloads_empty">没有活动下载</string>
+    <string name="download_cancel">取消下载</string>
+    <string name="download_retry">重试</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">设置</string>
+    <string name="settings_download_path">下载路径</string>
+    <string name="settings_download_path_desc">选择保存下载文件的文件夹</string>
+    <string name="settings_download_folder">下载文件夹</string>
+    <string name="settings_available_space">可用空间：%1$s</string>
+    <string name="settings_auto_extract">自动解压</string>
+    <string name="settings_auto_extract_desc">下载后自动解压ZIP文件</string>
+    <string name="settings_delete_archives">删除存档</string>
+    <string name="settings_delete_archives_desc">解压后删除ZIP存档</string>
+    <string name="settings_delete_after_extraction">安装后删除原始文件</string>
+    <string name="settings_delete_after_extraction_desc">安装成功后删除下载的文件</string>
+    <string name="settings_wifi_only">仅WiFi</string>
+    <string name="settings_wifi_only_desc">仅在连接WiFi时下载</string>
+    <string name="settings_notifications">下载通知</string>
+    <string name="settings_notifications_desc">在下载期间和之后显示通知</string>
+    <string name="settings_installation">安装</string>
+    <string name="settings_clear_history">清除下载和安装历史</string>
+    <string name="settings_clear_history_desc">删除默认下载文件夹中的所有.status文件</string>
+    <string name="settings_clear_history_confirm">清除历史</string>
+    <string name="settings_clear_history_dialog_title">清除下载和安装历史</string>
+    <string name="settings_clear_history_dialog_message">此操作将删除默认下载文件夹中的所有.status文件。此操作无法撤销。</string>
+    <string name="settings_clear_history_dialog_confirm">清除</string>
+    <string name="settings_clear_history_dialog_cancel">取消</string>
+    <string name="settings_esde_compatibility">启用ES-DE兼容性</string>
+    <string name="settings_esde_compatibility_desc">自动将ROM安装到ES-DE文件夹结构中</string>
+    <string name="settings_esde_folder">ES-DE ROMs文件夹</string>
+    <string name="settings_esde_folder_not_selected">未选择</string>
+    <string name="settings_network">网络</string>
+    <string name="settings_app_info">应用信息</string>
+    <string name="settings_version">版本</string>
+    <string name="settings_author">作者</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_support_me">支持我</string>
+    <string name="settings_buy_me_coffee">请我喝咖啡</string>
+    <string name="settings_paypal">PayPal</string>
+    <string name="settings_sources">来源</string>
+    <string name="settings_main_source">主要来源</string>
+    <string name="settings_version_label">版本 %1$s</string>
+    <string name="settings_author_label">作者：%1$s</string>
+    <string name="settings_support_message">如果您喜欢这个项目，请立即支持！</string>
+    
+    <!-- Notifications -->
+    <string name="notif_download_progress">下载中</string>
+    <string name="notif_download_completed">下载完成</string>
+    <string name="notif_download_failed">下载失败</string>
+    <string name="notif_extracting">解压中…</string>
+    <string name="notif_extraction_completed">解压完成</string>
+    <string name="notif_installation_progress">安装中</string>
+    <string name="notif_installation_completed">安装完成</string>
+    <string name="notif_installation_failed">安装失败</string>
+    <string name="notif_cancel_download">取消下载</string>
+    <string name="notif_cancel_installation">取消安装</string>
+    
+    <!-- Explore -->
+    <string name="explore_title">探索平台</string>
+    <string name="explore_no_platforms">没有可用平台</string>
+    
+    <!-- Common Actions -->
+    <string name="action_open">打开</string>
+    <string name="action_delete">删除</string>
+    <string name="action_share">分享</string>
+    <string name="action_select">选择</string>
+    
+    <!-- Errors -->
+    <string name="error_loading">加载错误</string>
+    <string name="error_network">网络错误</string>
+    <string name="error_unknown">未知错误</string>
+    <string name="error_download_failed">下载失败</string>
+    <string name="error_extraction_failed">解压失败</string>
+    <string name="error_no_storage">存储空间不足</string>
+    
+    <!-- Empty States -->
+    <string name="empty_no_results">未找到结果</string>
+    <string name="empty_no_favorites">还没有收藏</string>
+    <string name="empty_no_recent">没有最近的ROM</string>
+    <string name="empty_no_downloads">没有下载</string>
+</resources>
+

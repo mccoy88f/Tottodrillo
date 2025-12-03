@@ -42,7 +42,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.crocdb.friends.domain.model.PlatformCategory
@@ -68,7 +70,7 @@ fun ExploreScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = "Esplora Piattaforme",
+                        text = stringResource(R.string.explore_title),
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold
                     )
@@ -77,7 +79,7 @@ fun ExploreScreen(
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -93,13 +95,13 @@ fun ExploreScreen(
             }
             uiState.error != null -> {
                 EmptyState(
-                    message = uiState.error ?: "Errore nel caricamento",
+                    message = uiState.error ?: stringResource(R.string.error_loading),
                     modifier = Modifier.padding(padding)
                 )
             }
             categories.isEmpty() -> {
                 EmptyState(
-                    message = "Nessuna piattaforma disponibile",
+                    message = stringResource(R.string.explore_no_platforms),
                     modifier = Modifier.padding(padding)
                 )
             }

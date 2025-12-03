@@ -45,7 +45,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.crocdb.friends.domain.model.PlatformInfo
@@ -99,13 +101,13 @@ fun HomeScreen(
                     IconButton(onClick = onNavigateToSettings) {
                         Icon(
                             imageVector = Icons.Default.Settings,
-                            contentDescription = "Settings"
+                            contentDescription = stringResource(R.string.settings)
                         )
                     }
                     IconButton(onClick = onNavigateToSearch) {
                         Icon(
                             imageVector = Icons.Default.Search,
-                            contentDescription = "Search"
+                            contentDescription = stringResource(R.string.search)
                         )
                     }
                 },
@@ -121,7 +123,7 @@ fun HomeScreen(
             }
             uiState.error != null && uiState.recentPlatforms.isEmpty() -> {
                 EmptyState(
-                    message = uiState.error ?: "Errore nel caricamento",
+                    message = uiState.error ?: stringResource(R.string.error_loading),
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -158,14 +160,14 @@ private fun HomeContent(
                 .padding(horizontal = 20.dp, vertical = 16.dp)
         ) {
             Text(
-                text = "Esplora il mondo",
+                text = stringResource(R.string.home_welcome),
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onBackground
             )
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "del retro gaming",
+                text = stringResource(R.string.home_subtitle),
                 style = MaterialTheme.typography.titleLarge,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -176,7 +178,7 @@ private fun HomeContent(
         // Piattaforme popolari
         if (uiState.recentPlatforms.isNotEmpty()) {
             SectionHeader(
-                title = "Piattaforme Popolari",
+                title = stringResource(R.string.home_popular_platforms),
                 onSeeAllClick = onNavigateToExplore
             )
 
@@ -197,7 +199,7 @@ private fun HomeContent(
 
         // ROM in evidenza
         if (uiState.featuredRoms.isNotEmpty()) {
-            SectionHeader(title = "In Evidenza")
+            SectionHeader(title = stringResource(R.string.home_featured))
 
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
@@ -217,7 +219,7 @@ private fun HomeContent(
 
         // ROM recenti
         if (uiState.recentRoms.isNotEmpty()) {
-            SectionHeader(title = "Recenti")
+            SectionHeader(title = stringResource(R.string.home_recent))
 
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
@@ -237,7 +239,7 @@ private fun HomeContent(
 
         // ROM preferiti
         if (uiState.favoriteRoms.isNotEmpty()) {
-            SectionHeader(title = "Preferiti")
+            SectionHeader(title = stringResource(R.string.home_favorites))
 
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
@@ -279,7 +281,7 @@ private fun SectionHeader(
 
         if (onSeeAllClick != null) {
             Text(
-                text = "Vedi tutti",
+                text = stringResource(R.string.see_all),
                 style = MaterialTheme.typography.labelLarge,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.clickable(onClick = onSeeAllClick)

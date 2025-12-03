@@ -53,7 +53,9 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
+import com.crocdb.friends.R
 import coil.compose.SubcomposeAsyncImage
 import com.crocdb.friends.domain.model.DownloadLink
 import com.crocdb.friends.domain.model.Rom
@@ -266,12 +268,12 @@ fun RomDetailScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Dettaglio ROM") },
+                title = { Text(stringResource(R.string.rom_detail_title)) },
                 navigationIcon = {
                     IconButton(onClick = onNavigateBack) {
                         Icon(
                             imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Back"
+                            contentDescription = stringResource(R.string.back)
                         )
                     }
                 },
@@ -285,7 +287,7 @@ fun RomDetailScreen(
                         } else {
                             Icon(
                                 imageVector = Icons.Filled.Refresh,
-                                contentDescription = "Ricarica",
+                                contentDescription = stringResource(R.string.refresh),
                                 tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
@@ -297,7 +299,7 @@ fun RomDetailScreen(
                             } else {
                                 Icons.Filled.FavoriteBorder
                             },
-                            contentDescription = "Favorite",
+                            contentDescription = stringResource(R.string.favorite),
                             tint = if (isFavorite) {
                                 MaterialTheme.colorScheme.error
                             } else {
@@ -384,7 +386,7 @@ fun RomDetailScreen(
                 // Regions
                 if (rom.regions.isNotEmpty()) {
                     Text(
-                        text = "Regioni",
+                        text = stringResource(R.string.rom_detail_region),
                         style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -423,7 +425,7 @@ fun RomDetailScreen(
                 // Download links
                 if (rom.downloadLinks.isNotEmpty()) {
                     Text(
-                        text = "Download",
+                        text = stringResource(R.string.rom_detail_download),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.SemiBold
                     )
@@ -516,11 +518,11 @@ private fun DownloadLinkCard(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.Center
                                 ) {
-                                    Text("${downloadStatus.progress}%")
+                                    Text(stringResource(R.string.rom_detail_download_progress, downloadStatus.progress))
                                     Spacer(modifier = Modifier.size(8.dp))
                                     Icon(
                                         imageVector = Icons.Default.Close,
-                                        contentDescription = "Interrompi",
+                                        contentDescription = stringResource(R.string.rom_detail_cancel_download),
                                         modifier = Modifier.size(18.dp)
                                     )
                                 }
@@ -532,7 +534,7 @@ private fun DownloadLinkCard(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text("Scaricato")
+                                Text(stringResource(R.string.rom_detail_downloaded))
                             }
                             is com.crocdb.friends.domain.model.DownloadStatus.Failed -> {
                                 Icon(
@@ -541,7 +543,7 @@ private fun DownloadLinkCard(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text("Riprova")
+                                Text(stringResource(R.string.retry))
                             }
                             else -> {
                                 Icon(
@@ -550,7 +552,7 @@ private fun DownloadLinkCard(
                                     modifier = Modifier.size(18.dp)
                                 )
                                 Spacer(modifier = Modifier.size(8.dp))
-                                Text("Download")
+                                Text(stringResource(R.string.rom_detail_download))
                             }
                         }
                     }
@@ -573,7 +575,7 @@ private fun DownloadLinkCard(
                                             strokeWidth = 2.dp
                                         )
                                         Text(
-                                            text = "${extractionStatus.progress}%",
+                                            text = stringResource(R.string.rom_detail_extraction_progress, extractionStatus.progress),
                                             style = MaterialTheme.typography.bodySmall
                                         )
                                     }
@@ -592,7 +594,7 @@ private fun DownloadLinkCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Unarchive,
-                                            contentDescription = "Apri cartella estrazione",
+                                            contentDescription = stringResource(R.string.rom_detail_open_folder),
                                             modifier = Modifier.size(24.dp),
                                             tint = androidx.compose.ui.graphics.Color(0xFF4CAF50) // Verde
                                         )
@@ -609,7 +611,7 @@ private fun DownloadLinkCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Unarchive,
-                                            contentDescription = "Riprova estrazione",
+                                            contentDescription = stringResource(R.string.rom_detail_retry_extraction),
                                             modifier = Modifier.size(20.dp),
                                             tint = MaterialTheme.colorScheme.error
                                         )
@@ -626,7 +628,10 @@ private fun DownloadLinkCard(
                                     ) {
                                         Icon(
                                             imageVector = Icons.Default.Unarchive,
-                                            contentDescription = if (isSupportedArchiveFile(completed.romTitle)) "Estrai archivio" else "Copia file",
+                                            contentDescription = if (isSupportedArchiveFile(completed.romTitle)) 
+                                                stringResource(R.string.rom_detail_extract_archive) 
+                                            else 
+                                                stringResource(R.string.rom_detail_copy_file),
                                             modifier = Modifier.size(20.dp)
                                         )
                                     }
@@ -650,7 +655,7 @@ private fun DownloadLinkCard(
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = "${downloadStatus.progress}%",
+                            text = stringResource(R.string.rom_detail_download_progress, downloadStatus.progress),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.primary
                         )
