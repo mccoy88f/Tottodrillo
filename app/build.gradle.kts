@@ -58,18 +58,6 @@ android {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
-    
-    // Task per copiare automaticamente i file SVG dalla cartella logos in assets
-    tasks.register<Copy>("copyLogosToAssets") {
-        from("${project.rootDir}/logos")
-        into("${project.projectDir}/src/main/assets/logos")
-        include("*.svg")
-    }
-    
-    // Esegui il task prima di ogni build
-    tasks.preBuild {
-        dependsOn("copyLogosToAssets")
-    }
 }
 
 dependencies {
