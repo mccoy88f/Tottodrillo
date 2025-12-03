@@ -193,7 +193,14 @@ class RomDetailViewModel @Inject constructor(
      * Osserva un'estrazione per un link specifico
      */
     private fun observeExtractionForLink(link: DownloadLink, workId: UUID) {
+        // Se stiamo già osservando questo workId, non cancellare e riavviare
+        if (currentExtractionWorkId == workId && currentExtractionJob?.isActive == true) {
+            android.util.Log.d("RomDetailViewModel", "ℹ️ Già osservando estrazione con workId: $workId, salto riavvio")
+            return
+        }
+        
         currentExtractionJob?.cancel()
+        currentExtractionWorkId = workId
         currentExtractionJob = viewModelScope.launch {
             android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Inizio osservazione estrazione per link ${link.url}, workId: $workId")
             
@@ -226,59 +233,21 @@ class RomDetailViewModel @Inject constructor(
                         }
                     }
                     
-                    // Quando l'estrazione termina, ricarica lo stato completo
+                    // Quando l'estrazione termina, aggiorna solo lo stato UI
+                    // Non chiamare refreshRomStatus() per evitare di riavviare l'osservazione
+                    // Lo stato sarà ricaricato automaticamente quando l'utente rientra nella schermata
                     if (status is ExtractionStatus.Completed) {
                         android.util.Log.i("RomDetailViewModel", "✅ [PASSO 3] ExtractionStatus.Completed ricevuto! Path: ${status.extractedPath}, Files: ${status.filesCount}")
-                        
-                        // Aggiorna immediatamente lo stato per mostrare l'icona verde
-                        // Lo stato è già stato aggiornato sopra, ma assicuriamoci che sia corretto
-                        val currentRom = _uiState.value.rom
-                        if (currentRom != null) {
-                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
-                            val currentLinkStatus = currentLinkStatuses[link.url]
-                            if (currentLinkStatus != null) {
-                                currentLinkStatuses[link.url] = Pair(
-                                    currentLinkStatus.first,
-                                    status // ExtractionStatus.Completed
-                                )
-                                _uiState.update {
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato linkStatuses con Completed per link ${link.url}")
-                                    it.copy(
-                                        extractionStatus = status,
-                                        linkStatuses = currentLinkStatuses
-                                    )
-                                }
-                            }
-                        }
-                        
-                        // Aspetta che il file .status sia scritto e poi ricarica lo stato completo per sincronizzazione
-                        kotlinx.coroutines.delay(2000) // Aumentato a 2 secondi per assicurarsi che il file sia scritto
-                        refreshRomStatus()
+                        // Lo stato è già stato aggiornato sopra nella collect, non serve altro
                     } else if (status is ExtractionStatus.Failed) {
                         android.util.Log.e("RomDetailViewModel", "❌ [PASSO 3] ExtractionStatus.Failed: ${status.error}")
-                        // Aggiorna immediatamente anche per il fallimento
-                        val currentRom = _uiState.value.rom
-                        if (currentRom != null) {
-                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
-                            val currentLinkStatus = currentLinkStatuses[link.url]
-                            if (currentLinkStatus != null) {
-                                currentLinkStatuses[link.url] = Pair(
-                                    currentLinkStatus.first,
-                                    status // ExtractionStatus.Failed
-                                )
-                                _uiState.update {
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato linkStatuses con Failed per link ${link.url}")
-                                    it.copy(
-                                        extractionStatus = status,
-                                        linkStatuses = currentLinkStatuses
-                                    )
-                                }
-                            }
-                        }
-                        kotlinx.coroutines.delay(1000) // Aspetta che il file .status sia scritto
-                        refreshRomStatus()
+                        // Lo stato è già stato aggiornato sopra nella collect, non serve altro
                     }
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // La cancellazione del job è normale (es. quando il ViewModel viene ricreato o quando si riavvia l'osservazione)
+                // Non è un errore, quindi loggiamo solo a livello debug
+                android.util.Log.d("RomDetailViewModel", "ℹ️ Osservazione estrazione cancellata per link ${link.url} (normale)")
             } catch (e: Exception) {
                 android.util.Log.e("RomDetailViewModel", "❌ Errore durante osservazione estrazione per link ${link.url}", e)
             } finally {
