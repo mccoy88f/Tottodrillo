@@ -325,7 +325,7 @@ Se ti piace questo progetto e vuoi supportarmi, puoi offrirmi una birra! 🍺
 
 Il tuo supporto mi aiuta a continuare lo sviluppo e migliorare l'app.
 
-<a href="https://www.buymeacoffee.com/mccoy88f"><img src="https://img.buymeacoffee.com/button-api/?text=Offrimi%20una%20birra&emoji=%F0%9F%8D%BA&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
+<a href="https://www.buymeacoffee.com/mccoy88f">BUY ME A COFFEE!</a>
 
 [Puoi anche offrirmi una birra con PayPal 🍻](https://paypal.me/mccoy88f?country.x=IT&locale.x=it_IT)
 
