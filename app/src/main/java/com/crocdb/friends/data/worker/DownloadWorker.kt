@@ -64,10 +64,17 @@ class DownloadWorker(
 
         try {
             // Set foreground service
-            setForeground(createForegroundInfo(romTitle, 0, romSlug))
+            setForeground(createForegroundInfo(romTitle, 0, romSlug, id))
 
             // Esegui download
             val outputFile = File(targetPath, fileName)
+            
+            // Sovrascrivi sempre il file se esiste già
+            if (outputFile.exists()) {
+                Log.d("DownloadWorker", "⚠️ File già esistente, eliminazione: ${outputFile.absolutePath}")
+                outputFile.delete()
+            }
+            
             downloadFile(url, outputFile, romTitle, romSlug)
 
             // Crea/aggiorna file .status per confermare il download completato
@@ -179,7 +186,7 @@ class DownloadWorker(
                     PROGRESS_PERCENTAGE to progress
                 ))
 
-                setForeground(createForegroundInfo(romTitle, progress, romSlug))
+                setForeground(createForegroundInfo(romTitle, progress, romSlug, id))
                 lastNotificationTime = currentTime
             }
         }
@@ -204,7 +211,19 @@ class DownloadWorker(
     /**
      * Crea ForegroundInfo per il servizio
      */
-    private fun createForegroundInfo(romTitle: String, progress: Int, romSlug: String? = null): ForegroundInfo {
+    private fun createForegroundInfo(romTitle: String, progress: Int, romSlug: String? = null, workId: java.util.UUID = id): ForegroundInfo {
+        // Crea Intent per l'azione "Interrompi download"
+        val cancelIntent = Intent(appContext, com.crocdb.friends.data.receiver.DownloadCancelReceiver::class.java).apply {
+            action = com.crocdb.friends.data.receiver.DownloadCancelReceiver.ACTION_CANCEL_DOWNLOAD
+            putExtra(com.crocdb.friends.data.receiver.DownloadCancelReceiver.EXTRA_WORK_ID, workId.toString())
+        }
+        val cancelPendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            0,
+            cancelIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+        
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
             .setContentTitle("Download in corso")
             .setContentText(romTitle)
@@ -212,6 +231,11 @@ class DownloadWorker(
             .setContentIntent(createPendingIntent(romSlug))
             .setProgress(100, progress, progress == 0)
             .setOngoing(true)
+            .addAction(
+                android.R.drawable.ic_menu_close_clear_cancel,
+                "Interrompi download",
+                cancelPendingIntent
+            )
             .build()
 
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {

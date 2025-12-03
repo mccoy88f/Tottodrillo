@@ -53,6 +53,8 @@ class HomeViewModel @Inject constructor(
                     loadFeaturedRoms()
                     // Carica preferiti
                     loadFavoriteRoms()
+                    // Carica ROM recenti
+                    loadRecentRoms()
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { 
@@ -105,6 +107,23 @@ class HomeViewModel @Inject constructor(
             } catch (e: Exception) {
                 // Errore silenzioso per preferiti
                 android.util.Log.e("HomeViewModel", "Errore nel caricamento preferiti", e)
+            }
+        }
+    }
+    
+    /**
+     * Carica ROM recenti
+     */
+    fun loadRecentRoms() {
+        viewModelScope.launch {
+            try {
+                val recent = repository.getRecentRoms().first()
+                _uiState.update { state ->
+                    state.copy(recentRoms = recent)
+                }
+            } catch (e: Exception) {
+                // Errore silenzioso per ROM recenti
+                android.util.Log.e("HomeViewModel", "Errore nel caricamento ROM recenti", e)
             }
         }
     }

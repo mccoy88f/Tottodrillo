@@ -12,9 +12,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
 import java.util.UUID
 import javax.inject.Inject
 
@@ -57,6 +59,9 @@ class DownloadsViewModel @Inject constructor(
 
     private val _uiState = MutableStateFlow(DownloadsUiState())
     val uiState: StateFlow<DownloadsUiState> = _uiState.asStateFlow()
+
+    private val _showClearHistoryDialog = MutableStateFlow(false)
+    val showClearHistoryDialog: StateFlow<Boolean> = _showClearHistoryDialog.asStateFlow()
 
     /**
      * Avvia download
@@ -179,6 +184,30 @@ class DownloadsViewModel @Inject constructor(
     }
 
     /**
+     * Aggiorna compatibilità ES-DE
+     */
+    fun updateEsDeCompatibility(enabled: Boolean) {
+        viewModelScope.launch {
+            configRepository.setEsDeCompatibility(enabled)
+        }
+    }
+
+    /**
+     * Aggiorna path cartella ROMs ES-DE
+     */
+    fun updateEsDeRomsPath(path: String) {
+        viewModelScope.launch {
+            if (configRepository.isPathValid(path)) {
+                configRepository.setEsDeRomsPath(path)
+            } else {
+                _uiState.update { 
+                    it.copy(error = "Path non valido o non scrivibile")
+                }
+            }
+        }
+    }
+
+    /**
      * Ottiene spazio disponibile
      */
     fun getAvailableSpace(path: String): Long {
@@ -200,5 +229,62 @@ class DownloadsViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Mostra dialog di conferma per cancellare storico
+     */
+    fun showClearHistoryConfirmation() {
+        _showClearHistoryDialog.update { true }
+    }
+
+    /**
+     * Nasconde dialog di conferma
+     */
+    fun hideClearHistoryDialog() {
+        _showClearHistoryDialog.update { false }
+    }
+
+    /**
+     * Cancella tutti i file .status nella cartella di download predefinita
+     */
+    fun clearDownloadHistory() {
+        viewModelScope.launch {
+            try {
+                val downloadPath = configRepository.downloadConfig.first().downloadPath
+                val downloadDir = File(downloadPath)
+                
+                if (!downloadDir.exists() || !downloadDir.isDirectory) {
+                    _uiState.update { 
+                        it.copy(error = "Cartella di download non trovata")
+                    }
+                    return@launch
+                }
+
+                val statusFiles: Array<File>? = downloadDir.listFiles { _: File, name: String ->
+                    name.endsWith(".status", ignoreCase = true)
+                }
+
+                var deletedCount = 0
+                statusFiles?.forEach { file: File ->
+                    try {
+                        if (file.delete()) {
+                            deletedCount++
+                        }
+                    } catch (e: Exception) {
+                        android.util.Log.e("DownloadsViewModel", "Errore nel cancellare ${file.name}", e)
+                    }
+                }
+
+                _uiState.update { 
+                    it.copy(error = if (deletedCount > 0) null else "Nessun file .status trovato")
+                }
+                _showClearHistoryDialog.update { false }
+            } catch (e: Exception) {
+                _uiState.update { 
+                    it.copy(error = "Errore durante la cancellazione: ${e.message}")
+                }
+            }
+        }
     }
 }

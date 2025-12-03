@@ -8,7 +8,9 @@ data class DownloadConfig(
     val autoExtractArchives: Boolean = true,
     val deleteArchiveAfterExtraction: Boolean = false,
     val useWifiOnly: Boolean = false,
-    val notificationsEnabled: Boolean = true
+    val notificationsEnabled: Boolean = true,
+    val enableEsDeCompatibility: Boolean = false,
+    val esDeRomsPath: String? = null
 )
 
 /**

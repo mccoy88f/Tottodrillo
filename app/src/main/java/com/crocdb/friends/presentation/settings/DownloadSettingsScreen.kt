@@ -22,6 +22,8 @@ import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Icon
@@ -30,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
@@ -44,7 +47,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.hilt.navigation.compose.hiltViewModel
-import coil.compose.AsyncImage
 import com.crocdb.friends.presentation.downloads.DownloadsViewModel
 
 /**
@@ -55,10 +57,38 @@ import com.crocdb.friends.presentation.downloads.DownloadsViewModel
 fun DownloadSettingsScreen(
     onNavigateBack: () -> Unit,
     onSelectFolder: () -> Unit,
+    onSelectEsDeFolder: () -> Unit = {},
     viewModel: DownloadsViewModel = hiltViewModel()
 ) {
     val config by viewModel.downloadConfig.collectAsState()
+    val showClearHistoryDialog by viewModel.showClearHistoryDialog.collectAsState()
     val context = LocalContext.current
+
+    // Dialog di conferma per cancellare storico
+    if (showClearHistoryDialog) {
+        AlertDialog(
+            onDismissRequest = { viewModel.hideClearHistoryDialog() },
+            title = { Text("Cancella storico download ed estrazioni") },
+            text = { 
+                Text("Questa azione eliminerà tutti i file .status nella cartella di download predefinita. Questa operazione non può essere annullata.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = { viewModel.clearDownloadHistory() },
+                    colors = androidx.compose.material3.ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error
+                    )
+                ) {
+                    Text("Cancella")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.hideClearHistoryDialog() }) {
+                    Text("Annulla")
+                }
+            }
+        )
+    }
 
     Scaffold(
         topBar = {
@@ -178,6 +208,125 @@ fun DownloadSettingsScreen(
                 checked = config.notificationsEnabled,
                 onCheckedChange = viewModel::updateNotifications
             )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Opzioni estrazione
+            Text(
+                text = "Estrazione",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SettingItem(
+                title = "Cancella file originale dopo l'estrazione",
+                description = "Elimina il file scaricato dopo l'estrazione completata",
+                checked = config.deleteArchiveAfterExtraction,
+                onCheckedChange = viewModel::updateDeleteAfterExtract
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Compatibilità ES-DE
+            Text(
+                text = "Compatibilità ES-DE",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            SettingItem(
+                title = "Abilita compatibilità con ES-DE",
+                description = "Estrai/sposta le ROM nella struttura cartelle di ES-DE",
+                checked = config.enableEsDeCompatibility,
+                onCheckedChange = viewModel::updateEsDeCompatibility
+            )
+
+            if (config.enableEsDeCompatibility) {
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable(onClick = onSelectEsDeFolder),
+                    shape = RoundedCornerShape(12.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.surface
+                    )
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Folder,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+
+                        Spacer(modifier = Modifier.padding(horizontal = 12.dp))
+
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = "Cartella ROMs di ES-DE",
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = config.esDeRomsPath ?: "Non selezionata",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Gestione storico
+            Text(
+                text = "Gestione Storico",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable(onClick = { viewModel.showClearHistoryConfirmation() }),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "Cancella storico download ed estrazioni",
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = "Elimina tutti i file .status nella cartella di download predefinita",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
 
             Spacer(modifier = Modifier.height(32.dp))
             
@@ -307,25 +456,38 @@ fun DownloadSettingsScreen(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Se ti piace questo progetto, puoi offrirmi una birra! 🍺",
+                    text = "Se ti piace questo progetto, sostienilo con ora!",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Pulsante Buy Me a Coffee
-                AsyncImage(
-                    model = "https://img.buymeacoffee.com/button-api/?text=Offer me a beer&emoji=🍺&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff",
-                    contentDescription = "Buy Me a Coffee",
+                // Link Buy Me a Coffee
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp)
                         .clickable {
                             val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://www.buymeacoffee.com/mccoy88f"))
                             context.startActivity(intent)
                         }
-                )
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Link,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                    Spacer(modifier = Modifier.padding(horizontal = 8.dp))
+                    Text(
+                        text = "Buy me a coffee 🍺",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        textDecoration = TextDecoration.Underline
+                    )
+                }
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
@@ -348,7 +510,7 @@ fun DownloadSettingsScreen(
                     )
                     Spacer(modifier = Modifier.padding(horizontal = 8.dp))
                     Text(
-                        text = "Offer me a beer with PayPal 🍻",
+                        text = "PayPal 🍻",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.primary,
                         textDecoration = TextDecoration.Underline

@@ -23,6 +23,7 @@ sealed class UiState<out T> {
 data class HomeUiState(
     val featuredRoms: List<Rom> = emptyList(),
     val favoriteRoms: List<Rom> = emptyList(),
+    val recentRoms: List<Rom> = emptyList(),
     val recentPlatforms: List<PlatformInfo> = emptyList(),
     val isLoading: Boolean = false,
     val error: String? = null

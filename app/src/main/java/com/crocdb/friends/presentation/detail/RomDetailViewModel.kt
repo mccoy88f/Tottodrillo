@@ -3,6 +3,7 @@ package com.crocdb.friends.presentation.detail
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.core.content.FileProvider
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -51,30 +52,355 @@ class RomDetailViewModel @Inject constructor(
 
     init {
         loadRomDetail()
+        // Traccia che questa ROM è stata aperta
+        viewModelScope.launch {
+            if (romSlug.isNotEmpty()) {
+                repository.trackRomOpened(romSlug)
+            }
+        }
     }
 
     /**
      * Ricarica solo lo stato di download ed estrazione (senza ricaricare la ROM)
+     * E riavvia l'osservazione per i download/estrazioni in corso
      */
     fun refreshRomStatus() {
         val currentRom = _uiState.value.rom ?: return
         
         viewModelScope.launch {
+            android.util.Log.d("RomDetailViewModel", "🔄 [REFRESH STATUS] Inizio refreshRomStatus per ROM: ${currentRom.slug}")
+            
             // Calcola lo stato per ogni link separatamente
             val linkStatuses = currentRom.downloadLinks.associate { link ->
-                link.url to downloadManager.checkLinkStatus(link)
+                val status = downloadManager.checkLinkStatus(link)
+                android.util.Log.d("RomDetailViewModel", "🔄 [REFRESH STATUS] Link ${link.url}: Download=${status.first.javaClass.simpleName}, Estrazione=${status.second.javaClass.simpleName}")
+                if (status.second is ExtractionStatus.Completed) {
+                    android.util.Log.i("RomDetailViewModel", "✅ [REFRESH STATUS] Estrazione completata per ${link.url}: ${(status.second as ExtractionStatus.Completed).extractedPath}")
+                }
+                link.url to status
             }
             
             // Tiene lo stato generale per retrocompatibilità (primo link con stato non Idle)
             val (downloadStatus, extractionStatus) = downloadManager.checkRomStatus(romSlug, currentRom.downloadLinks)
             
-            android.util.Log.d("RomDetailViewModel", "🔄 Refresh stato ROM: Download=$downloadStatus, Estrazione=$extractionStatus, LinkStatuses=${linkStatuses.size}")
+            android.util.Log.d("RomDetailViewModel", "🔄 [REFRESH STATUS] Refresh stato ROM completato: Download=$downloadStatus, Estrazione=$extractionStatus, LinkStatuses=${linkStatuses.size}")
+            
             _uiState.update {
+                android.util.Log.d("RomDetailViewModel", "🔄 [REFRESH STATUS] Aggiornamento UI state con nuovi linkStatuses")
                 it.copy(
                     downloadStatus = downloadStatus,
                     extractionStatus = extractionStatus,
                     linkStatuses = linkStatuses
                 )
+            }
+            
+            // Riavvia l'osservazione per i download/estrazioni in corso
+            startObservingActiveTasks(currentRom.downloadLinks)
+        }
+    }
+    
+    /**
+     * Avvia l'osservazione per i download e estrazioni attivi
+     */
+    private fun startObservingActiveTasks(downloadLinks: List<DownloadLink>) {
+        viewModelScope.launch {
+            // Per ogni link, verifica se c'è un download in corso
+            downloadLinks.forEach { link ->
+                val activeDownloadWorkId = downloadManager.getActiveDownloadWorkId(link.url)
+                if (activeDownloadWorkId != null) {
+                    android.util.Log.d("RomDetailViewModel", "🔄 Trovato download attivo per ${link.url}, avvio osservazione con workId: $activeDownloadWorkId")
+                    // Se non stiamo già osservando questo work, avvia l'osservazione
+                    if (currentWorkId != activeDownloadWorkId) {
+                        currentWorkId = activeDownloadWorkId
+                        observeDownloadForLink(link, activeDownloadWorkId)
+                    }
+                }
+                
+                // Verifica se c'è un'estrazione in corso per questo file (se scaricato)
+                val linkStatus = _uiState.value.linkStatuses[link.url]
+                if (linkStatus?.first is DownloadStatus.Completed) {
+                    val completed = linkStatus.first as DownloadStatus.Completed
+                    val archivePath = completed.romTitle // Questo è il percorso completo del file
+                    
+                    val activeExtractionWorkId = downloadManager.getActiveExtractionWorkId(archivePath)
+                    if (activeExtractionWorkId != null) {
+                        android.util.Log.d("RomDetailViewModel", "🔄 Trovata estrazione attiva per $archivePath, avvio osservazione con workId: $activeExtractionWorkId")
+                        // Se non stiamo già osservando questo work, avvia l'osservazione
+                        if (currentExtractionWorkId != activeExtractionWorkId) {
+                            currentExtractionWorkId = activeExtractionWorkId
+                            observeExtractionForLink(link, activeExtractionWorkId)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    /**
+     * Osserva un download per un link specifico
+     */
+    private fun observeDownloadForLink(link: DownloadLink, workId: UUID) {
+        currentDownloadJob?.cancel()
+        currentDownloadJob = viewModelScope.launch {
+            downloadManager.observeDownload(workId).collect { task ->
+                val status = task?.status ?: DownloadStatus.Idle
+                android.util.Log.d("RomDetailViewModel", "📥 Stato download ricevuto: ${status.javaClass.simpleName}")
+                
+                // Aggiorna sia downloadStatus generale che linkStatuses per il link specifico
+                val currentRom = _uiState.value.rom
+                if (currentRom != null) {
+                    val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                    
+                    // Aggiorna lo stato per il link specifico
+                    val currentLinkStatus = currentLinkStatuses[link.url]
+                    val newLinkStatus = Pair(
+                        status, // Nuovo stato download
+                        currentLinkStatus?.second ?: ExtractionStatus.Idle // Mantieni stato estrazione
+                    )
+                    currentLinkStatuses[link.url] = newLinkStatus
+                    
+                    _uiState.update { 
+                        it.copy(
+                            downloadStatus = status,
+                            linkStatuses = currentLinkStatuses
+                        ) 
+                    }
+                } else {
+                    _uiState.update { it.copy(downloadStatus = status) }
+                }
+                
+                // Quando il download termina, ricarica lo stato per verificare se c'è un'estrazione
+                if (status is DownloadStatus.Completed) {
+                    android.util.Log.d("RomDetailViewModel", "✅ Download completato, ricarico stato completo")
+                    kotlinx.coroutines.delay(1000) // Aspetta che il file .status sia scritto
+                    refreshRomStatus()
+                }
+            }
+        }
+    }
+    
+    /**
+     * Avvia l'osservazione di un'estrazione per un link specifico (pubblico per essere chiamato dalla UI)
+     */
+    fun startObservingExtractionForLink(link: DownloadLink, workId: UUID) {
+        if (currentExtractionWorkId != workId) {
+            currentExtractionWorkId = workId
+            observeExtractionForLink(link, workId)
+        }
+    }
+    
+    /**
+     * Osserva un'estrazione per un link specifico
+     */
+    private fun observeExtractionForLink(link: DownloadLink, workId: UUID) {
+        currentExtractionJob?.cancel()
+        currentExtractionJob = viewModelScope.launch {
+            android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Inizio osservazione estrazione per link ${link.url}, workId: $workId")
+            
+            try {
+                downloadManager.observeExtraction(workId).collect { status ->
+                    android.util.Log.i("RomDetailViewModel", "📥 [PASSO 3] Ricevuto nuovo stato estrazione: ${status.javaClass.simpleName}, progress=${if (status is ExtractionStatus.InProgress) "${status.progress}%" else "N/A"}")
+                    
+                    // Aggiorna sempre lo stato per il link specifico
+                    val currentRom = _uiState.value.rom
+                    if (currentRom != null) {
+                        val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                        val currentLinkStatus = currentLinkStatuses[link.url]
+                        
+                        // Aggiorna lo stato per questo link specifico
+                        currentLinkStatuses[link.url] = Pair(
+                            currentLinkStatus?.first ?: DownloadStatus.Idle,
+                            status
+                        )
+                        
+                        _uiState.update { 
+                            android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento linkStatuses per link ${link.url} con stato: ${status.javaClass.simpleName}, progress=${if (status is ExtractionStatus.InProgress) "${status.progress}%" else "N/A"}")
+                            it.copy(
+                                extractionStatus = status,
+                                linkStatuses = currentLinkStatuses
+                            ) 
+                        }
+                    } else {
+                        _uiState.update { 
+                            it.copy(extractionStatus = status) 
+                        }
+                    }
+                    
+                    // Quando l'estrazione termina, ricarica lo stato completo
+                    if (status is ExtractionStatus.Completed) {
+                        android.util.Log.i("RomDetailViewModel", "✅ [PASSO 3] ExtractionStatus.Completed ricevuto! Path: ${status.extractedPath}, Files: ${status.filesCount}")
+                        
+                        // Aggiorna immediatamente lo stato per mostrare l'icona verde
+                        // Lo stato è già stato aggiornato sopra, ma assicuriamoci che sia corretto
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            val currentLinkStatus = currentLinkStatuses[link.url]
+                            if (currentLinkStatus != null) {
+                                currentLinkStatuses[link.url] = Pair(
+                                    currentLinkStatus.first,
+                                    status // ExtractionStatus.Completed
+                                )
+                                _uiState.update {
+                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato linkStatuses con Completed per link ${link.url}")
+                                    it.copy(
+                                        extractionStatus = status,
+                                        linkStatuses = currentLinkStatuses
+                                    )
+                                }
+                            }
+                        }
+                        
+                        // Aspetta che il file .status sia scritto e poi ricarica lo stato completo per sincronizzazione
+                        kotlinx.coroutines.delay(2000) // Aumentato a 2 secondi per assicurarsi che il file sia scritto
+                        refreshRomStatus()
+                    } else if (status is ExtractionStatus.Failed) {
+                        android.util.Log.e("RomDetailViewModel", "❌ [PASSO 3] ExtractionStatus.Failed: ${status.error}")
+                        // Aggiorna immediatamente anche per il fallimento
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            val currentLinkStatus = currentLinkStatuses[link.url]
+                            if (currentLinkStatus != null) {
+                                currentLinkStatuses[link.url] = Pair(
+                                    currentLinkStatus.first,
+                                    status // ExtractionStatus.Failed
+                                )
+                                _uiState.update {
+                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato linkStatuses con Failed per link ${link.url}")
+                                    it.copy(
+                                        extractionStatus = status,
+                                        linkStatuses = currentLinkStatuses
+                                    )
+                                }
+                            }
+                        }
+                        kotlinx.coroutines.delay(1000) // Aspetta che il file .status sia scritto
+                        refreshRomStatus()
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RomDetailViewModel", "❌ Errore durante osservazione estrazione per link ${link.url}", e)
+            } finally {
+                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Fine osservazione estrazione per link ${link.url}, workId: $workId")
+            }
+        }
+    }
+    
+    /**
+     * Osserva un'estrazione (versione generica senza link specifico)
+     */
+    private fun observeExtraction(workId: UUID) {
+        currentExtractionJob?.cancel()
+        currentExtractionJob = viewModelScope.launch {
+            android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Inizio osservazione estrazione per workId: $workId")
+            downloadManager.observeExtraction(workId).collect { status ->
+                android.util.Log.i("RomDetailViewModel", "📥 [PASSO 3] Ricevuto nuovo stato estrazione: ${status.javaClass.simpleName}")
+                when (status) {
+                    is ExtractionStatus.Completed -> {
+                        android.util.Log.i("RomDetailViewModel", "✅ [PASSO 3] ExtractionStatus.Completed ricevuto! Path: ${status.extractedPath}, Files: ${status.filesCount}")
+                        
+                        // Aggiorna immediatamente extractionStatus
+                        _uiState.update { 
+                            android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato extractionStatus con Completed")
+                            it.copy(extractionStatus = status) 
+                        }
+                        
+                        // Attendi che il file .status sia scritto e poi aggiorna linkStatuses
+                        kotlinx.coroutines.delay(1000)
+                        
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            // Ricalcola lo stato per tutti i link
+                            val updatedLinkStatuses = currentRom.downloadLinks.associate { link ->
+                                link.url to downloadManager.checkLinkStatus(link)
+                            }
+                            
+                            _uiState.update { 
+                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento linkStatuses dopo estrazione completata")
+                                it.copy(
+                                    extractionStatus = status,
+                                    linkStatuses = updatedLinkStatuses
+                                ) 
+                            }
+                        }
+                        
+                        // Ricarica lo stato completo per assicurarsi che tutto sia sincronizzato
+                        refreshRomStatus()
+                    }
+                    is ExtractionStatus.InProgress -> {
+                        android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] ExtractionStatus.InProgress: ${status.progress}% - ${status.currentFile}")
+                        
+                        // Aggiorna lo stato per il link che ha l'estrazione in corso
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            
+                            // Trova il link che corrisponde all'estrazione in corso e aggiorna lo stato
+                            currentRom.downloadLinks.forEach { link ->
+                                val linkStatus = currentLinkStatuses[link.url]
+                                if (linkStatus?.first is DownloadStatus.Completed) {
+                                    // Questo link ha un download completato, potrebbe essere quello in estrazione
+                                    currentLinkStatuses[link.url] = Pair(linkStatus.first, status)
+                                }
+                            }
+                            
+                            _uiState.update { 
+                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.InProgress")
+                                it.copy(
+                                    extractionStatus = status,
+                                    linkStatuses = currentLinkStatuses
+                                ) 
+                            }
+                        } else {
+                            _uiState.update { 
+                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.InProgress")
+                                it.copy(extractionStatus = status) 
+                            }
+                        }
+                    }
+                    is ExtractionStatus.Failed -> {
+                        android.util.Log.e("RomDetailViewModel", "❌ [PASSO 3] ExtractionStatus.Failed: ${status.error}")
+                        
+                        // Aggiorna immediatamente extractionStatus e linkStatuses per mostrare l'icona rossa
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            // Aggiorna lo stato del link che ha fallito
+                            val updatedLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            // Trova il link che corrisponde al file estratto (se possibile)
+                            currentRom.downloadLinks.forEach { link ->
+                                val currentStatus = updatedLinkStatuses[link.url]
+                                // Se questo link aveva un'estrazione in corso, segnala il fallimento
+                                if (currentStatus?.second is ExtractionStatus.InProgress) {
+                                    updatedLinkStatuses[link.url] = Pair(
+                                        currentStatus.first,
+                                        status
+                                    )
+                                }
+                            }
+                            
+                            _uiState.update { 
+                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.Failed")
+                                it.copy(
+                                    extractionStatus = status,
+                                    linkStatuses = updatedLinkStatuses
+                                ) 
+                            }
+                        } else {
+                            _uiState.update { 
+                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.Failed")
+                                it.copy(extractionStatus = status) 
+                            }
+                        }
+                    }
+                    else -> {
+                        android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] ExtractionStatus.Idle")
+                        _uiState.update { 
+                            android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.Idle")
+                            it.copy(extractionStatus = status) 
+                        }
+                    }
+                }
             }
         }
     }
@@ -129,6 +455,9 @@ class RomDetailViewModel @Inject constructor(
                             error = null
                         )
                     }
+                    
+                    // Riavvia l'osservazione per i download/estrazioni in corso
+                    startObservingActiveTasks(rom.downloadLinks)
                 }
                 is NetworkResult.Error -> {
                     _uiState.update {
@@ -202,23 +531,8 @@ class RomDetailViewModel @Inject constructor(
                         )
                         currentWorkId = workId
 
-                        currentDownloadJob?.cancel()
-                        currentDownloadJob = launch {
-                            downloadManager.observeDownload(workId).collect { task ->
-                                val status = task?.status ?: DownloadStatus.Idle
-                                android.util.Log.d("RomDetailViewModel", "📥 Stato download ricevuto: ${status.javaClass.simpleName}")
-                                _uiState.update { it.copy(downloadStatus = status) }
-                                
-                                // Quando il download termina, ricarica lo stato per verificare se c'è un'estrazione
-                                if (status is DownloadStatus.Completed) {
-                                    android.util.Log.d("RomDetailViewModel", "✅ Download completato, ricarico stato completo")
-                                    // Aggiorna immediatamente lo stato UI con il download completato
-                                    // Il refresh verrà fatto dopo per verificare l'estrazione
-                                    kotlinx.coroutines.delay(1000) // Aspetta che il file .status sia scritto
-                                    refreshRomStatus()
-                                }
-                            }
-                        }
+                        // Usa la funzione helper per osservare il download
+                        observeDownloadForLink(link, workId)
                     } catch (e: Exception) {
                         _uiState.update {
                             it.copy(
@@ -237,8 +551,29 @@ class RomDetailViewModel @Inject constructor(
     fun onExtractClick(archivePath: String, romTitle: String, extractionPath: String) {
         viewModelScope.launch {
             try {
+                val currentRom = _uiState.value.rom ?: return@launch
+                
+                // Trova il link che corrisponde a questo file
+                val matchingLink = currentRom.downloadLinks.firstOrNull { link ->
+                    val linkStatus = _uiState.value.linkStatuses[link.url]
+                    linkStatus?.first is DownloadStatus.Completed && 
+                    (linkStatus.first as DownloadStatus.Completed).romTitle == archivePath
+                }
+                
+                // Aggiorna immediatamente lo stato per mostrare che l'estrazione è iniziata
+                val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                if (matchingLink != null) {
+                    currentLinkStatuses[matchingLink.url] = Pair(
+                        currentLinkStatuses[matchingLink.url]?.first ?: DownloadStatus.Idle,
+                        ExtractionStatus.InProgress(0, "Avvio estrazione...")
+                    )
+                }
+                
                 _uiState.update {
-                    it.copy(extractionStatus = ExtractionStatus.Idle)
+                    it.copy(
+                        extractionStatus = ExtractionStatus.InProgress(0, "Avvio estrazione..."),
+                        linkStatuses = currentLinkStatuses
+                    )
                 }
 
                 val workId = downloadManager.startExtraction(
@@ -248,67 +583,15 @@ class RomDetailViewModel @Inject constructor(
                     romSlug = romSlug // Passa lo slug della ROM corrente
                 )
                 currentExtractionWorkId = workId
+                android.util.Log.d("RomDetailViewModel", "🚀 Estrazione avviata con workId: $workId, matchingLink: ${matchingLink?.url ?: "null"}")
 
-                currentExtractionJob?.cancel()
-                currentExtractionJob = launch {
-                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Inizio osservazione estrazione per workId: $workId")
-                    downloadManager.observeExtraction(workId).collect { status ->
-                        android.util.Log.i("RomDetailViewModel", "📥 [PASSO 3] Ricevuto nuovo stato estrazione: ${status.javaClass.simpleName}")
-                        when (status) {
-                            is ExtractionStatus.Completed -> {
-                                android.util.Log.i("RomDetailViewModel", "✅ [PASSO 3] ExtractionStatus.Completed ricevuto! Path: ${status.extractedPath}, Files: ${status.filesCount}")
-                                
-                                // Aggiorna immediatamente extractionStatus
-                                _uiState.update { 
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento immediato extractionStatus con Completed")
-                                    it.copy(extractionStatus = status) 
-                                }
-                                
-                                // Attendi che il file .status sia scritto e poi aggiorna linkStatuses
-                                kotlinx.coroutines.delay(1000)
-                                
-                                val currentRom = _uiState.value.rom
-                                if (currentRom != null) {
-                                    // Ricalcola lo stato per tutti i link
-                                    val updatedLinkStatuses = currentRom.downloadLinks.associate { link ->
-                                        link.url to downloadManager.checkLinkStatus(link)
-                                    }
-                                    
-                                    _uiState.update { 
-                                        android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento linkStatuses dopo estrazione completata")
-                                        it.copy(
-                                            extractionStatus = status,
-                                            linkStatuses = updatedLinkStatuses
-                                        ) 
-                                    }
-                                }
-                                
-                                // Ricarica lo stato completo per assicurarsi che tutto sia sincronizzato
-                                refreshRomStatus()
-                            }
-                            is ExtractionStatus.InProgress -> {
-                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] ExtractionStatus.InProgress: ${status.progress}% - ${status.currentFile}")
-                                _uiState.update { 
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.InProgress")
-                                    it.copy(extractionStatus = status) 
-                                }
-                            }
-                            is ExtractionStatus.Failed -> {
-                                android.util.Log.e("RomDetailViewModel", "❌ [PASSO 3] ExtractionStatus.Failed: ${status.error}")
-                                _uiState.update { 
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.Failed")
-                                    it.copy(extractionStatus = status) 
-                                }
-                            }
-                            else -> {
-                                android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] ExtractionStatus.Idle")
-                                _uiState.update { 
-                                    android.util.Log.d("RomDetailViewModel", "🔄 [PASSO 3] Aggiornamento UI state con ExtractionStatus.Idle")
-                                    it.copy(extractionStatus = status) 
-                                }
-                            }
-                        }
-                    }
+                // Usa la funzione helper per osservare l'estrazione, passando il link se trovato
+                if (matchingLink != null) {
+                    android.util.Log.d("RomDetailViewModel", "🔍 Avvio osservazione estrazione per link specifico: ${matchingLink.url}")
+                    observeExtractionForLink(matchingLink, workId)
+                } else {
+                    android.util.Log.d("RomDetailViewModel", "🔍 Avvio osservazione estrazione generica (nessun link trovato)")
+                    observeExtraction(workId)
                 }
             } catch (e: Exception) {
                 _uiState.update {
@@ -323,6 +606,13 @@ class RomDetailViewModel @Inject constructor(
     }
 
     /**
+     * Ottiene il workId di un'estrazione attiva per un percorso archivio (pubblico per essere chiamato dalla UI)
+     */
+    suspend fun getActiveExtractionWorkId(archivePath: String): UUID? {
+        return downloadManager.getActiveExtractionWorkId(archivePath)
+    }
+    
+    /**
      * Apre la cartella di estrazione usando un Intent
      */
     fun openExtractionFolder(extractionPath: String) {
@@ -334,33 +624,70 @@ class RomDetailViewModel @Inject constructor(
                     return@launch
                 }
 
-                // Prova ad aprire con un file manager usando ACTION_VIEW
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    val uri = FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.fileprovider",
-                        folder
-                    )
-                    setDataAndType(uri, "resource/folder")
-                    addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
+                // Verifica se il percorso è su SD card esterna
+                val isExternalSd = extractionPath.startsWith("/storage/") && 
+                                   !extractionPath.startsWith(android.os.Environment.getExternalStorageDirectory().absolutePath)
                 
-                // Se non riesce, prova con un Intent generico per aprire la cartella
-                try {
-                    context.startActivity(intent)
-                } catch (e: Exception) {
-                    android.util.Log.d("RomDetailViewModel", "Tentativo con Intent generico")
-                    // Fallback: apri con un file manager generico
-                    val chooser = Intent.createChooser(
-                        Intent(Intent.ACTION_VIEW).apply {
-                            setDataAndType(Uri.parse("file://$extractionPath"), "resource/folder")
+                if (isExternalSd) {
+                    // Per SD card esterna, non possiamo usare file:// URI su Android 7+
+                    // Mostriamo un Toast con il percorso e proviamo un Intent generico
+                    android.util.Log.d("RomDetailViewModel", "Apertura cartella su SD card: $extractionPath")
+                    
+                    // Mostra il percorso all'utente
+                    android.os.Handler(android.os.Looper.getMainLooper()).post {
+                        Toast.makeText(
+                            context,
+                            "Percorso: $extractionPath\nApri manualmente con un file manager",
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
+                    
+                    // Prova comunque con un Intent generico (potrebbe funzionare su alcuni dispositivi)
+                    try {
+                        // Prova con ACTION_GET_CONTENT o ACTION_OPEN_DOCUMENT_TREE
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            // Usa un Intent generico che chiede al sistema di aprire la cartella
+                            // Alcuni file manager potrebbero gestirlo
+                            setType("resource/folder")
+                            putExtra("path", extractionPath)
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                        },
-                        "Apri cartella"
-                    )
-                    chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    context.startActivity(chooser)
+                        }
+                        
+                        val chooser = Intent.createChooser(intent, "Apri cartella")
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(chooser)
+                    } catch (e: Exception) {
+                        android.util.Log.e("RomDetailViewModel", "Errore nell'apertura cartella SD card", e)
+                        // Il Toast è già stato mostrato sopra
+                    }
+                } else {
+                    // Per memoria locale, usa FileProvider
+                    android.util.Log.d("RomDetailViewModel", "Apertura cartella su memoria locale: $extractionPath")
+                    try {
+                        val intent = Intent(Intent.ACTION_VIEW).apply {
+                            val uri = FileProvider.getUriForFile(
+                                context,
+                                "${context.packageName}.fileprovider",
+                                folder
+                            )
+                            setDataAndType(uri, "resource/folder")
+                            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                        }
+                        context.startActivity(intent)
+                    } catch (e: Exception) {
+                        android.util.Log.d("RomDetailViewModel", "FileProvider fallito, tentativo con Intent generico", e)
+                        // Fallback: apri con un file manager generico
+                        val chooser = Intent.createChooser(
+                            Intent(Intent.ACTION_VIEW).apply {
+                                setDataAndType(Uri.parse("file://$extractionPath"), "resource/folder")
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            },
+                            "Apri cartella"
+                        )
+                        chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                        context.startActivity(chooser)
+                    }
                 }
             } catch (e: Exception) {
                 android.util.Log.e("RomDetailViewModel", "Errore nell'apertura della cartella", e)

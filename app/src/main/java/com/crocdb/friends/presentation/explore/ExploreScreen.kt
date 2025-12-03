@@ -19,6 +19,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.ExpandLess
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.SportsEsports
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -37,9 +39,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.crocdb.friends.domain.model.PlatformCategory
+import com.crocdb.friends.domain.model.PlatformInfo
 import com.crocdb.friends.presentation.components.EmptyState
 import com.crocdb.friends.presentation.components.LoadingIndicator
 
@@ -100,6 +107,7 @@ fun ExploreScreen(
                 ExploreContent(
                     categories = categories,
                     onNavigateToPlatform = onNavigateToPlatform,
+                    viewModel = viewModel,
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -111,8 +119,11 @@ fun ExploreScreen(
 private fun ExploreContent(
     categories: List<PlatformCategory>,
     onNavigateToPlatform: (String) -> Unit,
+    viewModel: ExploreViewModel,
     modifier: Modifier = Modifier
 ) {
+    val expandedCategories by viewModel.expandedCategories.collectAsState()
+    
     LazyColumn(
         modifier = modifier.fillMaxSize(),
         contentPadding = PaddingValues(vertical = 16.dp),
@@ -121,6 +132,8 @@ private fun ExploreContent(
         items(categories) { category ->
             CategorySection(
                 category = category,
+                isExpanded = expandedCategories.contains(category.id),
+                onToggleExpand = { viewModel.toggleCategory(category.id) },
                 onPlatformClick = onNavigateToPlatform
             )
         }
@@ -130,6 +143,8 @@ private fun ExploreContent(
 @Composable
 private fun CategorySection(
     category: PlatformCategory,
+    isExpanded: Boolean,
+    onToggleExpand: () -> Unit,
     onPlatformClick: (String) -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -138,46 +153,72 @@ private fun CategorySection(
             .fillMaxWidth()
             .padding(horizontal = 20.dp)
     ) {
-        // Category header
+        // Category header (clickable per espandere/collassare)
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.padding(bottom = 12.dp)
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onToggleExpand)
+                .padding(vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
-                    .clip(RoundedCornerShape(10.dp))
-                    .background(MaterialTheme.colorScheme.primaryContainer),
-                contentAlignment = Alignment.Center
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.weight(1f)
             ) {
-                Icon(
-                    imageVector = Icons.Default.SportsEsports,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier.size(24.dp)
-                )
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(RoundedCornerShape(10.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.SportsEsports,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(24.dp)
+                    )
+                }
+
+                Spacer(modifier = Modifier.size(12.dp))
+
+                Column {
+                    Text(
+                        text = category.name,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                    Text(
+                        text = "${category.platforms.size} piattaforme",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
-
-            Spacer(modifier = Modifier.size(12.dp))
-
-            Text(
-                text = category.name,
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onBackground
+            
+            // Icona espandi/collassa
+            Icon(
+                imageVector = if (isExpanded) Icons.Default.ExpandLess else Icons.Default.ExpandMore,
+                contentDescription = if (isExpanded) "Collassa" else "Espandi",
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(24.dp)
             )
         }
 
-        // Platforms list
-        Column(
-            verticalArrangement = Arrangement.spacedBy(8.dp)
-        ) {
-            category.platforms.forEach { platform ->
-                PlatformItem(
-                    platformCode = platform.code,
-                    platformName = platform.displayName,
-                    onClick = { onPlatformClick(platform.code) }
-                )
+        // Platforms list (mostrata solo se espansa)
+        if (isExpanded) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                category.platforms.forEach { platform ->
+                    PlatformItem(
+                        platform = platform,
+                        onClick = { onPlatformClick(platform.code) }
+                    )
+                }
             }
         }
     }
@@ -185,8 +226,7 @@ private fun CategorySection(
 
 @Composable
 private fun PlatformItem(
-    platformCode: String,
-    platformName: String,
+    platform: PlatformInfo,
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -207,23 +247,57 @@ private fun PlatformItem(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
+            // Icona piattaforma
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(MaterialTheme.colorScheme.primaryContainer),
+                contentAlignment = Alignment.Center
+            ) {
+                if (platform.imagePath != null) {
+                    val context = LocalContext.current
+                    AsyncImage(
+                        model = ImageRequest.Builder(context)
+                            .data("file:///android_asset/${platform.imagePath}") // URI per caricare da assets
+                            .build(),
+                        contentDescription = platform.displayName,
+                        modifier = Modifier.size(40.dp),
+                        contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.SportsEsports,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                        modifier = Modifier.size(28.dp)
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.size(12.dp))
+
             Column(
                 modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = platformCode.uppercase(),
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-
-                Spacer(modifier = Modifier.height(4.dp))
-
-                Text(
-                    text = platformName,
-                    style = MaterialTheme.typography.bodyMedium,
+                    text = platform.displayName, // Nome dal JSON
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
+
+                // Mostra la descrizione come sottotitolo se disponibile
+                if (platform.description != null && platform.description.isNotBlank()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text(
+                        text = platform.description,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 2,
+                        overflow = androidx.compose.ui.text.style.TextOverflow.Ellipsis
+                    )
+                }
             }
 
             Icon(

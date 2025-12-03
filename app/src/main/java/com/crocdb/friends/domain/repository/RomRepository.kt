@@ -64,4 +64,14 @@ interface RomRepository {
      * Verifica se una ROM è nei preferiti
      */
     suspend fun isFavorite(romSlug: String): Boolean
+    
+    /**
+     * Traccia quando una ROM viene aperta (per la sezione Recenti)
+     */
+    suspend fun trackRomOpened(romSlug: String)
+    
+    /**
+     * Stream di ROM recenti (ultime 25 aperte)
+     */
+    fun getRecentRoms(): Flow<List<Rom>>
 }

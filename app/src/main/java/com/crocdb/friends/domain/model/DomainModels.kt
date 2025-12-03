@@ -20,10 +20,12 @@ data class Rom(
 data class PlatformInfo(
     val code: String,
     val displayName: String,
-    val manufacturer: String? = null
+    val manufacturer: String? = null,
+    val imagePath: String? = null, // Percorso dell'immagine (es. "logos/3do.svg")
+    val description: String? = null // Descrizione della piattaforma
 ) {
     companion object {
-        val UNKNOWN = PlatformInfo("unknown", "Unknown", null)
+        val UNKNOWN = PlatformInfo("unknown", "Unknown", null, null, null)
     }
 }
 

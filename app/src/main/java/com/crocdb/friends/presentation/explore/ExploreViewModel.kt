@@ -41,6 +41,10 @@ class ExploreViewModel @Inject constructor(
     
     private val _isLoadingMore = MutableStateFlow<Map<String, Boolean>>(emptyMap())
     val isLoadingMore: StateFlow<Map<String, Boolean>> = _isLoadingMore.asStateFlow()
+    
+    // Traccia quali categorie sono espanse (true = espanse, false = collassate)
+    private val _expandedCategories = MutableStateFlow<Set<String>>(emptySet())
+    val expandedCategories: StateFlow<Set<String>> = _expandedCategories.asStateFlow()
 
     init {
         loadExploreData()
@@ -162,67 +166,25 @@ class ExploreViewModel @Inject constructor(
     }
 
     /**
-     * Ottiene le categorie di piattaforme
+     * Ottiene le categorie di piattaforme raggruppate per brand
      */
     fun getPlatformCategories(): List<PlatformCategory> {
         val platforms = _uiState.value.platforms
         
-        return listOf(
+        // Raggruppa per brand
+        val platformsByBrand = platforms.groupBy { it.manufacturer ?: "Altri" }
+        
+        // Ordina i brand per nome (alfabetico)
+        val sortedBrands = platformsByBrand.toList().sortedBy { it.first }
+        
+        return sortedBrands.map { (brand, brandPlatforms) ->
             PlatformCategory(
-                id = "nintendo",
-                name = "Nintendo",
-                platforms = platforms.filter { 
-                    it.code.uppercase() in listOf("NES", "SNES", "N64", "GC", "WII", "WIIU", "SWITCH")
-                },
+                id = brand.lowercase().replace(" ", "_"),
+                name = brand,
+                platforms = brandPlatforms.sortedBy { it.displayName },
                 icon = "sports_esports"
-            ),
-            PlatformCategory(
-                id = "nintendo_handheld",
-                name = "Nintendo Handheld",
-                platforms = platforms.filter { 
-                    it.code.uppercase() in listOf("GB", "GBC", "GBA", "NDS", "3DS")
-                },
-                icon = "videogame_asset"
-            ),
-            PlatformCategory(
-                id = "playstation",
-                name = "PlayStation",
-                platforms = platforms.filter { 
-                    it.code.uppercase() in listOf("PS1", "PS2", "PS3", "PS4", "PS5", "PSP", "PSVITA")
-                },
-                icon = "sports_esports"
-            ),
-            PlatformCategory(
-                id = "sega",
-                name = "Sega",
-                platforms = platforms.filter { 
-                    it.code.uppercase() in listOf("SMS", "SMD", "SATURN", "DC", "GG")
-                },
-                icon = "sports_esports"
-            ),
-            PlatformCategory(
-                id = "xbox",
-                name = "Xbox",
-                platforms = platforms.filter { 
-                    it.code.uppercase() in listOf("XBOX", "XBOX360", "XBOXONE")
-                },
-                icon = "sports_esports"
-            ),
-            PlatformCategory(
-                id = "other",
-                name = "Altri",
-                platforms = platforms.filter { 
-                    it.code.uppercase() !in listOf(
-                        "NES", "SNES", "N64", "GC", "WII", "WIIU", "SWITCH",
-                        "GB", "GBC", "GBA", "NDS", "3DS",
-                        "PS1", "PS2", "PS3", "PS4", "PS5", "PSP", "PSVITA",
-                        "SMS", "SMD", "SATURN", "DC", "GG",
-                        "XBOX", "XBOX360", "XBOXONE"
-                    )
-                },
-                icon = "devices_other"
             )
-        ).filter { it.platforms.isNotEmpty() }
+        }
     }
 
     /**
@@ -244,5 +206,33 @@ class ExploreViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+    
+    /**
+     * Espande o collassa una categoria
+     */
+    fun toggleCategory(categoryId: String) {
+        _expandedCategories.update { expanded ->
+            if (expanded.contains(categoryId)) {
+                expanded - categoryId
+            } else {
+                expanded + categoryId
+            }
+        }
+    }
+    
+    /**
+     * Collassa tutte le categorie
+     */
+    fun collapseAllCategories() {
+        _expandedCategories.update { emptySet() }
+    }
+    
+    /**
+     * Espande tutte le categorie
+     */
+    fun expandAllCategories() {
+        val allCategoryIds = getPlatformCategories().map { it.id }.toSet()
+        _expandedCategories.update { allCategoryIds }
     }
 }

@@ -62,13 +62,14 @@ fun RomCard(
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .aspectRatio(0.75f)
+                    .aspectRatio(0.75f),
+                contentAlignment = Alignment.Center
             ) {
                 SubcomposeAsyncImage(
                     model = rom.coverUrl,
                     contentDescription = rom.title,
                     modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Crop,
+                    contentScale = ContentScale.Fit, // Centra l'immagine mantenendo le proporzioni
                     loading = {
                         Box(
                             modifier = Modifier.fillMaxSize(),

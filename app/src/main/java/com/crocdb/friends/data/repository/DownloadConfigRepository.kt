@@ -31,6 +31,8 @@ class DownloadConfigRepository @Inject constructor(
         val DELETE_AFTER_EXTRACT = booleanPreferencesKey("delete_archive_after_extraction")
         val WIFI_ONLY = booleanPreferencesKey("use_wifi_only")
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        val ENABLE_ES_DE_COMPATIBILITY = booleanPreferencesKey("enable_es_de_compatibility")
+        val ES_DE_ROMS_PATH = stringPreferencesKey("es_de_roms_path")
     }
 
     /**
@@ -42,7 +44,9 @@ class DownloadConfigRepository @Inject constructor(
             autoExtractArchives = preferences[AUTO_EXTRACT] ?: true,
             deleteArchiveAfterExtraction = preferences[DELETE_AFTER_EXTRACT] ?: false,
             useWifiOnly = preferences[WIFI_ONLY] ?: false,
-            notificationsEnabled = preferences[NOTIFICATIONS_ENABLED] ?: true
+            notificationsEnabled = preferences[NOTIFICATIONS_ENABLED] ?: true,
+            enableEsDeCompatibility = preferences[ENABLE_ES_DE_COMPATIBILITY] ?: false,
+            esDeRomsPath = preferences[ES_DE_ROMS_PATH]
         )
     }
 
@@ -88,6 +92,28 @@ class DownloadConfigRepository @Inject constructor(
     suspend fun setNotificationsEnabled(enabled: Boolean) {
         context.dataStore.edit { preferences ->
             preferences[NOTIFICATIONS_ENABLED] = enabled
+        }
+    }
+
+    /**
+     * Aggiorna compatibilità ES-DE
+     */
+    suspend fun setEsDeCompatibility(enabled: Boolean) {
+        context.dataStore.edit { preferences ->
+            preferences[ENABLE_ES_DE_COMPATIBILITY] = enabled
+        }
+    }
+
+    /**
+     * Aggiorna path cartella ROMs ES-DE
+     */
+    suspend fun setEsDeRomsPath(path: String?) {
+        context.dataStore.edit { preferences ->
+            if (path != null) {
+                preferences[ES_DE_ROMS_PATH] = path
+            } else {
+                preferences.remove(ES_DE_ROMS_PATH)
+            }
         }
     }
 

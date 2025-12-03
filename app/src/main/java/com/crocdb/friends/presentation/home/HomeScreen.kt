@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
@@ -45,6 +46,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.foundation.Image
 import androidx.hilt.navigation.compose.hiltViewModel
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.crocdb.friends.domain.model.PlatformInfo
 import com.crocdb.friends.presentation.common.HomeUiState
 import com.crocdb.friends.presentation.components.EmptyState
@@ -66,9 +69,10 @@ fun HomeScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    // Ricarica i preferiti quando si torna alla home
+    // Ricarica i preferiti e le ROM recenti quando si torna alla home
     LaunchedEffect(Unit) {
         viewModel.loadFavoriteRoms()
+        viewModel.loadRecentRoms()
     }
 
     Scaffold(
@@ -202,7 +206,28 @@ private fun HomeContent(
                 items(uiState.featuredRoms) { rom ->
                     RomCard(
                         rom = rom,
-                        onClick = { onNavigateToRomDetail(rom.slug) }
+                        onClick = { onNavigateToRomDetail(rom.slug) },
+                        modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // ROM recenti
+        if (uiState.recentRoms.isNotEmpty()) {
+            SectionHeader(title = "Recenti")
+
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(uiState.recentRoms) { rom ->
+                    RomCard(
+                        rom = rom,
+                        onClick = { onNavigateToRomDetail(rom.slug) },
+                        modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }
             }
@@ -221,7 +246,8 @@ private fun HomeContent(
                 items(uiState.favoriteRoms) { rom ->
                     RomCard(
                         rom = rom,
-                        onClick = { onNavigateToRomDetail(rom.slug) }
+                        onClick = { onNavigateToRomDetail(rom.slug) },
+                        modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }
             }
@@ -293,19 +319,32 @@ private fun PlatformCard(
                         .background(MaterialTheme.colorScheme.primaryContainer),
                     contentAlignment = Alignment.Center
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.SportsEsports,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        modifier = Modifier.size(28.dp)
-                    )
+                    // Mostra l'immagine SVG se disponibile, altrimenti icona generica
+                    if (platform.imagePath != null) {
+                        val context = androidx.compose.ui.platform.LocalContext.current
+                        AsyncImage(
+                            model = ImageRequest.Builder(context)
+                                .data("file:///android_asset/${platform.imagePath}") // URI per caricare da assets
+                                .build(),
+                            contentDescription = platform.displayName,
+                            modifier = Modifier.size(40.dp),
+                            contentScale = androidx.compose.ui.layout.ContentScale.Fit
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.SportsEsports,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    }
                 }
 
                 Spacer(modifier = Modifier.height(8.dp))
 
                 Text(
-                    text = platform.code.uppercase(),
-                    style = MaterialTheme.typography.labelLarge,
+                    text = platform.displayName.take(12),
+                    style = MaterialTheme.typography.labelSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )

@@ -18,6 +18,7 @@
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
+        android:enableOnBackInvokedCallback="true"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:label="@string/app_name"
@@ -54,6 +55,24 @@
             android:exported="false"
             android:foregroundServiceType="dataSync"
             tools:node="merge" />
+
+        <!-- Receiver per cancellazione download da notifica -->
+        <receiver
+            android:name=".data.receiver.DownloadCancelReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.crocdb.friends.CANCEL_DOWNLOAD" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Receiver per cancellazione estrazione da notifica -->
+        <receiver
+            android:name=".data.receiver.ExtractionCancelReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.crocdb.friends.CANCEL_EXTRACTION" />
+            </intent-filter>
+        </receiver>
 
     </application>
 

@@ -48,6 +48,32 @@ sealed class Screen(val route: String) {
 }
 
 /**
+ * Helper per gestire la navigazione indietro in modo sicuro
+ * Se lo stack è vuoto o siamo già alla home, naviga alla home invece di lasciare una schermata vuota
+ */
+private fun NavHostController.safePopBackStack() {
+    // Controlla se siamo già alla home
+    val currentRoute = currentBackStackEntry?.destination?.route
+    if (currentRoute == Screen.Home.route) {
+        // Siamo già alla home, non fare nulla
+        return
+    }
+    
+    // Prova a fare pop dello stack
+    val popped = popBackStack()
+    if (!popped) {
+        // Lo stack è vuoto, naviga alla home
+        navigate(Screen.Home.route) {
+            // Pulisci tutto lo stack e naviga alla home
+            popUpTo(0) {
+                inclusive = true
+            }
+            launchSingleTop = true
+        }
+    }
+}
+
+/**
  * Navigation graph principale
  */
 @Composable
@@ -56,7 +82,8 @@ fun CrocdbNavGraph(
     startDestination: String = Screen.Home.route,
     initialRomSlug: String? = null,
     onOpenDownloadFolderPicker: () -> Unit = {},
-    onRequestExtraction: (String, String, String) -> Unit = { _, _, _ -> } // archivePath, romTitle, romSlug
+    onOpenEsDeFolderPicker: () -> Unit = {},
+    onRequestExtraction: (String, String, String, String) -> Unit = { _, _, _, _ -> } // archivePath, romTitle, romSlug, platformCode
 ) {
     var showFilters by remember { mutableStateOf(false) }
     
@@ -101,7 +128,7 @@ fun CrocdbNavGraph(
 
         composable(Screen.Search.route) {
             SearchScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToRomDetail = { romSlug ->
                     navController.navigate(Screen.RomDetail.createRoute(romSlug))
                 },
@@ -125,7 +152,7 @@ fun CrocdbNavGraph(
             val platformCode = backStackEntry.arguments?.getString("platformCode") ?: return@composable
             
             SearchScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToRomDetail = { romSlug ->
                     navController.navigate(Screen.RomDetail.createRoute(romSlug))
                 },
@@ -142,7 +169,7 @@ fun CrocdbNavGraph(
 
         composable(Screen.Explore.route) {
             ExploreScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToPlatform = { platformCode ->
                     navController.navigate(Screen.Search.createRoute(platformCode))
                 }
@@ -159,21 +186,24 @@ fun CrocdbNavGraph(
 
                     RomDetailRoute(
                         romSlug = romSlug,
-                        onNavigateBack = { navController.popBackStack() },
+                        onNavigateBack = { navController.safePopBackStack() },
                         onNavigateToPlatform = { platformCode ->
                             navController.navigate(Screen.Search.createRoute(platformCode))
                         },
-                        onRequestExtraction = { archivePath, romTitle, romSlug ->
-                            onRequestExtraction(archivePath, romTitle, romSlug)
+                        onRequestExtraction = { archivePath, romTitle, romSlug, platformCode ->
+                            onRequestExtraction(archivePath, romTitle, romSlug, platformCode)
                         }
                     )
         }
 
         composable(Screen.Settings.route) {
             DownloadSettingsScreen(
-                onNavigateBack = { navController.popBackStack() },
+                onNavigateBack = { navController.safePopBackStack() },
                 onSelectFolder = {
                     onOpenDownloadFolderPicker()
+                },
+                onSelectEsDeFolder = {
+                    onOpenEsDeFolderPicker()
                 }
             )
         }

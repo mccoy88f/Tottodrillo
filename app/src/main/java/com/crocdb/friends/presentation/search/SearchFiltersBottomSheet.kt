@@ -209,9 +209,9 @@ private fun FilterSection(
         ) {
             items.forEach { (code, name) ->
                 FilterChip(
-                    label = code.uppercase(),
+                    label = name, // Mostra il nome invece del codice
                     selected = code in selectedItems,
-                    onClick = { onItemToggle(code) }
+                    onClick = { onItemToggle(code) } // Usa comunque il codice per la logica
                 )
             }
         }

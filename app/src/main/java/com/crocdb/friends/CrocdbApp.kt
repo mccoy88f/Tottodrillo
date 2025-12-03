@@ -1,6 +1,9 @@
 package com.crocdb.friends
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.SvgDecoder
 import dagger.hilt.android.HiltAndroidApp
 
 /**
@@ -8,7 +11,7 @@ import dagger.hilt.android.HiltAndroidApp
  * Annotata con @HiltAndroidApp per abilitare Hilt dependency injection
  */
 @HiltAndroidApp
-class CrocdbApp : Application() {
+class CrocdbApp : Application(), ImageLoaderFactory {
 
     override fun onCreate() {
         super.onCreate()
@@ -19,5 +22,16 @@ class CrocdbApp : Application() {
         // - Crash reporting
         // - WorkManager
         // - Database Room
+    }
+    
+    /**
+     * Configura ImageLoader globale per Coil con supporto SVG
+     */
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                add(SvgDecoder.Factory())
+            }
+            .build()
     }
 }

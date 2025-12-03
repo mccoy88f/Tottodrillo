@@ -18,7 +18,9 @@ import com.crocdb.friends.domain.model.ExtractionStatus
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import java.io.File
 import java.util.UUID
 import javax.inject.Inject
@@ -87,6 +89,7 @@ class DownloadManager @Inject constructor(
             .addTag(TAG_DOWNLOAD)
             .addTag(taskId)
             .addTag(romSlug) // Aggiungi romSlug come tag per poterlo filtrare
+            .addTag("url:${downloadLink.url}") // Aggiungi URL come tag per identificarlo
             .build()
 
         // Solo download; l'estrazione è sempre manuale
@@ -164,6 +167,7 @@ class DownloadManager @Inject constructor(
         val extractionRequest = OneTimeWorkRequestBuilder<ExtractionWorker>()
             .setInputData(extractionData)
             .addTag(TAG_EXTRACTION)
+            .addTag("archive:${archivePath}") // Aggiungi percorso archivio come tag per identificarlo
             .build()
 
         workManager.enqueue(extractionRequest)
@@ -174,15 +178,57 @@ class DownloadManager @Inject constructor(
      * Osserva lo stato di un'estrazione
      */
     fun observeExtraction(workId: UUID): Flow<ExtractionStatus> {
-        return workManager.getWorkInfoByIdFlow(workId).map { workInfo ->
-            workInfo?.let { convertWorkInfoToExtractionStatus(it) } ?: ExtractionStatus.Idle
+        return flow {
+            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Inizio osservazione per workId=$workId")
+            
+            // Emetti lo stato iniziale immediatamente
+            try {
+                val initialWorkInfo = workManager.getWorkInfoById(workId).get()
+                if (initialWorkInfo != null) {
+                    val initialStatus = convertWorkInfoToExtractionStatus(initialWorkInfo)
+                    android.util.Log.i("DownloadManager", "📊 observeExtraction onStart: workId=$workId, state=${initialWorkInfo.state}, status=${initialStatus.javaClass.simpleName}, progress=${if (initialStatus is ExtractionStatus.InProgress) "${initialStatus.progress}%" else "N/A"}")
+                    if (initialStatus is ExtractionStatus.Completed) {
+                        android.util.Log.i("DownloadManager", "✅ observeExtraction onStart: Work già completato! Emettendo ExtractionStatus.Completed immediatamente. Path: ${initialStatus.extractedPath}, Files: ${initialStatus.filesCount}")
+                    }
+                    emit(initialStatus)
+                    
+                    // Se il work è già completato o fallito, non c'è bisogno di osservare ulteriori cambiamenti
+                    if (initialWorkInfo.state == WorkInfo.State.SUCCEEDED || 
+                        initialWorkInfo.state == WorkInfo.State.FAILED || 
+                        initialWorkInfo.state == WorkInfo.State.CANCELLED) {
+                        android.util.Log.d("DownloadManager", "🔄 observeExtraction: Work già terminato (${initialWorkInfo.state}), non serve osservare ulteriori cambiamenti")
+                        return@flow
+                    }
+                } else {
+                    android.util.Log.w("DownloadManager", "⚠️ observeExtraction: initialWorkInfo è null per workId=$workId")
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("DownloadManager", "❌ Errore nel recupero stato iniziale estrazione", e)
+            }
+            
+            // Poi osserva i cambiamenti (solo se il work non è già terminato)
+            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Inizio collect su getWorkInfoByIdFlow per workId=$workId")
+            workManager.getWorkInfoByIdFlow(workId).collect { workInfo ->
+                if (workInfo != null) {
+                    val status = convertWorkInfoToExtractionStatus(workInfo)
+                    android.util.Log.i("DownloadManager", "📊 observeExtraction: workId=$workId, state=${workInfo.state}, status=${status.javaClass.simpleName}, progress=${if (status is ExtractionStatus.InProgress) "${status.progress}%" else "N/A"}")
+                    if (status is ExtractionStatus.Completed) {
+                        android.util.Log.i("DownloadManager", "✅ observeExtraction: Emettendo ExtractionStatus.Completed! Path: ${status.extractedPath}, Files: ${status.filesCount}")
+                    }
+                    emit(status)
+                } else {
+                    android.util.Log.w("DownloadManager", "⚠️ observeExtraction: workInfo è null per workId=$workId")
+                    emit(ExtractionStatus.Idle)
+                }
+            }
+            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Collect completato per workId=$workId")
         }
     }
 
     /**
      * Converte WorkInfo in ExtractionStatus
      */
-    private fun convertWorkInfoToExtractionStatus(workInfo: WorkInfo): ExtractionStatus {
+    fun convertWorkInfoToExtractionStatus(workInfo: WorkInfo): ExtractionStatus {
         val progress = workInfo.progress
         val progressPercent = progress.getInt(ExtractionWorker.PROGRESS_PERCENTAGE, 0)
         val currentFile = progress.getString(ExtractionWorker.PROGRESS_CURRENT_FILE) ?: ""
@@ -400,6 +446,67 @@ class DownloadManager @Inject constructor(
     }
     
     /**
+     * Verifica se c'è stato un errore durante l'estrazione per un URL specifico
+     * Legge il file .status: Formato <URL>\tERROR:<messaggio>
+     */
+    private suspend fun getExtractionError(fileName: String, url: String?): String? {
+        val config = configRepository.downloadConfig.first()
+        val statusFile = File(config.downloadPath, "$fileName.status")
+        
+        if (!statusFile.exists() || !statusFile.isFile) {
+            return null
+        }
+        
+        return try {
+            val lines = statusFile.readLines().filter { it.isNotBlank() }
+            
+            // Se è specificato un URL, cerca quella riga specifica
+            if (url != null) {
+                val matchingLine = lines.firstOrNull { line ->
+                    val lineUrl = if (line.contains('\t')) {
+                        line.substringBefore('\t')
+                    } else {
+                        line.trim()
+                    }
+                    lineUrl == url && line.contains('\t') && line.substringAfter('\t').startsWith("ERROR:")
+                }
+                
+                if (matchingLine != null) {
+                    val errorPart = matchingLine.substringAfter('\t')
+                    if (errorPart.startsWith("ERROR:")) {
+                        val errorMsg = errorPart.substringAfter("ERROR:")
+                        if (errorMsg.isNotEmpty()) {
+                            android.util.Log.d("DownloadManager", "⚠️ Errore estrazione trovato per URL specifico: $errorMsg")
+                            return errorMsg
+                        }
+                    }
+                }
+            } else {
+                // Se non è specificato un URL, cerca la prima riga con errore (per retrocompatibilità)
+                val firstLineWithError = lines.firstOrNull { 
+                    it.contains('\t') && it.substringAfter('\t').startsWith("ERROR:")
+                }
+                
+                if (firstLineWithError != null) {
+                    val errorPart = firstLineWithError.substringAfter('\t')
+                    if (errorPart.startsWith("ERROR:")) {
+                        val errorMsg = errorPart.substringAfter("ERROR:")
+                        if (errorMsg.isNotEmpty()) {
+                            android.util.Log.d("DownloadManager", "⚠️ Errore estrazione trovato (prima riga): $errorMsg")
+                            return errorMsg
+                        }
+                    }
+                }
+            }
+            
+            null
+        } catch (e: Exception) {
+            android.util.Log.e("DownloadManager", "❌ Errore lettura errore estrazione dal file .status", e)
+            null
+        }
+    }
+    
+    /**
      * Verifica se un file è stato estratto e restituisce il path di estrazione per un URL specifico
      * Legge il file .status: Formato multi-riga, ogni riga: <URL>\t<PATH_ESTRAZIONE>
      */
@@ -421,7 +528,13 @@ class DownloadManager @Inject constructor(
                         } else {
                             line.trim()
                         }
-                        lineUrl == url && line.contains('\t')
+                        if (lineUrl == url && line.contains('\t')) {
+                            val afterTab = line.substringAfter('\t')
+                            // Ignora le righe con ERROR: e cerca solo path validi
+                            afterTab.isNotEmpty() && !afterTab.startsWith("ERROR:")
+                        } else {
+                            false
+                        }
                     }
                     
                     if (matchingLine != null) {
@@ -434,8 +547,10 @@ class DownloadManager @Inject constructor(
                     android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata per URL specifico: $url")
                     return null
                 } else {
-                    // Se non è specificato un URL, restituisci il path della prima riga che ha un path (per retrocompatibilità)
-                    val firstLineWithPath = lines.firstOrNull { it.contains('\t') }
+                    // Se non è specificato un URL, restituisci il path della prima riga che ha un path valido (per retrocompatibilità)
+                    val firstLineWithPath = lines.firstOrNull { line ->
+                        line.contains('\t') && !line.substringAfter('\t').startsWith("ERROR:")
+                    }
                     if (firstLineWithPath != null) {
                         val extractionPath = firstLineWithPath.substringAfter('\t')
                         if (extractionPath.isNotEmpty()) {
@@ -443,7 +558,7 @@ class DownloadManager @Inject constructor(
                             return extractionPath
                         }
                     }
-                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata (file .status contiene solo URL)")
+                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata (file .status contiene solo URL o errori)")
                     return null
                 }
             } catch (e: Exception) {
@@ -468,6 +583,44 @@ class DownloadManager @Inject constructor(
     }
     
     /**
+     * Verifica se c'è un download attivo per un URL specifico
+     */
+    private suspend fun hasActiveDownloadForUrl(url: String): WorkInfo? {
+        val workInfos = workManager.getWorkInfosByTag("url:$url").get()
+        return workInfos.firstOrNull { workInfo ->
+            workInfo.tags.contains(TAG_DOWNLOAD) &&
+            (workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED)
+        }
+    }
+    
+    /**
+     * Ottiene il workId di un download attivo per un URL specifico
+     */
+    suspend fun getActiveDownloadWorkId(url: String): UUID? {
+        val workInfo = hasActiveDownloadForUrl(url)
+        return workInfo?.id
+    }
+    
+    /**
+     * Verifica se c'è un'estrazione attiva per un percorso file specifico
+     */
+    private suspend fun hasActiveExtractionForArchivePath(archivePath: String): WorkInfo? {
+        val workInfos = workManager.getWorkInfosByTag("archive:$archivePath").get()
+        return workInfos.firstOrNull { workInfo ->
+            workInfo.tags.contains(TAG_EXTRACTION) &&
+            (workInfo.state == WorkInfo.State.RUNNING || workInfo.state == WorkInfo.State.ENQUEUED)
+        }
+    }
+    
+    /**
+     * Ottiene il workId di un'estrazione attiva per un percorso archivio specifico
+     */
+    suspend fun getActiveExtractionWorkId(archivePath: String): UUID? {
+        val workInfo = hasActiveExtractionForArchivePath(archivePath)
+        return workInfo?.id
+    }
+    
+    /**
      * Verifica lo stato di download ed estrazione per un link specifico
      * Verifica l'URL nel file .status per identificare quale link è stato scaricato
      */
@@ -475,6 +628,25 @@ class DownloadManager @Inject constructor(
         val fileName = sanitizeFileName(link.name, link.url)
         android.util.Log.d("DownloadManager", "🔍 Verifica stato link: ${link.name} -> fileName: $fileName, URL: ${link.url}")
         
+        // PRIMA: Verifica se c'è un download attivo per questo URL specifico
+        val activeDownload = hasActiveDownloadForUrl(link.url)
+        if (activeDownload != null) {
+            android.util.Log.i("DownloadManager", "🔄 Download attivo trovato per URL: ${link.url}")
+            val progress = activeDownload.progress
+            val progressPercent = progress.getInt(DownloadWorker.PROGRESS_PERCENTAGE, 0)
+            val currentBytes = progress.getLong(DownloadWorker.PROGRESS_CURRENT, 0)
+            val totalBytes = progress.getLong(DownloadWorker.PROGRESS_MAX, 0)
+            
+            val downloadStatus = com.crocdb.friends.domain.model.DownloadStatus.InProgress(
+                link.name,
+                progressPercent,
+                currentBytes,
+                totalBytes
+            )
+            return Pair(downloadStatus, com.crocdb.friends.domain.model.ExtractionStatus.Idle)
+        }
+        
+        // SECONDO: Verifica se il file è stato scaricato
         if (!isFileDownloaded(fileName)) {
             return Pair(
                 com.crocdb.friends.domain.model.DownloadStatus.Idle,
@@ -497,21 +669,38 @@ class DownloadManager @Inject constructor(
         val downloadStatus = com.crocdb.friends.domain.model.DownloadStatus.Completed(filePath, link.name)
         android.util.Log.i("DownloadManager", "✅ Link scaricato trovato: $filePath")
         
-        // Verifica se è stato estratto (per questo URL specifico)
-        val extractionPath = getExtractionPath(fileName, link.url)
-        val extractionStatus = if (extractionPath != null) {
-            // Conta i file estratti
-            val extractedDir = File(extractionPath)
-            val filesCount = if (extractedDir.exists() && extractedDir.isDirectory) {
-                extractedDir.listFiles()?.size ?: 0
-            } else {
-                0
-            }
-            android.util.Log.i("DownloadManager", "✅ Estrazione trovata: $extractionPath con $filesCount file")
-            com.crocdb.friends.domain.model.ExtractionStatus.Completed(extractionPath, filesCount)
+        // TERZO: Verifica se c'è un'estrazione attiva per questo file
+        val activeExtraction = hasActiveExtractionForArchivePath(filePath)
+        val extractionStatus = if (activeExtraction != null) {
+            android.util.Log.i("DownloadManager", "🔄 Estrazione attiva trovata per file: $filePath")
+            val progress = activeExtraction.progress
+            val progressPercent = progress.getInt(ExtractionWorker.PROGRESS_PERCENTAGE, 0)
+            val currentFile = progress.getString(ExtractionWorker.PROGRESS_CURRENT_FILE) ?: ""
+            com.crocdb.friends.domain.model.ExtractionStatus.InProgress(progressPercent, currentFile)
         } else {
-            android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata per: $fileName")
-            com.crocdb.friends.domain.model.ExtractionStatus.Idle
+            // Verifica se è stato estratto o se c'è stato un errore (per questo URL specifico)
+            val extractionError = getExtractionError(fileName, link.url)
+            if (extractionError != null) {
+                // C'è stato un errore durante l'estrazione
+                android.util.Log.w("DownloadManager", "⚠️ Errore estrazione trovato: $extractionError")
+                com.crocdb.friends.domain.model.ExtractionStatus.Failed(extractionError)
+            } else {
+                val extractionPath = getExtractionPath(fileName, link.url)
+                if (extractionPath != null) {
+                    // Conta i file estratti
+                    val extractedDir = File(extractionPath)
+                    val filesCount = if (extractedDir.exists() && extractedDir.isDirectory) {
+                        extractedDir.listFiles()?.size ?: 0
+                    } else {
+                        0
+                    }
+                    android.util.Log.i("DownloadManager", "✅ Estrazione trovata: $extractionPath con $filesCount file")
+                    com.crocdb.friends.domain.model.ExtractionStatus.Completed(extractionPath, filesCount)
+                } else {
+                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata per: $fileName")
+                    com.crocdb.friends.domain.model.ExtractionStatus.Idle
+                }
+            }
         }
         
         return Pair(downloadStatus, extractionStatus)
