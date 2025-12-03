@@ -1,58 +1,58 @@
-# Contributing to Crocdb Friends
+# Contributing to Tottodrillo
 
-Grazie per il tuo interesse nel contribuire a Crocdb Friends! 🎉
+Thank you for your interest in contributing to Tottodrillo! 🎉
 
-## Come Contribuire
+## How to Contribute
 
-### Segnalare Bug
+### Reporting Bugs
 
-Se trovi un bug, apri una [issue](https://github.com/mccoy88f/Tottodrillo/issues) includendo:
-- Descrizione del problema
-- Steps per riprodurlo
-- Comportamento atteso vs attuale
-- Screenshot (se applicabile)
-- Versione Android e dispositivo
+If you find a bug, please open an [issue](https://github.com/mccoy88f/Tottodrillo/issues) including:
+- Description of the problem
+- Steps to reproduce it
+- Expected vs actual behavior
+- Screenshots (if applicable)
+- Android version and device model
 
-### Proporre Feature
+### Proposing Features
 
-Per proporre nuove feature:
-1. Controlla che non sia già stata proposta nelle [issues](https://github.com/mccoy88f/Tottodrillo/issues)
-2. Apri una nuova issue con tag "enhancement"
-3. Descrivi la feature e il suo valore aggiunto
+To propose new features:
+1. Check that it hasn't already been proposed in [issues](https://github.com/mccoy88f/Tottodrillo/issues)
+2. Open a new issue with the "enhancement" label
+3. Describe the feature and its added value
 
-### Pull Request
+### Pull Requests
 
-1. Fork il progetto
-2. Crea un branch (`git checkout -b feature/AmazingFeature`)
-3. Commit le modifiche (`git commit -m 'Add some AmazingFeature'`)
-4. Push al branch (`git push origin feature/AmazingFeature`)
-5. Apri una Pull Request
+1. Fork the project
+2. Create a branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
-## Linee Guida di Sviluppo
+## Development Guidelines
 
 ### Code Style
 
-- Segui le [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
-- Usa 4 spazi per indentazione
-- Max line length: 120 caratteri
-- Organizza imports alfabeticamente
+- Follow the [Kotlin Coding Conventions](https://kotlinlang.org/docs/coding-conventions.html)
+- Use 4 spaces for indentation
+- Max line length: 120 characters
+- Organize imports alphabetically
 
-### Architettura
+### Architecture
 
-- Mantieni separazione tra layer (data/domain/presentation)
-- Usa dependency injection con Hilt
-- ViewModel per business logic
-- Repository pattern per data access
+- Maintain separation between layers (data/domain/presentation)
+- Use dependency injection with Hilt
+- ViewModel for business logic
+- Repository pattern for data access
 
 ### Testing
 
-- Scrivi unit test per business logic
-- Aggiungi UI test per flussi critici
-- Assicurati che tutti i test passino prima del PR
+- Write unit tests for business logic
+- Add UI tests for critical flows
+- Ensure all tests pass before submitting a PR
 
 ### Commit Messages
 
-Usa il formato [Conventional Commits](https://www.conventionalcommits.org/):
+Use the [Conventional Commits](https://www.conventionalcommits.org/) format:
 
 ```
 feat: add download queue feature
@@ -64,15 +64,15 @@ test: add unit tests for repository
 chore: update dependencies
 ```
 
-## Setup Ambiente di Sviluppo
+## Development Environment Setup
 
-1. Installa Android Studio Hedgehog o superiore
-2. SDK Android API 34
+1. Install Android Studio Hedgehog or higher
+2. Android SDK API 34
 3. JDK 17
-4. Clone e sincronizza Gradle
+4. Clone the repository and sync Gradle
 
-## Domande?
+## Questions?
 
-Apri una [discussion](https://github.com/mccoy88f/Tottodrillo/discussions) per domande generali.
+Open a [discussion](https://github.com/mccoy88f/Tottodrillo/discussions) for general questions.
 
-Grazie per contribuire! 🙏
+Thank you for contributing! 🙏
