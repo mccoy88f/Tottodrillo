@@ -325,7 +325,7 @@ APKは次に生成されます: `app/build/outputs/apk/`
 
 あなたのサポートは、開発を継続し、アプリを改善するのに役立ちます。
 
-<a href="https://www.buymeacoffee.com/mccoy88f"><img src="https://img.buymeacoffee.com/button-api/?text=コーヒーを奢る&emoji=☕&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
+<a href="https://www.buymeacoffee.com/mccoy88f">BUY ME A COFFEE!</a>
 
 [PayPalでコーヒーを購入することもできます 🍻](https://paypal.me/mccoy88f?country.x=IT&locale.x=it_IT)
 
