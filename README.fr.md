@@ -91,7 +91,7 @@ Ce README est également disponible dans d'autres langues :
 
 ## 📱 Captures d'Écran
 
-*Bientôt disponible*
+![Écran d'Accueil de Tottodrillo](screen.jpg)
 
 ## 🏗️ Architecture
 

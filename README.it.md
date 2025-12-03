@@ -91,7 +91,7 @@ Questo README è disponibile anche in altre lingue:
 
 ## 📱 Screenshots
 
-*Prossimamente*
+![Schermata Home Tottodrillo](screen.jpg)
 
 ## 🏗️ Architettura
 

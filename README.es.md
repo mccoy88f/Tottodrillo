@@ -91,7 +91,7 @@ Este README también está disponible en otros idiomas:
 
 ## 📱 Capturas de Pantalla
 
-*Próximamente*
+![Pantalla de Inicio de Tottodrillo](screen.jpg)
 
 ## 🏗️ Arquitectura
 

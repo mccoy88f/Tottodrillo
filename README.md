@@ -91,7 +91,7 @@ This README is also available in other languages:
 
 ## 📱 Screenshots
 
-*Coming soon*
+![Tottodrillo Home Screen](screen.jpg)
 
 ## 🏗️ Architecture
 
