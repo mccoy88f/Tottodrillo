@@ -325,7 +325,7 @@ Si te gusta este proyecto y quieres apoyarme, ¡puedes invitarme a un café! �
 
 Tu apoyo me ayuda a continuar el desarrollo y mejorar la aplicación.
 
-<a href="https://www.buymeacoffee.com/mccoy88f"><img src="https://img.buymeacoffee.com/button-api/?text=Invítame%20a%20un%20café&emoji=☕&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff" /></a>
+<a href="https://www.buymeacoffee.com/mccoy88f">BUY ME A COFFEE!</a>
 
 [También puedes invitarme a un café con PayPal 🍻](https://paypal.me/mccoy88f?country.x=IT&locale.x=it_IT)
 
