@@ -1,0 +1,1265 @@
+{
+  "platforms": [
+    {
+      "mother_code": "3do",
+      "name": "3DO Interactive Multiplayer",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Panasonic"
+    },
+    {
+      "mother_code": "adam",
+      "name": "Coleco Adam",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Coleco"
+    },
+    {
+      "mother_code": "ags",
+      "name": "Game Boy Advance (AGS)",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "amiga",
+      "name": "Amiga",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amiga1200",
+      "name": "Amiga 1200",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amiga600",
+      "name": "Amiga 600",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amigacd32",
+      "name": "Amiga CD32",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amstradcpc",
+      "name": "Amstrad CPC",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Amstrad"
+    },
+    {
+      "mother_code": "apple2",
+      "name": "Apple II",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "apple2gs",
+      "name": "Apple IIGS",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "arcade",
+      "name": "Arcade",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Arcade"
+    },
+    {
+      "mother_code": "arcadia",
+      "name": "Arcadia",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "archimedes",
+      "name": "Archimedes",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "arduboy",
+      "name": "Arduboy",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "astrocde",
+      "name": "Astrocde",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "atari2600",
+      "name": "Atari 2600",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari5200",
+      "name": "Atari 5200",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari7800",
+      "name": "Atari 7800",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari800",
+      "name": "Atari800",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarijaguar",
+      "name": "Atari Jaguar",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarilynx",
+      "name": "Atari Lynx",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarist",
+      "name": "Atarist",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarixe",
+      "name": "Atarixe",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atomiswave",
+      "name": "Atomiswave",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "bbcmicro",
+      "name": "BBC Micro",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "c64",
+      "name": "Commodore 64",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "cdimono1",
+      "name": "Cdimono1",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Philips"
+    },
+    {
+      "mother_code": "cdtv",
+      "name": "Commodore CDTV",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "chailove",
+      "name": "Chailove",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "channelf",
+      "name": "Fairchild Channel F",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Fairchild"
+    },
+    {
+      "mother_code": "coco",
+      "name": "Coco",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "colecovision",
+      "name": "ColecoVision",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Coleco"
+    },
+    {
+      "mother_code": "consolearcade",
+      "name": "Consolearcade",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Arcade"
+    },
+    {
+      "mother_code": "cps",
+      "name": "Cps",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps1",
+      "name": "Capcom CPS-1",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps2",
+      "name": "Capcom CPS-2",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps3",
+      "name": "Capcom CPS-3",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "crvision",
+      "name": "Crvision",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "daphne",
+      "name": "Daphne",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "desktop",
+      "name": "Desktop",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "doom",
+      "name": "Doom",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "dos",
+      "name": "MS-DOS",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "dragon32",
+      "name": "Dragon 32",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "dreamcast",
+      "name": "Dreamcast",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "easyrpg",
+      "name": "Easyrpg",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "electron",
+      "name": "Electron",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "emulators",
+      "name": "Emulators",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "epic",
+      "name": "Epic",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Epic Games"
+    },
+    {
+      "mother_code": "famicom",
+      "name": "Famicom",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "fba",
+      "name": "Fba",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "FinalBurn Alpha"
+    },
+    {
+      "mother_code": "fbneo",
+      "name": "Fbneo",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "FinalBurn Neo"
+    },
+    {
+      "mother_code": "fds",
+      "name": "Famicom Disk System",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "flash",
+      "name": "Flash",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Adobe"
+    },
+    {
+      "mother_code": "fm7",
+      "name": "Fm7",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Fujitsu"
+    },
+    {
+      "mother_code": "fmtowns",
+      "name": "FM Towns",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Fujitsu"
+    },
+    {
+      "mother_code": "gamate",
+      "name": "Gamate",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "gameandwatch",
+      "name": "Game & Watch",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gamecom",
+      "name": "Gamecom",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Tiger"
+    },
+    {
+      "mother_code": "gamegear",
+      "name": "Gamegear",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "gb",
+      "name": "Game Boy",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gba",
+      "name": "Game Boy Advance",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gbc",
+      "name": "Game Boy Color",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gc",
+      "name": "GameCube",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "genesis",
+      "name": "Sega Genesis",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "gmaster",
+      "name": "Gmaster",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Tiger"
+    },
+    {
+      "mother_code": "gx4000",
+      "name": "Gx4000",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Amstrad"
+    },
+    {
+      "mother_code": "intellivision",
+      "name": "Intellivision",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Mattel"
+    },
+    {
+      "mother_code": "j2me",
+      "name": "J2me",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Java"
+    },
+    {
+      "mother_code": "kodi",
+      "name": "Kodi",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "laserdisc",
+      "name": "Laserdisc",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lcdgames",
+      "name": "Lcdgames",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lowresnx",
+      "name": "Lowresnx",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lutro",
+      "name": "Lutro",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "macintosh",
+      "name": "Macintosh",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "mame",
+      "name": "MAME",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "MAME"
+    },
+    {
+      "mother_code": "mark3",
+      "name": "Mark3",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "mastersystem",
+      "name": "Master System",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megacd",
+      "name": "Sega CD",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megacdjp",
+      "name": "Megacdjp",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megadrive",
+      "name": "Megadrive",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megadrivejp",
+      "name": "Megadrivejp",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megaduck",
+      "name": "Megaduck",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "mess",
+      "name": "Mess",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "model2",
+      "name": "Model2",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "model3",
+      "name": "Model3",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "moto",
+      "name": "Moto",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "msx",
+      "name": "MSX",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msx1",
+      "name": "Msx1",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msx2",
+      "name": "MSX2",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msxturbor",
+      "name": "Msxturbor",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "mugen",
+      "name": "Mugen",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "multivision",
+      "name": "Multivision",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "n3ds",
+      "name": "Nintendo 3DS",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "n64",
+      "name": "Nintendo 64",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "n64dd",
+      "name": "Nintendo 64DD",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "naomi",
+      "name": "Naomi",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "naomi2",
+      "name": "Naomi2",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "naomigd",
+      "name": "Naomigd",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "nds",
+      "name": "Nintendo DS",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "neogeo",
+      "name": "Neo Geo",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "neogeocd",
+      "name": "Neo Geo CD",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "neogeocdjp",
+      "name": "Neogeocdjp",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "nes",
+      "name": "Nintendo Entertainment System",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "ngage",
+      "name": "N-Gage",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nokia"
+    },
+    {
+      "mother_code": "ngp",
+      "name": "Neo Geo Pocket",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "ngpc",
+      "name": "Neo Geo Pocket Color",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "odyssey2",
+      "name": "Magnavox Odyssey²",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Magnavox"
+    },
+    {
+      "mother_code": "oric",
+      "name": "Oric",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "palm",
+      "name": "Palm",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Palm"
+    },
+    {
+      "mother_code": "pc",
+      "name": "PC",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "pc88",
+      "name": "PC-88",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pc98",
+      "name": "PC-98",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcarcade",
+      "name": "Pcarcade",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "pcengine",
+      "name": "PC Engine",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcenginecd",
+      "name": "PC Engine CD",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcfx",
+      "name": "PC-FX",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pico8",
+      "name": "Pico8",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "pippin",
+      "name": "Apple Bandai Pippin",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "plus4",
+      "name": "Plus4",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "pokemini",
+      "name": "Pokémon Mini",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "ports",
+      "name": "Ports",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "ps2",
+      "name": "PlayStation 2",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "ps3",
+      "name": "PlayStation 3",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "ps4",
+      "name": "Ps4",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psp",
+      "name": "PlayStation Portable",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psvita",
+      "name": "PlayStation Vita",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psx",
+      "name": "PlayStation",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "pv1000",
+      "name": "Pv1000",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Casio"
+    },
+    {
+      "mother_code": "quake",
+      "name": "Quake",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "samcoupe",
+      "name": "Samcoupe",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "satellaview",
+      "name": "Satellaview",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "saturn",
+      "name": "Sega Saturn",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "saturnjp",
+      "name": "Saturnjp",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "scummvm",
+      "name": "Scummvm",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "scv",
+      "name": "Scv",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Epoch"
+    },
+    {
+      "mother_code": "sega32x",
+      "name": "Sega 32X",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sg-1000",
+      "name": "Sg-1000",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sgb",
+      "name": "Sgb",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "snes",
+      "name": "Super Nintendo Entertainment System",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "solarus",
+      "name": "Solarus",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "spectravideo",
+      "name": "Spectravideo",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "steam",
+      "name": "Steam",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Valve"
+    },
+    {
+      "mother_code": "stv",
+      "name": "Stv",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sufami",
+      "name": "Sufami",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "supergrafx",
+      "name": "Supergrafx",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "supervision",
+      "name": "Supervision",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Watara"
+    },
+    {
+      "mother_code": "supracan",
+      "name": "Supracan",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "switch",
+      "name": "Switch",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "symbian",
+      "name": "Symbian",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Symbian"
+    },
+    {
+      "mother_code": "tanodragon",
+      "name": "Tanodragon",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "tg-cd",
+      "name": "Tg-cd",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "tg16",
+      "name": "TurboGrafx-16",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "ti99",
+      "name": "TI-99/4A",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Texas Instruments"
+    },
+    {
+      "mother_code": "tic80",
+      "name": "Tic80",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "to8",
+      "name": "To8",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "type-x",
+      "name": "Type-x",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "uzebox",
+      "name": "Uzebox",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "vectrex",
+      "name": "Vectrex",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "GCE"
+    },
+    {
+      "mother_code": "vic20",
+      "name": "Commodore VIC-20",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "videopac",
+      "name": "Videopac",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Philips"
+    },
+    {
+      "mother_code": "vircon32",
+      "name": "Vircon32",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "virtualboy",
+      "name": "Virtualboy",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "vpinball",
+      "name": "Vpinball",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "vsmile",
+      "name": "Vsmile",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "VTech"
+    },
+    {
+      "mother_code": "wasm4",
+      "name": "Wasm4",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "wii",
+      "name": "Wii",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "wiiu",
+      "name": "Wii U",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "windows",
+      "name": "Windows",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "windows3x",
+      "name": "Windows3x",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "windows9x",
+      "name": "Windows9x",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "wonderswan",
+      "name": "WonderSwan",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "wonderswancolor",
+      "name": "WonderSwan Color",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "x1",
+      "name": "X1",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sharp"
+    },
+    {
+      "mother_code": "x68000",
+      "name": "Sharp X68000",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sharp"
+    },
+    {
+      "mother_code": "xbox",
+      "name": "Xbox",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "xbox360",
+      "name": "Xbox 360",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "zmachine",
+      "name": "Zmachine",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "zx81",
+      "name": "ZX81",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sinclair"
+    },
+    {
+      "mother_code": "zxnext",
+      "name": "Zxnext",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sinclair"
+    },
+    {
+      "mother_code": "zxspectrum",
+      "name": "ZX Spectrum",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Sinclair"
+    }
+  ],
+  "total": 180
+}
