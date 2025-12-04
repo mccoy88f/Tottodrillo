@@ -147,5 +147,12 @@
     <string name="empty_no_favorites">还没有收藏</string>
     <string name="empty_no_recent">没有最近的ROM</string>
     <string name="empty_no_downloads">没有下载</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">文件访问权限</string>
+    <string name="permission_dialog_message">要在任何文件夹（包括SD卡）中下载和安装ROM，Tottodrillo需要完整的文件访问权限。</string>
+    <string name="permission_dialog_reason">此权限允许:\n• 下载ROM到任何文件夹\n• 在外部SD卡上安装ROM\n• 管理自定义文件夹中的文件\n\n此权限仅在Android 11及更高版本上需要。</string>
+    <string name="permission_dialog_confirm">授予权限</string>
+    <string name="permission_dialog_later">稍后</string>
 </resources>
 

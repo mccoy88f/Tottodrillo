@@ -122,6 +122,15 @@
     <string name="settings_esde_folder">Cartella ROMs di ES-DE</string>
     <string name="settings_esde_folder_not_selected">Non selezionata</string>
     <string name="settings_network">Rete</string>
+    <string name="settings_storage_permission">Permessi Storage</string>
+    <string name="settings_storage_permission_desc">Consenti accesso completo ai file per download ed estrazioni su qualsiasi cartella</string>
+    <string name="settings_storage_permission_granted">Permesso concesso</string>
+    <string name="settings_storage_permission_denied">Permesso negato</string>
+    <string name="settings_storage_permission_request">Richiedi permesso</string>
+    <string name="storage_permission_rationale">Per scaricare ed estrarre ROM su qualsiasi cartella (inclusa SD card), è necessario concedere l\'accesso completo ai file. Questo permesso è richiesto solo su Android 11 e versioni successive.</string>
+    <string name="storage_permission_required">Permesso di accesso ai file richiesto</string>
+    <string name="storage_permission_required_message">Per procedere con il download, è necessario concedere l\'accesso completo ai file nelle impostazioni.</string>
+    <string name="storage_permission_open_settings">Apri Impostazioni</string>
     <string name="settings_app_info">Informazioni App</string>
     <string name="settings_version">Versione</string>
     <string name="settings_author">Autore</string>
@@ -149,4 +158,11 @@
     <string name="empty_no_favorites">Nessun preferito ancora</string>
     <string name="empty_no_recent">Nessuna ROM recente</string>
     <string name="empty_no_downloads">Nessun download</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">Permesso di accesso ai file</string>
+    <string name="permission_dialog_message">Per scaricare e installare ROM su qualsiasi cartella (inclusa la SD card), Tottodrillo necessita del permesso di accesso completo ai file.</string>
+    <string name="permission_dialog_reason">Questo permesso permette di:\n• Scaricare ROM in qualsiasi cartella\n• Installare ROM su SD card esterna\n• Gestire file su cartelle personalizzate\n\nIl permesso è richiesto solo su Android 11 e versioni successive.</string>
+    <string name="permission_dialog_confirm">Concedi permesso</string>
+    <string name="permission_dialog_later">Più tardi</string>
 </resources>

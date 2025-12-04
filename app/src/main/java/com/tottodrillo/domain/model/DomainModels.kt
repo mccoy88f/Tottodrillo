@@ -1,0 +1,134 @@
+package com.tottodrillo.domain.model
+
+/**
+ * Modello UI per una ROM
+ */
+data class Rom(
+    val slug: String,
+    val id: String?,
+    val title: String,
+    val platform: PlatformInfo,
+    val coverUrl: String?,
+    val regions: List<RegionInfo>,
+    val downloadLinks: List<DownloadLink>,
+    val isFavorite: Boolean = false
+)
+
+/**
+ * Informazioni piattaforma per UI
+ */
+data class PlatformInfo(
+    val code: String,
+    val displayName: String,
+    val manufacturer: String? = null,
+    val imagePath: String? = null, // Percorso dell'immagine (es. "logos/3do.svg")
+    val description: String? = null // Descrizione della piattaforma
+) {
+    companion object {
+        val UNKNOWN = PlatformInfo("unknown", "Unknown", null, null, null)
+    }
+}
+
+/**
+ * Informazioni regione per UI
+ */
+data class RegionInfo(
+    val code: String,
+    val displayName: String,
+    val flagEmoji: String
+) {
+    companion object {
+        fun fromCode(code: String): RegionInfo = when (code.uppercase()) {
+            "US" -> RegionInfo("US", "USA", "🇺🇸")
+            "EU" -> RegionInfo("EU", "Europe", "🇪🇺")
+            "JP" -> RegionInfo("JP", "Japan", "🇯🇵")
+            "KR" -> RegionInfo("KR", "Korea", "🇰🇷")
+            "CN" -> RegionInfo("CN", "China", "🇨🇳")
+            "AU" -> RegionInfo("AU", "Australia", "🇦🇺")
+            "BR" -> RegionInfo("BR", "Brazil", "🇧🇷")
+            "UK" -> RegionInfo("UK", "UK", "🇬🇧")
+            "FR" -> RegionInfo("FR", "France", "🇫🇷")
+            "DE" -> RegionInfo("DE", "Germany", "🇩🇪")
+            "IT" -> RegionInfo("IT", "Italy", "🇮🇹")
+            "ES" -> RegionInfo("ES", "Spain", "🇪🇸")
+            "NL" -> RegionInfo("NL", "Netherlands", "🇳🇱")
+            "SE" -> RegionInfo("SE", "Sweden", "🇸🇪")
+            "NO" -> RegionInfo("NO", "Norway", "🇳🇴")
+            "DK" -> RegionInfo("DK", "Denmark", "🇩🇰")
+            "FI" -> RegionInfo("FI", "Finland", "🇫🇮")
+            "WW" -> RegionInfo("WW", "Worldwide", "🌍")
+            else -> RegionInfo(code, code, "🏴")
+        }
+    }
+}
+
+/**
+ * Link di download
+ */
+data class DownloadLink(
+    val name: String,
+    val type: String,
+    val format: String,
+    val url: String,
+    val size: String?
+)
+
+/**
+ * Categoria di piattaforme per esplorazione
+ */
+data class PlatformCategory(
+    val id: String,
+    val name: String,
+    val platforms: List<PlatformInfo>,
+    val icon: String // Material Icon name
+)
+
+/**
+ * Filtri di ricerca
+ */
+data class SearchFilters(
+    val query: String = "",
+    val selectedPlatforms: List<String> = emptyList(),
+    val selectedRegions: List<String> = emptyList(),
+    val selectedFormats: List<String> = emptyList()
+) {
+    fun isEmpty(): Boolean = query.isEmpty() && 
+                            selectedPlatforms.isEmpty() && 
+                            selectedRegions.isEmpty() &&
+                            selectedFormats.isEmpty()
+    
+    fun hasActiveFilters(): Boolean = selectedPlatforms.isNotEmpty() || 
+                                     selectedRegions.isNotEmpty() ||
+                                     selectedFormats.isNotEmpty()
+}
+
+/**
+ * Stato del download
+ */
+sealed class DownloadStatus {
+    data object Idle : DownloadStatus()
+    data class Pending(val romTitle: String) : DownloadStatus()
+    data class InProgress(
+        val romTitle: String, 
+        val progress: Int,
+        val bytesDownloaded: Long,
+        val totalBytes: Long
+    ) : DownloadStatus()
+    data class Completed(val romTitle: String, val filePath: String) : DownloadStatus()
+    data class Failed(val romTitle: String, val error: String) : DownloadStatus()
+    data class Paused(val romTitle: String, val progress: Int) : DownloadStatus()
+}
+
+/**
+ * Download info per persistenza
+ */
+data class DownloadInfo(
+    val id: String,
+    val romSlug: String,
+    val romTitle: String,
+    val url: String,
+    val fileName: String,
+    val status: DownloadStatus,
+    val createdAt: Long,
+    val completedAt: Long? = null
+)

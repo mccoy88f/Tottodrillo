@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "Crocdb Friends"
+rootProject.name = "Tottodrillo"
 include(":app")

@@ -147,5 +147,12 @@
     <string name="empty_no_favorites">Aucun favori pour le moment</string>
     <string name="empty_no_recent">Aucune ROM récente</string>
     <string name="empty_no_downloads">Aucun téléchargement</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">Autorisation d\'accès aux fichiers</string>
+    <string name="permission_dialog_message">Pour télécharger et installer des ROMs dans n\'importe quel dossier (y compris la carte SD), Tottodrillo nécessite une autorisation d\'accès complet aux fichiers.</string>
+    <string name="permission_dialog_reason">Cette autorisation permet de:\n• Télécharger des ROMs dans n\'importe quel dossier\n• Installer des ROMs sur carte SD externe\n• Gérer les fichiers dans des dossiers personnalisés\n\nCette autorisation n\'est requise que sur Android 11 et versions ultérieures.</string>
+    <string name="permission_dialog_confirm">Accorder l\'autorisation</string>
+    <string name="permission_dialog_later">Plus tard</string>
 </resources>
 

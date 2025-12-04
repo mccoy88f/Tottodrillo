@@ -146,5 +146,12 @@
     <string name="empty_no_favorites">No favorites yet</string>
     <string name="empty_no_recent">No recent ROMs</string>
     <string name="empty_no_downloads">No downloads</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">File Access Permission</string>
+    <string name="permission_dialog_message">To download and install ROMs in any folder (including SD card), Tottodrillo needs full file access permission.</string>
+    <string name="permission_dialog_reason">This permission allows:\n• Download ROMs to any folder\n• Install ROMs on external SD card\n• Manage files in custom folders\n\nThis permission is only required on Android 11 and later.</string>
+    <string name="permission_dialog_confirm">Grant permission</string>
+    <string name="permission_dialog_later">Later</string>
 </resources>
 

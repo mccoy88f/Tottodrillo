@@ -147,5 +147,12 @@
     <string name="empty_no_favorites">Noch keine Favoriten</string>
     <string name="empty_no_recent">Keine kürzlichen ROMs</string>
     <string name="empty_no_downloads">Keine Downloads</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">Dateizugriffsberechtigung</string>
+    <string name="permission_dialog_message">Zum Herunterladen und Installieren von ROMs in jedem Ordner (einschließlich SD-Karte) benötigt Tottodrillo die vollständige Dateizugriffsberechtigung.</string>
+    <string name="permission_dialog_reason">Diese Berechtigung ermöglicht:\n• ROMs in jeden Ordner herunterzuladen\n• ROMs auf externer SD-Karte zu installieren\n• Dateien in benutzerdefinierten Ordnern zu verwalten\n\nDiese Berechtigung ist nur unter Android 11 und höher erforderlich.</string>
+    <string name="permission_dialog_confirm">Berechtigung erteilen</string>
+    <string name="permission_dialog_later">Später</string>
 </resources>
 
