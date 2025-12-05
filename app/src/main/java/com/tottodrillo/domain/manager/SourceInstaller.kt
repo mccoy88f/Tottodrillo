@@ -79,6 +79,11 @@ class SourceInstaller @Inject constructor(
                 
                 tempDir.copyRecursively(targetDir, overwrite = true)
                 
+                // Installa dipendenze Python se necessario
+                if (metadata.type.lowercase() == "python" && metadata.dependencies != null) {
+                    installPythonDependencies(targetDir, metadata.dependencies)
+                }
+                
                 // Registra la sorgente (mantiene lo stato enabled se era già installata)
                 if (isUpdate && isAlreadyInstalled) {
                     val configs = sourceManager.loadInstalledConfigs()
@@ -204,6 +209,86 @@ class SourceInstaller @Inject constructor(
                     throw IllegalArgumentException("Script Python non trovato: $pythonScript")
                 }
             }
+        }
+    }
+    
+    /**
+     * Installa le dipendenze Python usando Chaquopy
+     * Nota: Le dipendenze comuni (requests, beautifulsoup4) sono già installate nel build.gradle.kts
+     * Questo metodo installa solo dipendenze aggiuntive specificate nel requirements.txt
+     */
+    private fun installPythonDependencies(sourceDir: File, dependencies: List<String>) {
+        try {
+            // Verifica se Chaquopy è disponibile
+            if (!com.chaquo.python.Python.isStarted()) {
+                android.util.Log.w("SourceInstaller", "Chaquopy non inizializzato, salto installazione dipendenze Python")
+                return
+            }
+            
+            val python = com.chaquo.python.Python.getInstance()
+            
+            // Leggi requirements.txt se presente
+            val requirementsFile = File(sourceDir, "requirements.txt")
+            val requirementsToInstall = if (requirementsFile.exists()) {
+                requirementsFile.readText().lines()
+                    .filter { it.isNotBlank() && !it.trimStart().startsWith("#") }
+                    .map { it.trim() }
+                    .filter { 
+                        // Filtra dipendenze già installate nel build.gradle.kts
+                        val dep = it.lowercase()
+                        !dep.startsWith("requests") && !dep.startsWith("beautifulsoup4")
+                    }
+            } else {
+                dependencies.filter { 
+                    val dep = it.lowercase()
+                    !dep.startsWith("requests") && !dep.startsWith("beautifulsoup4")
+                }
+            }
+            
+            if (requirementsToInstall.isEmpty()) {
+                android.util.Log.d("SourceInstaller", "Nessuna dipendenza aggiuntiva da installare (requests e beautifulsoup4 sono già installate)")
+                return
+            }
+            
+            // Per dipendenze aggiuntive, prova a installarle usando pip
+            for (requirement in requirementsToInstall) {
+                try {
+                    android.util.Log.d("SourceInstaller", "Installazione dipendenza Python aggiuntiva: $requirement")
+                    
+                    // Usa pip._internal.main per installare
+                    val sysModule = python.getModule("sys")
+                    val originalArgv = sysModule["argv"]
+                    
+                    // Imposta sys.argv per pip
+                    val argvList = python.builtins.callAttr("list", listOf("pip", "install", requirement))
+                    sysModule["argv"] = argvList
+                    
+                    // Prova a chiamare pip._internal.main
+                    try {
+                        val pipMain = python.getModule("pip._internal.main")
+                        pipMain.callAttr("main")
+                        android.util.Log.d("SourceInstaller", "✅ Dipendenza installata: $requirement")
+                    } catch (e: Exception) {
+                        // Fallback: prova con pip.__main__
+                        try {
+                            val pipMain = python.getModule("pip.__main__")
+                            pipMain.callAttr("main")
+                            android.util.Log.d("SourceInstaller", "✅ Dipendenza installata (fallback): $requirement")
+                        } catch (e2: Exception) {
+                            android.util.Log.w("SourceInstaller", "Impossibile installare $requirement automaticamente. Potrebbe essere necessario aggiungerla al build.gradle.kts", e2)
+                        }
+                    } finally {
+                        // Ripristina sys.argv
+                        sysModule["argv"] = originalArgv
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("SourceInstaller", "Errore installazione dipendenza $requirement", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SourceInstaller", "Errore nell'installazione dipendenze Python", e)
+            // Non bloccare l'installazione se le dipendenze falliscono
+            // Le dipendenze comuni (requests, beautifulsoup4) sono già installate nel build.gradle.kts
         }
     }
     

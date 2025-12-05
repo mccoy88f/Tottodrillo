@@ -11,6 +11,11 @@ import com.tottodrillo.domain.model.Rom
  * Mapper per convertire RomEntry (API) in Rom (Domain)
  */
 fun RomEntry.toDomain(sourceId: String? = null): Rom {
+    // Usa boxart_urls se disponibile, altrimenti usa boxartUrl come lista
+    val coverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
+        ?: this.boxartUrl?.let { listOf(it) } 
+        ?: emptyList()
+    
     return Rom(
         slug = this.slug,
         id = this.romId,
@@ -19,7 +24,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
             code = this.platform,
             displayName = getPlatformDisplayName(this.platform)
         ),
-        coverUrl = this.boxartUrl,
+        coverUrl = coverUrls.firstOrNull(), // Prima immagine come principale
+        coverUrls = coverUrls, // Tutte le immagini per il carosello
         regions = this.regions.map { RegionInfo.fromCode(it) },
         downloadLinks = this.links.map { link ->
             DownloadLink(

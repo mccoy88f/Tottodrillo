@@ -52,6 +52,8 @@ data class RomEntry(
     val platform: String,
     @SerializedName("boxart_url")
     val boxartUrl: String?,
+    @SerializedName("boxart_urls")
+    val boxartUrls: List<String>? = null, // Lista di tutte le immagini (box + screen)
     @SerializedName("regions")
     val regions: List<String>,
     @SerializedName("links")
@@ -142,7 +144,7 @@ data class SearchRequest(
  */
 data class EntryResponse(
     @SerializedName("entry")
-    val entry: RomEntry
+    val entry: RomEntry? = null  // Nullable perché alcune sorgenti possono non trovare la ROM
 )
 
 /**

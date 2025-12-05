@@ -98,8 +98,9 @@ def get_rom_download_url(page_url: str) -> Optional[str]:
             media_id_elem = result.find(attrs={'name': 'mediaId'})
             if media_id_elem and media_id_elem.get('value'):
                 media_id = media_id_elem['value']
-                # Costruisce l'URL di download diretto (usa dl3.vimm.net come nel form)
-                return f'https://dl3.vimm.net/download/?mediaId={media_id}'
+                # Il form usa POST a //dl2.vimm.net/, ma possiamo usare GET con mediaId come query param
+                # Costruisce l'URL di download diretto (usa dl2.vimm.net come nel form)
+                return f'https://dl2.vimm.net/?mediaId={media_id}'
     except Exception as e:
         print(f"Errore nel recupero URL download: {e}", file=sys.stderr)
     return None
@@ -252,12 +253,6 @@ def get_general_search_roms(search_key: str) -> List[Dict[str, Any]]:
 def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
     """Ottiene i dettagli completi di una ROM dall'URI"""
     try:
-        # Ottieni l'URL di download
-        download_url = get_rom_download_url(uri)
-        
-        if not download_url:
-            return None
-        
         # Estrai informazioni dalla pagina ROM per ottenere nome e sistema
         headers = {'User-Agent': get_random_ua()}
         page = requests.get('https://vimm.net/' + uri, headers=headers, timeout=10, verify=False)
@@ -281,9 +276,17 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
                         system = vimm_system
                         break
         
-        # Cerca l'immagine della box art
+        # Estrai l'ID della ROM dall'URI per costruire gli URL delle immagini
+        rom_id = None
+        match = re.search(r'/vault/(\d+)', uri)
+        if match:
+            rom_id = match.group(1)
+        
+        # Cerca le immagini (box art e screen)
         boxart_url = None
-        # L'immagine ha alt="Box" e src che inizia con //dl.vimm.net/image.php?type=box&id=
+        screen_url = None
+        
+        # Cerca l'immagine della box art
         boxart_img = soup.find('img', alt='Box')
         if boxart_img:
             src = boxart_img.get('src', '')
@@ -312,13 +315,157 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
                         boxart_url = src
                     break
         
-        # Determina il formato dal nome del file o dall'URL
-        format_type = "zip"  # Default
-        if download_url:
-            if '.7z' in download_url or '7z' in download_url:
-                format_type = "7z"
-            elif '.zip' in download_url or 'zip' in download_url:
-                format_type = "zip"
+        # Se ancora non trovata, costruisci dall'URI
+        if not boxart_url and rom_id:
+            boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
+        
+        # Costruisci l'URL dell'immagine screen (se abbiamo l'ID)
+        if rom_id:
+            screen_url = f'https://dl.vimm.net/image.php?type=screen&id={rom_id}'
+        
+        # Crea lista di immagini per il carosello (box art prima, poi screen)
+        cover_urls = []
+        if boxart_url:
+            cover_urls.append(boxart_url)
+        if screen_url:
+            cover_urls.append(screen_url)
+        
+        # Estrai array media dal JavaScript per ottenere tutte le versioni
+        media_array = []
+        scripts = soup.find_all('script')
+        for script in scripts:
+            if script.string and 'const media=' in script.string:
+                match = re.search(r'const media=(\[.*?\]);', script.string, re.DOTALL)
+                if match:
+                    try:
+                        media_array = json.loads(match.group(1))
+                        break
+                    except:
+                        pass
+        
+        # Estrai opzioni di format dal select (può essere fuori dal form)
+        format_options = []
+        format_select = soup.find(id='dl_format')
+        if format_select:
+            for option in format_select.find_all('option'):
+                format_value = option.get('value', '')
+                format_text = option.get_text(strip=True)
+                # Usa il title se disponibile, altrimenti il testo
+                format_title = option.get('title', '')
+                if format_title:
+                    # Estrai l'estensione dal title (es. ".wbfs files work..." -> ".wbfs")
+                    match = re.search(r'\.(\w+)', format_title)
+                    if match:
+                        ext = match.group(1)
+                        format_text = f".{ext}"
+                format_options.append({
+                    'value': format_value,
+                    'text': format_text
+                })
+        
+        # Se non ci sono opzioni di format, usa default (0 = Zipped, 1 = AltZipped, 2 = AltZipped2)
+        if not format_options:
+            format_options = [
+                {'value': '0', 'text': 'Default'},
+                {'value': '1', 'text': 'Alt'},
+                {'value': '2', 'text': 'Alt2'}
+            ]
+        
+        # Genera link per ogni combinazione di version (media) e format
+        links = []
+        for media_item in media_array:
+            media_id = media_item.get('ID')
+            version = media_item.get('Version', '')
+            version_string = media_item.get('VersionString', version)
+            
+            # Per ogni formato disponibile
+            for format_option in format_options:
+                format_value = format_option.get('value', '0')
+                format_text = format_option.get('text', 'Default')
+                
+                # Determina la dimensione in base al formato
+                size_str = None
+                size_bytes = 0
+                if format_value == '0':
+                    size_str = media_item.get('ZippedText', '')
+                    size_bytes = int(media_item.get('Zipped', '0') or '0')
+                elif format_value == '1':
+                    size_str = media_item.get('AltZippedText', '')
+                    size_bytes = int(media_item.get('AltZipped', '0') or '0')
+                elif format_value == '2':
+                    size_str = media_item.get('AltZipped2Text', '')
+                    size_bytes = int(media_item.get('AltZipped2', '0') or '0')
+                
+                # Salta i formati non disponibili (dimensione 0)
+                if size_bytes == 0 or size_str in ['0 KB', '0 MB', '0 GB']:
+                    continue
+                
+                # Costruisci l'URL di download
+                # Il formato viene passato come parametro 'alt' (0, 1, o 2)
+                download_url = f'https://dl2.vimm.net/?mediaId={media_id}'
+                if format_value != '0':
+                    download_url += f'&alt={format_value}'
+                
+                # Determina il tipo di formato dal nome
+                format_type = "zip"  # Default
+                format_display = format_text
+                if format_text:
+                    format_lower = format_text.lower()
+                    if '.wbfs' in format_lower or 'wbfs' in format_lower:
+                        format_type = "wbfs"
+                        format_display = ".wbfs"
+                    elif '.rvz' in format_lower or 'rvz' in format_lower:
+                        format_type = "rvz"
+                        format_display = ".rvz"
+                    elif '.7z' in format_lower or '7z' in format_lower:
+                        format_type = "7z"
+                        format_display = ".7z"
+                    elif '.iso' in format_lower or 'iso' in format_lower:
+                        format_type = "iso"
+                        format_display = ".iso"
+                    elif '.zip' in format_lower or 'zip' in format_lower:
+                        format_type = "zip"
+                        format_display = ".zip"
+                    else:
+                        # Se non riconosciuto, usa il testo originale
+                        format_display = format_text
+                else:
+                    # Se non c'è testo, determina dal value
+                    if format_value == '1':
+                        format_display = "Alt Format"
+                    elif format_value == '2':
+                        format_display = "Alt2 Format"
+                
+                # Nome del link: Version - Format (es. "1.1 - .wbfs")
+                link_name = f"Version {version_string}"
+                if format_display and format_display not in ['Default', 'Alt Format', 'Alt2 Format']:
+                    link_name += f" - {format_display}"
+                elif format_display:
+                    link_name += f" - {format_display}"
+                
+                if size_str:
+                    link_name += f" ({size_str})"
+                
+                links.append({
+                    'name': link_name,
+                    'type': 'direct',
+                    'format': format_type,
+                    'url': download_url,
+                    'size_str': size_str
+                })
+        
+        # Se non ci sono link generati (nessun media array), usa il metodo vecchio
+        if not links:
+            download_url = get_rom_download_url(uri)
+            if download_url:
+                format_type = "zip"  # Default
+                links.append({
+                    'name': 'Download',
+                    'type': 'direct',
+                    'format': format_type,
+                    'url': download_url,
+                    'size_str': None
+                })
         
         slug = get_rom_slug_from_uri(uri)
         
@@ -327,20 +474,17 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
             'rom_id': uri,
             'title': title,
             'platform': map_system_to_mother_code(system) if system else 'unknown',
-            'boxart_url': boxart_url,
+            'boxart_url': boxart_url,  # Mantieni per compatibilità
+            'boxart_urls': cover_urls,  # Lista di tutte le immagini per il carosello
             'regions': [],
-            'links': [{
-                'name': 'Download',
-                'type': 'direct',
-                'format': format_type,
-                'url': download_url,
-                'size_str': None
-            }]
+            'links': links
         }
         
         return entry
     except Exception as e:
         print(f"Errore nel recupero entry: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
         return None
 
 
@@ -468,9 +612,9 @@ def get_entry(params: Dict[str, Any]) -> str:
                 if entry:
                     return json.dumps({"entry": entry})
     
-    # Se non trovata, restituisci errore
+    # Se non trovata, restituisci entry null per coerenza con l'API
     return json.dumps({
-        "error": f"ROM con slug '{slug}' non trovata. Esegui prima una ricerca."
+        "entry": None
     })
 
 

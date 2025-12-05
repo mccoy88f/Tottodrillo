@@ -116,7 +116,7 @@ class RomRepositoryImpl @Inject constructor(
                             result.fold(
                                 onSuccess = { searchResults ->
                                     searchResults.results.map { entry ->
-                                        entry.toDomain(sourceId = source.id)
+                                        entry?.toDomain(sourceId = source.id)
                                     }
                                 },
                                 onFailure = {
@@ -286,7 +286,8 @@ class RomRepositoryImpl @Inject constructor(
                             val result = executor.getEntry(slug)
                             result.fold(
                                 onSuccess = { entryResponse ->
-                                    entryResponse.entry.toDomain(sourceId = source.id)
+                                    // Verifica che entry non sia null prima di chiamare toDomain()
+                                    entryResponse.entry?.toDomain(sourceId = source.id)
                                 },
                                 onFailure = {
                                     android.util.Log.e("RomRepositoryImpl", "Errore getEntry in sorgente ${source.id}", it)

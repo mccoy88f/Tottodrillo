@@ -67,9 +67,16 @@ android {
 }
 
 // Configurazione Chaquopy per supporto Python nelle sorgenti
-// Nota: La configurazione Python viene fatta tramite il plugin Chaquopy
-// Le dipendenze Python possono essere installate dinamicamente dalle sorgenti
-// oppure specificate nel blocco python {} se necessario
+chaquopy {
+    defaultConfig {
+        version = "3.11"
+        pip {
+            // Dipendenze Python comuni per le sorgenti
+            install("requests")
+            install("beautifulsoup4")
+        }
+    }
+}
 
 dependencies {
     // Core Android
