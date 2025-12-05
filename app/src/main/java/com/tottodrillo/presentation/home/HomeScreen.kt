@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -38,6 +39,7 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -213,14 +215,27 @@ private fun HomeContent(
         if (uiState.featuredRoms.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.home_featured))
 
+            val featuredState = rememberLazyListState()
+            val featuredVisibleItems = remember {
+                derivedStateOf {
+                    val layoutInfo = featuredState.layoutInfo
+                    val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+                    visibleIndices.take(10).toSet()
+                }
+            }
+
             LazyRow(
+                state = featuredState,
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.featuredRoms) { rom ->
+                items(uiState.featuredRoms.size, key = { uiState.featuredRoms[it].slug }) { index ->
+                    val rom = uiState.featuredRoms[index]
+                    val shouldLoad = featuredVisibleItems.value.contains(index)
                     RomCard(
                         rom = rom,
                         onClick = { onNavigateToRomDetail(rom.slug) },
+                        shouldLoadImage = shouldLoad,
                         modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }
@@ -233,14 +248,27 @@ private fun HomeContent(
         if (uiState.recentRoms.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.home_recent))
 
+            val recentState = rememberLazyListState()
+            val recentVisibleItems = remember {
+                derivedStateOf {
+                    val layoutInfo = recentState.layoutInfo
+                    val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+                    visibleIndices.take(10).toSet()
+                }
+            }
+
             LazyRow(
+                state = recentState,
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.recentRoms) { rom ->
+                items(uiState.recentRoms.size, key = { uiState.recentRoms[it].slug }) { index ->
+                    val rom = uiState.recentRoms[index]
+                    val shouldLoad = recentVisibleItems.value.contains(index)
                     RomCard(
                         rom = rom,
                         onClick = { onNavigateToRomDetail(rom.slug) },
+                        shouldLoadImage = shouldLoad,
                         modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }
@@ -253,14 +281,27 @@ private fun HomeContent(
         if (uiState.favoriteRoms.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.home_favorites))
 
+            val favoritesState = rememberLazyListState()
+            val favoritesVisibleItems = remember {
+                derivedStateOf {
+                    val layoutInfo = favoritesState.layoutInfo
+                    val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+                    visibleIndices.take(10).toSet()
+                }
+            }
+
             LazyRow(
+                state = favoritesState,
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.favoriteRoms) { rom ->
+                items(uiState.favoriteRoms.size, key = { uiState.favoriteRoms[it].slug }) { index ->
+                    val rom = uiState.favoriteRoms[index]
+                    val shouldLoad = favoritesVisibleItems.value.contains(index)
                     RomCard(
                         rom = rom,
                         onClick = { onNavigateToRomDetail(rom.slug) },
+                        shouldLoadImage = shouldLoad,
                         modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }

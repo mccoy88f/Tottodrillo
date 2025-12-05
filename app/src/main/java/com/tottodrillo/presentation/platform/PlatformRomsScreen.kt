@@ -108,6 +108,12 @@ fun PlatformRomsScreen(
             uiState.isLoading && romsForPlatform == null -> {
                 LoadingIndicator(modifier = Modifier.padding(padding))
             }
+            uiState.error != null && romsForPlatform.isNullOrEmpty() -> {
+                EmptyState(
+                    message = "Errore: ${uiState.error}",
+                    modifier = Modifier.padding(padding)
+                )
+            }
             romsForPlatform.isNullOrEmpty() -> {
                 EmptyState(
                     message = "Nessuna ROM trovata per ${platformCode.uppercase()}",
@@ -115,6 +121,16 @@ fun PlatformRomsScreen(
                 )
             }
             else -> {
+                // Calcola quali ROM sono visibili e limita a 10 immagini caricate contemporaneamente
+                val visibleItems = remember {
+                    derivedStateOf {
+                        val layoutInfo = gridState.layoutInfo
+                        val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+                        // Prendi i primi 10 indici visibili
+                        visibleIndices.take(10).toSet()
+                    }
+                }
+                
                 Box(modifier = Modifier.fillMaxSize().padding(padding)) {
                     LazyVerticalGrid(
                         state = gridState,
@@ -128,10 +144,13 @@ fun PlatformRomsScreen(
                         horizontalArrangement = Arrangement.spacedBy(12.dp),
                         verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        items(romsForPlatform!!, key = { it.slug }) { rom ->
+                        items(romsForPlatform!!.size, key = { romsForPlatform!![it].slug }) { index ->
+                            val rom = romsForPlatform!![index]
+                            val shouldLoad = visibleItems.value.contains(index)
                             RomCard(
                                 rom = rom,
-                                onClick = { onNavigateToRomDetail(rom.slug) }
+                                onClick = { onNavigateToRomDetail(rom.slug) },
+                                shouldLoadImage = shouldLoad
                             )
                         }
                         

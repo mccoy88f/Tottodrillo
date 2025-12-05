@@ -11,6 +11,7 @@ import com.tottodrillo.data.remote.SearchRequestBody
 import com.tottodrillo.data.remote.SourceApiAdapter
 import com.tottodrillo.data.remote.SourceExecutor
 import com.tottodrillo.data.remote.extractData
+import com.tottodrillo.data.remote.getUserMessage
 import com.tottodrillo.data.remote.safeApiCall
 import com.tottodrillo.di.NetworkModule
 import com.google.gson.Gson
@@ -105,9 +106,12 @@ class RomRepositoryImpl @Inject constructor(
                                 gson
                             )
                             
+                            val platformsList = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList()
+                            android.util.Log.d("RomRepositoryImpl", "🔍 Ricerca in sorgente ${source.id}: query='${filters.query}', platforms=$platformsList, page=$page")
+                            
                             val result = executor.searchRoms(
                                 searchKey = filters.query.takeIf { it.isNotEmpty() },
-                                platforms = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList(),
+                                platforms = platformsList,
                                 regions = filters.selectedRegions.takeIf { it.isNotEmpty() } ?: emptyList(),
                                 maxResults = 50,
                                 page = page
@@ -115,12 +119,13 @@ class RomRepositoryImpl @Inject constructor(
                             
                             result.fold(
                                 onSuccess = { searchResults ->
+                                    android.util.Log.d("RomRepositoryImpl", "✅ Sorgente ${source.id}: ${searchResults.results.size} risultati trovati")
                                     searchResults.results.map { entry ->
                                         entry?.toDomain(sourceId = source.id)
                                     }
                                 },
                                 onFailure = {
-                                    android.util.Log.e("RomRepositoryImpl", "Errore ricerca in sorgente ${source.id}", it)
+                                    android.util.Log.e("RomRepositoryImpl", "❌ Errore ricerca in sorgente ${source.id}", it)
                                     emptyList()
                                 }
                             )
@@ -274,11 +279,24 @@ class RomRepositoryImpl @Inject constructor(
         page: Int,
         limit: Int
     ): NetworkResult<List<Rom>> {
+        android.util.Log.d("RomRepositoryImpl", "🔍 getRomsByPlatform: platform=$platform, page=$page, limit=$limit")
         // Usa searchRoms con filtro piattaforma (stesso codice di aggregazione)
-        return searchRoms(
+        val result = searchRoms(
             filters = SearchFilters(selectedPlatforms = listOf(platform)),
             page = page
         )
+        when (result) {
+            is NetworkResult.Success -> {
+                android.util.Log.d("RomRepositoryImpl", "✅ getRomsByPlatform success: ${result.data.size} ROM trovate")
+            }
+            is NetworkResult.Error -> {
+                android.util.Log.e("RomRepositoryImpl", "❌ getRomsByPlatform error: ${result.exception.getUserMessage()}")
+            }
+            is NetworkResult.Loading -> {
+                android.util.Log.d("RomRepositoryImpl", "⏳ getRomsByPlatform loading...")
+            }
+        }
+        return result
     }
 
     override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {

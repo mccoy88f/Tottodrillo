@@ -280,6 +280,16 @@ private fun SearchResults(
     gridState: androidx.compose.foundation.lazy.grid.LazyGridState,
     modifier: Modifier = Modifier
 ) {
+    // Calcola quali ROM sono visibili e limita a 10 immagini caricate contemporaneamente
+    val visibleItems = remember {
+        derivedStateOf {
+            val layoutInfo = gridState.layoutInfo
+            val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+            // Prendi i primi 10 indici visibili
+            visibleIndices.take(10).toSet()
+        }
+    }
+    
     Box(modifier = modifier) {
         LazyVerticalGrid(
             columns = GridCells.Adaptive(180.dp),
@@ -292,10 +302,13 @@ private fun SearchResults(
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(results, key = { it.slug }) { rom ->
+            items(results.size, key = { results[it].slug }) { index ->
+                val rom = results[index]
+                val shouldLoad = visibleItems.value.contains(index)
                 RomCard(
                     rom = rom,
-                    onClick = { onRomClick(rom.slug) }
+                    onClick = { onRomClick(rom.slug) },
+                    shouldLoadImage = shouldLoad
                 )
             }
 

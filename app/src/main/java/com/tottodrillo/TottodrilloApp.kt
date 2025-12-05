@@ -123,44 +123,41 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
             var newRequest = request
             
             // Controlla se questa è una richiesta di immagine che richiede Referer
-            // Usa try-catch per gestire il caso in cui SourceManager non sia ancora inizializzato
+            // L'interceptor è completamente generico e si basa solo sulla configurazione della sorgente
+            // (imageRefererPattern nel source.json), senza logica hardcoded per sorgenti specifiche
             try {
                 if (::sourceManager.isInitialized) {
                     val installedSources = kotlinx.coroutines.runBlocking {
                         sourceManager.getInstalledSources()
                     }
                     
+                    // Prova ogni sorgente installata per vedere se ha un pattern Referer configurato
                     for (source in installedSources) {
                         val metadata = kotlinx.coroutines.runBlocking {
                             sourceManager.getSourceMetadata(source.id)
                         }
                         
                         val refererPattern = metadata?.imageRefererPattern
-                        if (refererPattern != null) {
-                            // Verifica se l'URL corrisponde a questa sorgente (controlla host o pattern)
-                            val sourceHost = metadata.baseUrl?.let { baseUrl ->
-                                try { 
-                                    baseUrl.toHttpUrl().host
-                                } catch (e: Exception) { 
-                                    null 
-                                }
-                            }
+                        if (refererPattern != null && refererPattern.contains("{id}")) {
+                            // Estrai l'ID dall'URL dell'immagine in vari modi possibili:
+                            // 1. Query parameter "id" (es. ?id=123)
+                            // 2. Ultimo segmento del path se è numerico (es. /image/123)
+                            // 3. Parte finale dell'URL prima dei query params se è numerica
+                            val imageId = url.queryParameter("id") 
+                                ?: url.pathSegments.lastOrNull()?.takeIf { it.matches(Regex("\\d+")) }
+                                ?: url.toString()
+                                    .substringAfterLast("/")
+                                    .substringBefore("?")
+                                    .takeIf { it.matches(Regex("\\d+")) }
                             
-                            if (sourceHost != null && sourceHost.isNotBlank() && url.host.contains(sourceHost, ignoreCase = true)) {
-                                // Estrai l'ID dall'URL dell'immagine (cerca pattern comuni come ?id=, /id/, etc.)
-                                val imageId = url.queryParameter("id") 
-                                    ?: url.pathSegments.lastOrNull()
-                                    ?: url.toString().substringAfterLast("/").substringBefore("?")
-                                
-                                if (imageId != null && imageId.isNotBlank()) {
-                                    // Sostituisci {id} nel pattern con l'ID reale
-                                    val refererUrl = refererPattern.replace("{id}", imageId)
-                                    newRequest = request.newBuilder()
-                                        .header("Referer", refererUrl)
-                                        .build()
-                                    android.util.Log.d("TottodrilloApp", "Aggiunto Referer per ${source.id}: $refererUrl")
-                                    break
-                                }
+                            if (imageId != null && imageId.isNotBlank()) {
+                                // Sostituisci {id} nel pattern con l'ID estratto
+                                val refererUrl = refererPattern.replace("{id}", imageId)
+                                newRequest = request.newBuilder()
+                                    .header("Referer", refererUrl)
+                                    .build()
+                                android.util.Log.d("TottodrilloApp", "Aggiunto Referer per ${source.id}: $refererUrl")
+                                break // Usa la prima sorgente che corrisponde
                             }
                         }
                     }

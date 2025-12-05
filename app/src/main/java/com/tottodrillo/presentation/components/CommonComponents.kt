@@ -45,6 +45,7 @@ fun RomCard(
     rom: Rom,
     onClick: () -> Unit,
     onFavoriteClick: (() -> Unit)? = null,
+    shouldLoadImage: Boolean = true, // Controlla se caricare l'immagine (per lazy loading)
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -65,35 +66,52 @@ fun RomCard(
                     .aspectRatio(0.75f),
                 contentAlignment = Alignment.Center
             ) {
-                SubcomposeAsyncImage(
-                    model = rom.coverUrl,
-                    contentDescription = rom.title,
-                    modifier = Modifier.fillMaxSize(),
-                    contentScale = ContentScale.Fit, // Centra l'immagine mantenendo le proporzioni
-                    loading = {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                if (shouldLoadImage && rom.coverUrl != null) {
+                    SubcomposeAsyncImage(
+                        model = rom.coverUrl,
+                        contentDescription = rom.title,
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Fit, // Centra l'immagine mantenendo le proporzioni
+                        loading = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                            }
+                        },
+                        error = {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.BrokenImage,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
-                    },
-                    error = {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .background(MaterialTheme.colorScheme.surfaceVariant),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.BrokenImage,
-                                contentDescription = null,
-                                modifier = Modifier.size(48.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                    )
+                } else {
+                    // Placeholder quando l'immagine non deve essere caricata
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BrokenImage,
+                            contentDescription = null,
+                            modifier = Modifier.size(48.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.3f)
+                        )
                     }
-                )
+                }
 
                 // Favorite button
                 if (onFavoriteClick != null) {
