@@ -26,19 +26,19 @@ class PlatformManager @Inject constructor(
     
     private val gson = Gson()
     private var platformsCache: List<PlatformInfo>? = null
-    private var sourceMapping: Map<String, List<String>>? = null // mother_code -> lista codici CrocDB
+    private var sourceMappingCache: Map<String, Map<String, List<String>>>? = null // source_name -> (mother_code -> lista codici)
     
     companion object {
         // I file sono nella root del progetto, li leggiamo dalle assets
         private const val PLATFORMS_MAIN_FILE = "platforms_main.json"
-        private const val SOURCE_SETTING_FILE = "sources/crocdb.sourcesetting"
+        private const val DEFAULT_SOURCE = "crocdb" // Sorgente predefinita
     }
     
     /**
      * Carica tutte le piattaforme dal file platforms_main.json
-     * e le mappa con crocdb.sourcesetting per ottenere i codici CrocDB
+     * I mapping delle sorgenti sono ora integrati direttamente nel file JSON
      */
-    suspend fun loadPlatforms(): List<PlatformInfo> = withContext(Dispatchers.IO) {
+    suspend fun loadPlatforms(sourceName: String = DEFAULT_SOURCE): List<PlatformInfo> = withContext(Dispatchers.IO) {
         // Usa cache se disponibile
         platformsCache?.let { return@withContext it }
         
@@ -46,33 +46,33 @@ class PlatformManager @Inject constructor(
             // Carica platforms_main.json
             val platformsMain = loadPlatformsMain()
             
-            // Carica crocdb.sourcesetting
-            val sourceMapping = loadSourceMapping()
+            // Crea il mapping delle sorgenti per accesso rapido
+            val sourceMapping = buildSourceMapping(platformsMain.platforms)
+            sourceMappingCache = sourceMapping
             
-            // Mappa le piattaforme madre a PlatformInfo con codici CrocDB
+            // Mappa le piattaforme madre a PlatformInfo usando i dati locali
             val platforms = platformsMain.platforms.mapNotNull { motherPlatform ->
-                // Trova i codici CrocDB corrispondenti al mother_code
-                val crocdbCodes = sourceMapping[motherPlatform.motherCode] ?: emptyList()
+                // Trova i codici per la sorgente specificata
+                val sourceCodes = motherPlatform.sourceMappings[sourceName] ?: emptyList()
                 
-                // Se non c'è mapping, salta questa piattaforma (non è disponibile su CrocDB)
-                if (crocdbCodes.isEmpty()) {
+                // Se non c'è mapping per questa sorgente, salta questa piattaforma
+                if (sourceCodes.isEmpty()) {
                     null
                 } else {
-                    // Crea una PlatformInfo per ogni codice CrocDB
+                    // Crea una PlatformInfo per ogni codice sorgente
                     // Per ora creiamo solo la prima, ma potremmo crearne multiple
-                    val crocdbCode = crocdbCodes.first()
+                    val sourceCode = sourceCodes.first()
                     PlatformInfo(
-                        code = crocdbCode, // Codice CrocDB per le query API
-                        displayName = motherPlatform.name ?: motherPlatform.motherCode,
-                        manufacturer = motherPlatform.brand,
-                        imagePath = motherPlatform.image,
-                        description = motherPlatform.description
+                        code = sourceCode, // Codice sorgente per le query API
+                        displayName = motherPlatform.name ?: motherPlatform.motherCode, // Usa nome locale
+                        manufacturer = motherPlatform.brand, // Usa brand locale
+                        imagePath = motherPlatform.image, // Usa immagine locale
+                        description = motherPlatform.description // Usa descrizione locale
                     )
                 }
             }
             
             platformsCache = platforms
-            this@PlatformManager.sourceMapping = sourceMapping
             platforms
         } catch (e: Exception) {
             android.util.Log.e("PlatformManager", "Errore nel caricamento piattaforme", e)
@@ -95,73 +95,93 @@ class PlatformManager @Inject constructor(
     }
     
     /**
-     * Carica crocdb.sourcesetting dalle assets e crea il mapping mother_code -> codici CrocDB
+     * Costruisce il mapping delle sorgenti dalle piattaforme caricate
+     * Ritorna: source_name -> (mother_code -> lista codici)
      */
-    private suspend fun loadSourceMapping(): Map<String, List<String>> = withContext(Dispatchers.IO) {
-        try {
-            val inputStream = context.assets.open(SOURCE_SETTING_FILE)
-            val json = inputStream.bufferedReader().use { it.readText() }
-            val sourceSetting = gson.fromJson(json, SourceSetting::class.java)
-            
-            // Estrai il mapping per CrocDB
-            val crocdbConfig = sourceSetting.sources["crocdb"]
-                ?: throw IllegalStateException("Configurazione CrocDB non trovata")
-            
-            // Converte il mapping in Map<String, List<String>>
-            // Il mapping può contenere String o List<String>
-            val mapping = mutableMapOf<String, List<String>>()
-            
-            crocdbConfig.mapping.forEach { (motherCode, crocdbValue) ->
-                val crocdbCodes = when (crocdbValue) {
-                    is String -> listOf(crocdbValue)
-                    is List<*> -> crocdbValue.filterIsInstance<String>()
-                    else -> emptyList()
-                }
-                if (crocdbCodes.isNotEmpty()) {
-                    mapping[motherCode] = crocdbCodes
+    private fun buildSourceMapping(platforms: List<MotherPlatform>): Map<String, Map<String, List<String>>> {
+        val mapping = mutableMapOf<String, MutableMap<String, List<String>>>()
+        
+        platforms.forEach { platform ->
+            platform.sourceMappings.forEach { (sourceName, codes) ->
+                if (codes.isNotEmpty()) {
+                    val sourceMap = mapping.getOrPut(sourceName) { mutableMapOf() }
+                    sourceMap[platform.motherCode] = codes
                 }
             }
-            
-            mapping
-        } catch (e: Exception) {
-            android.util.Log.e("PlatformManager", "Errore nel caricamento crocdb.sourcesetting", e)
-            throw e
         }
+        
+        return mapping
     }
     
     /**
-     * Ottiene il codice CrocDB per un mother_code
+     * Ottiene il codice sorgente per un mother_code
      */
-    suspend fun getCrocdbCode(motherCode: String): String? {
-        val mapping = sourceMapping ?: loadSourceMapping()
-        return mapping[motherCode]?.firstOrNull()
+    suspend fun getSourceCode(motherCode: String, sourceName: String = DEFAULT_SOURCE): String? {
+        val mapping = sourceMappingCache ?: run {
+            val platformsMain = loadPlatformsMain()
+            buildSourceMapping(platformsMain.platforms)
+        }
+        return mapping[sourceName]?.get(motherCode)?.firstOrNull()
     }
     
     /**
-     * Ottiene tutti i codici CrocDB per un mother_code (può essere multiplo)
+     * Ottiene tutti i codici sorgente per un mother_code (può essere multiplo)
      */
-    suspend fun getCrocdbCodes(motherCode: String): List<String> {
-        val mapping = sourceMapping ?: loadSourceMapping()
-        return mapping[motherCode] ?: emptyList()
+    suspend fun getSourceCodes(motherCode: String, sourceName: String = DEFAULT_SOURCE): List<String> {
+        val mapping = sourceMappingCache ?: run {
+            val platformsMain = loadPlatformsMain()
+            buildSourceMapping(platformsMain.platforms)
+        }
+        return mapping[sourceName]?.get(motherCode) ?: emptyList()
     }
     
     /**
-     * Ottiene il mother_code da un codice CrocDB (reverse lookup)
+     * Ottiene il mother_code da un codice sorgente (reverse lookup)
      */
-    suspend fun getMotherCodeFromCrocDbCode(crocDbCode: String): String? {
-        val mapping = sourceMapping ?: loadSourceMapping()
-        // Cerca il mother_code che contiene questo codice CrocDB
-        return mapping.entries.firstOrNull { entry ->
-            entry.value.contains(crocDbCode)
+    suspend fun getMotherCodeFromSourceCode(sourceCode: String, sourceName: String = DEFAULT_SOURCE): String? {
+        val mapping = sourceMappingCache ?: run {
+            val platformsMain = loadPlatformsMain()
+            buildSourceMapping(platformsMain.platforms)
+        }
+        // Cerca il mother_code che contiene questo codice sorgente
+        return mapping[sourceName]?.entries?.firstOrNull { entry ->
+            entry.value.contains(sourceCode)
         }?.key
     }
+    
+    /**
+     * Metodi di compatibilità per CrocDB (deprecati, usa i metodi generici)
+     */
+    @Deprecated("Usa getSourceCode invece", ReplaceWith("getSourceCode(motherCode, \"crocdb\")"))
+    suspend fun getCrocdbCode(motherCode: String): String? = getSourceCode(motherCode, "crocdb")
+    
+    @Deprecated("Usa getSourceCodes invece", ReplaceWith("getSourceCodes(motherCode, \"crocdb\")"))
+    suspend fun getCrocdbCodes(motherCode: String): List<String> = getSourceCodes(motherCode, "crocdb")
+    
+    @Deprecated("Usa getMotherCodeFromSourceCode invece", ReplaceWith("getMotherCodeFromSourceCode(crocDbCode, \"crocdb\")"))
+    suspend fun getMotherCodeFromCrocDbCode(crocDbCode: String): String? = getMotherCodeFromSourceCode(crocDbCode, "crocdb")
     
     /**
      * Pulisce la cache
      */
     fun clearCache() {
         platformsCache = null
-        sourceMapping = null
+        sourceMappingCache = null
+    }
+    
+    /**
+     * Ottiene tutte le sorgenti disponibili dalle piattaforme caricate
+     */
+    suspend fun getAvailableSources(): Set<String> = withContext(Dispatchers.IO) {
+        try {
+            val platformsMain = loadPlatformsMain()
+            platformsMain.platforms
+                .flatMap { it.sourceMappings.keys }
+                .toSet()
+        } catch (e: Exception) {
+            android.util.Log.e("PlatformManager", "Errore nel recupero sorgenti disponibili", e)
+            emptySet()
+        }
     }
 }
 

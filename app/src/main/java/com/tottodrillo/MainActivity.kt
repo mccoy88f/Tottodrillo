@@ -26,6 +26,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
 import androidx.compose.ui.platform.LocalContext
 import com.tottodrillo.presentation.components.StoragePermissionDialog
 import androidx.core.content.ContextCompat
@@ -43,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import java.io.File
 import javax.inject.Inject
 
 /**
@@ -59,6 +63,9 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var configRepository: DownloadConfigRepository
+    
+    @Inject
+    lateinit var sourceManager: com.tottodrillo.domain.manager.SourceManager
     
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -92,6 +99,49 @@ class MainActivity : ComponentActivity() {
 
     private var pendingExtraction: Triple<String, String, String>? = null // archivePath, romTitle, romSlug
 
+    // Callback per notificare quando una sorgente viene installata
+    private var onSourceInstalled: (() -> Unit)? = null
+
+    private val installSourceLauncher =
+        registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let {
+                android.util.Log.d("MainActivity", "📦 File sorgente selezionato: $uri")
+                activityScope.launch {
+                    try {
+                        // Copia il file nella cache temporanea
+                        val tempFile = File(this@MainActivity.cacheDir, "source_install_${System.currentTimeMillis()}.zip")
+                        this@MainActivity.contentResolver.openInputStream(uri)?.use { input ->
+                            tempFile.outputStream().use { output ->
+                                input.copyTo(output)
+                            }
+                        }
+                        
+                        // Installa la sorgente
+                        val installer = com.tottodrillo.domain.manager.SourceInstaller(
+                            this@MainActivity,
+                            sourceManager
+                        )
+                        val result = installer.installFromZip(tempFile)
+                        result.fold(
+                            onSuccess = { metadata ->
+                                android.util.Log.d("MainActivity", "✅ Sorgente installata: ${metadata.name}")
+                                // Notifica che una sorgente è stata installata
+                                onSourceInstalled?.invoke()
+                            },
+                            onFailure = { error ->
+                                android.util.Log.e("MainActivity", "❌ Errore installazione sorgente", error)
+                            }
+                        )
+                        
+                        // Pulisci file temporaneo
+                        tempFile.delete()
+                    } catch (e: Exception) {
+                        android.util.Log.e("MainActivity", "Errore nell'installazione sorgente", e)
+                    }
+                }
+            }
+        }
+    
     private val openExtractionFolderLauncher =
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             val (archivePath, romTitle, romSlug) = pendingExtraction ?: return@registerForActivityResult
@@ -146,11 +196,94 @@ class MainActivity : ComponentActivity() {
                     }
                 )
                 
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    TottodrilloNavGraph(
+                // Controlla se ci sono sorgenti abilitate (non solo installate)
+                var hasEnabledSources by remember { mutableStateOf<Boolean?>(null) }
+                var refreshTrigger by remember { mutableStateOf(0) }
+                var homeRefreshTrigger by remember { mutableStateOf(0) }
+                
+                // Imposta il callback per aggiornare lo stato quando viene installata una sorgente
+                LaunchedEffect(Unit) {
+                    onSourceInstalled = {
+                        refreshTrigger++
+                    }
+                }
+                
+                // Ricarica lo stato delle sorgenti quando cambia refreshTrigger o all'avvio
+                LaunchedEffect(refreshTrigger) {
+                    // Delay per assicurarsi che le modifiche siano state salvate su disco
+                    if (refreshTrigger > 0) {
+                        kotlinx.coroutines.delay(500) // Delay più lungo per assicurarsi che il salvataggio sia completato
+                    }
+                    val hasInstalled = sourceManager.hasInstalledSources()
+                    val hasEnabled = if (hasInstalled) {
+                        sourceManager.hasEnabledSources()
+                    } else {
+                        false
+                    }
+                    val previousState = hasEnabledSources
+                    hasEnabledSources = hasEnabled
+                    android.util.Log.d("MainActivity", "🔍 Stato sorgenti: installed=$hasInstalled, enabled=$hasEnabled, refreshTrigger=$refreshTrigger, previous=$previousState")
+                    
+                    // Se lo stato è cambiato (qualsiasi cambiamento), forza sempre il refresh della home
+                    if (previousState != null && previousState != hasEnabled) {
+                        homeRefreshTrigger++
+                        android.util.Log.d("MainActivity", "🔄 Stato cambiato da $previousState a $hasEnabled, forzo refresh home: homeRefreshTrigger=$homeRefreshTrigger")
+                    } else if (refreshTrigger > 0) {
+                        // Anche se lo stato non è cambiato, se c'è stato un trigger, forza comunque il refresh
+                        // (per assicurarsi che la home si aggiorni dopo attivazione/disattivazione)
+                        homeRefreshTrigger++
+                        android.util.Log.d("MainActivity", "🔄 Trigger ricevuto, forzo refresh home anche se stato non cambiato: homeRefreshTrigger=$homeRefreshTrigger")
+                    }
+                }
+                
+                when {
+                    hasEnabledSources == false -> {
+                        // Stato per mostrare le impostazioni quando necessario
+                        var showSettings by remember { mutableStateOf(false) }
+                        
+                        if (showSettings) {
+                            // Mostra direttamente la schermata delle impostazioni
+                            com.tottodrillo.presentation.settings.DownloadSettingsScreen(
+                                onNavigateBack = { showSettings = false },
+                                onSelectFolder = { openDownloadFolderLauncher.launch(null) },
+                                onSelectEsDeFolder = { openEsDeFolderLauncher.launch(null) },
+                                onRequestStoragePermission = {
+                                    StoragePermissionManager.requestManageExternalStoragePermission(this@MainActivity)
+                                },
+                                onInstallSource = {
+                                    installSourceLauncher.launch("application/zip")
+                                },
+                                onSourcesChanged = {
+                                    // Quando cambiano le sorgenti, ricontrolla lo stato
+                                    android.util.Log.d("MainActivity", "🔄 onSourcesChanged da DownloadSettingsScreen (no enabled), incremento refreshTrigger")
+                                    refreshTrigger++
+                                }
+                            )
+                        } else {
+                            // Mostra schermata "Nessuna sorgente abilitata"
+                            com.tottodrillo.presentation.sources.NoEnabledSourcesScreen(
+                                onNavigateToSettings = {
+                                    showSettings = true
+                                }
+                            )
+                        }
+                    }
+                    hasEnabledSources == null -> {
+                        // Loading - mostra schermata normale (verrà aggiornata)
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            // Mostra loading o app normale
+                        }
+                    }
+                    hasEnabledSources == true -> {
+                        // Mostra app normale
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            TottodrilloNavGraph(
                         initialRomSlug = pendingRomSlug,
                         onOpenDownloadFolderPicker = {
                             openDownloadFolderLauncher.launch(null)
@@ -161,6 +294,22 @@ class MainActivity : ComponentActivity() {
                         onRequestStoragePermission = {
                             StoragePermissionManager.requestManageExternalStoragePermission(this@MainActivity)
                         },
+                        onInstallSource = {
+                            installSourceLauncher.launch("application/zip")
+                        },
+                        onSourcesStateChanged = {
+                            // Incrementa il trigger per ricontrollare lo stato delle sorgenti
+                            android.util.Log.d("MainActivity", "🔄 onSourcesStateChanged chiamato, incremento refreshTrigger")
+                            refreshTrigger++
+                            android.util.Log.d("MainActivity", "🔄 refreshTrigger incrementato a $refreshTrigger")
+                        },
+                        onHomeRefresh = {
+                            // Incrementa il trigger per forzare il refresh della home
+                            android.util.Log.d("MainActivity", "🔄 onHomeRefresh chiamato, incremento homeRefreshTrigger")
+                            homeRefreshTrigger++
+                            android.util.Log.d("MainActivity", "🔄 homeRefreshTrigger incrementato a $homeRefreshTrigger")
+                        },
+                        homeRefreshKey = homeRefreshTrigger,
                         onRequestExtraction = { archivePath, romTitle, romSlug, platformCode ->
                             // Controlla se ES-DE è abilitato
                             activityScope.launch {
@@ -170,7 +319,7 @@ class MainActivity : ComponentActivity() {
                                     
                                     if (config.enableEsDeCompatibility && !config.esDeRomsPath.isNullOrBlank()) {
                                         // Usa automaticamente la cartella ES-DE
-                                        val motherCode = platformManager.getMotherCodeFromCrocDbCode(platformCode)
+                                        val motherCode = platformManager.getMotherCodeFromSourceCode(platformCode, "crocdb")
                                         android.util.Log.d("MainActivity", "🔍 Platform code: $platformCode -> Mother code: $motherCode")
                                         
                                         if (motherCode != null) {
@@ -197,6 +346,17 @@ class MainActivity : ComponentActivity() {
                             }
                         }
                     )
+                        }
+                    }
+                    else -> {
+                        // Loading
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background
+                        ) {
+                            // Mostra loading mentre verifica sorgenti
+                        }
+                    }
                 }
             }
         }

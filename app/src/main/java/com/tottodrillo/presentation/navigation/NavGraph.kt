@@ -8,7 +8,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -42,6 +44,8 @@ sealed class Screen(val route: String) {
     }
     data object Explore : Screen("explore")
     data object Settings : Screen("settings")
+    data object Sources : Screen("sources")
+    data object NoSources : Screen("no_sources")
     data object RomDetail : Screen("rom_detail/{romSlug}") {
         fun createRoute(romSlug: String) = "rom_detail/$romSlug"
     }
@@ -84,7 +88,11 @@ fun TottodrilloNavGraph(
     onOpenDownloadFolderPicker: () -> Unit = {},
     onOpenEsDeFolderPicker: () -> Unit = {},
     onRequestStoragePermission: () -> Unit = {},
-    onRequestExtraction: (String, String, String, String) -> Unit = { _, _, _, _ -> } // archivePath, romTitle, romSlug, platformCode
+    onRequestExtraction: (String, String, String, String) -> Unit = { _, _, _, _ -> }, // archivePath, romTitle, romSlug, platformCode
+    onInstallSource: () -> Unit = {},
+    onSourcesStateChanged: () -> Unit = {},
+    onHomeRefresh: () -> Unit = {},
+    homeRefreshKey: Int = 0
 ) {
     var showFilters by remember { mutableStateOf(false) }
     
@@ -108,7 +116,29 @@ fun TottodrilloNavGraph(
         startDestination = startDestination
     ) {
         composable(Screen.Home.route) {
+            // Key per forzare il refresh della home quando cambiano le sorgenti
+            // Usa direttamente homeRefreshKey passato da MainActivity
+            var localHomeRefreshKey by remember { mutableStateOf(0) }
+            
+            // Incrementa la key quando si naviga alla home
+            LaunchedEffect(navController.currentBackStackEntry?.id) {
+                localHomeRefreshKey++
+            }
+            
+            // Incrementa la key quando cambia homeRefreshKey (passato da MainActivity)
+            // Questo viene triggerato quando si attiva/disattiva una sorgente
+            LaunchedEffect(homeRefreshKey) {
+                if (homeRefreshKey > 0) {
+                    // Usa sempre il valore più alto per assicurarsi che il refresh venga sempre fatto
+                    if (homeRefreshKey > localHomeRefreshKey) {
+                        localHomeRefreshKey = homeRefreshKey
+                        android.util.Log.d("NavGraph", "🔄 homeRefreshKey cambiato a $homeRefreshKey, aggiorno localHomeRefreshKey a $localHomeRefreshKey")
+                    }
+                }
+            }
+            
             HomeScreen(
+                refreshKey = localHomeRefreshKey,
                 onNavigateToSearch = {
                     navController.navigate(Screen.Search.route)
                 },
@@ -198,8 +228,18 @@ fun TottodrilloNavGraph(
         }
 
         composable(Screen.Settings.route) {
+            val scope = rememberCoroutineScope()
+            
             DownloadSettingsScreen(
-                onNavigateBack = { navController.safePopBackStack() },
+                onNavigateBack = { 
+                    // Notifica che si sta tornando indietro (potrebbero essere cambiate le sorgenti)
+                    // Delay per assicurarsi che le modifiche siano state salvate su disco
+                    scope.launch {
+                        kotlinx.coroutines.delay(500)
+                        onSourcesStateChanged()
+                    }
+                    navController.safePopBackStack() 
+                },
                 onSelectFolder = {
                     onOpenDownloadFolderPicker()
                 },
@@ -208,6 +248,24 @@ fun TottodrilloNavGraph(
                 },
                 onRequestStoragePermission = {
                     onRequestStoragePermission()
+                },
+                onInstallSource = {
+                    onInstallSource()
+                },
+                onSourcesChanged = {
+                    // Notifica immediatamente quando cambiano le sorgenti
+                    // Questo viene chiamato quando si attiva/disattiva una sorgente
+                    android.util.Log.d("NavGraph", "🔄 onSourcesChanged ricevuto, avvio coroutine")
+                    scope.launch {
+                        // Delay più lungo per assicurarsi che il salvataggio sia completato
+                        kotlinx.coroutines.delay(500)
+                        android.util.Log.d("NavGraph", "🔄 onSourcesChanged chiamato, notifico cambio stato")
+                        onSourcesStateChanged() // Ricontrolla lo stato delle sorgenti
+                        // Forza anche il refresh della home
+                        android.util.Log.d("NavGraph", "🔄 Chiamo onHomeRefresh()")
+                        onHomeRefresh() // Incrementa homeRefreshTrigger
+                        android.util.Log.d("NavGraph", "🔄 Sorgenti cambiate, forzo refresh home")
+                    }
                 }
             )
         }

@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -31,6 +32,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Folder
 import androidx.compose.material.icons.filled.Link
@@ -64,6 +66,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tottodrillo.R
 import com.tottodrillo.presentation.downloads.DownloadsViewModel
+import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
+import dagger.hilt.android.EntryPointAccessors
+import dagger.hilt.android.components.ActivityComponent
 
 /**
  * Schermata impostazioni download
@@ -75,11 +80,30 @@ fun DownloadSettingsScreen(
     onSelectFolder: () -> Unit,
     onSelectEsDeFolder: () -> Unit = {},
     onRequestStoragePermission: () -> Unit = {},
+    onInstallSource: () -> Unit = {},
+    onSourcesChanged: () -> Unit = {},
     viewModel: DownloadsViewModel = hiltViewModel()
 ) {
     val config by viewModel.downloadConfig.collectAsState()
     val showClearHistoryDialog by viewModel.showClearHistoryDialog.collectAsState()
     val context = LocalContext.current
+    
+    // Ottieni SourceManager tramite EntryPoint
+    val sourceManager = remember {
+        try {
+            val activity = context as? androidx.activity.ComponentActivity
+            if (activity != null) {
+                EntryPointAccessors.fromActivity(
+                    activity,
+                    SourceManagerEntryPoint::class.java
+                ).sourceManager()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
 
     // Dialog di conferma per cancellare storico
     if (showClearHistoryDialog) {
@@ -456,31 +480,69 @@ fun DownloadSettingsScreen(
             
             Spacer(modifier = Modifier.height(12.dp))
             
-            // Sorgente crocdb.net (sempre attiva)
-            Row(
+            // Pulsante per installare nuove sorgenti
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                    .clickable(onClick = onInstallSource),
+                shape = RoundedCornerShape(12.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
+                )
             ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = "crocdb.net",
-                        style = MaterialTheme.typography.bodyLarge,
-                        fontWeight = FontWeight.Medium
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Add,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
+                    Spacer(modifier = Modifier.width(8.dp))
                     Text(
-                        text = stringResource(R.string.settings_main_source),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                        text = stringResource(R.string.sources_install_new),
+                        style = MaterialTheme.typography.bodyLarge,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer
                     )
                 }
-                Switch(
-                    checked = true,
-                    onCheckedChange = null, // Non disattivabile
-                    enabled = false
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Lista sorgenti installate
+            sourceManager?.let {
+                var refreshTrigger by remember { mutableStateOf(0) }
+                
+                SourcesListSection(
+                    sourceManager = it,
+                    onSourcesChanged = {
+                        // Notifica che le sorgenti sono cambiate
+                        android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged ricevuto da SourcesListSection")
+                        refreshTrigger++
+                        // Notifica anche MainActivity che le sorgenti sono cambiate
+                        android.util.Log.d("DownloadSettingsScreen", "🔄 Chiamo onSourcesChanged() callback")
+                        onSourcesChanged()
+                        android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged() callback chiamato")
+                    }
+                )
+                
+                // Ricarica la lista quando cambiano le sorgenti
+                LaunchedEffect(refreshTrigger) {
+                    if (refreshTrigger > 0) {
+                        // Le sorgenti sono cambiate, ricarica la lista
+                        kotlinx.coroutines.delay(100) // Piccolo delay per assicurarsi che il cambio sia stato salvato
+                    }
+                }
+            } ?: run {
+                Text(
+                    text = stringResource(R.string.sources_list_error),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.error
                 )
             }
 

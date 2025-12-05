@@ -98,11 +98,19 @@ object NetworkModule {
             .build()
     }
 
+    /**
+     * @deprecated Usa SourceManager e SourceApiClient invece.
+     * Mantenuto solo per retrocompatibilità durante la migrazione.
+     */
     @Provides
     @Singleton
+    @Deprecated("Usa SourceManager invece", ReplaceWith("SourceManager"))
     fun provideApiService(
         retrofit: Retrofit
-    ): ApiService {
-        return retrofit.create(ApiService::class.java)
+    ): ApiService? {
+        // Ritorna null per forzare l'uso di sorgenti installabili
+        // Rimuovere completamente in una versione futura
+        return null
+        // return retrofit.create(ApiService::class.java)
     }
 }

@@ -8,8 +8,17 @@ import com.tottodrillo.data.remote.EntryRequestBody
 import com.tottodrillo.data.remote.ApiService
 import com.tottodrillo.data.remote.NetworkResult
 import com.tottodrillo.data.remote.SearchRequestBody
+import com.tottodrillo.data.remote.SourceApiAdapter
+import com.tottodrillo.data.remote.SourceExecutor
 import com.tottodrillo.data.remote.extractData
 import com.tottodrillo.data.remote.safeApiCall
+import com.tottodrillo.di.NetworkModule
+import com.google.gson.Gson
+import okhttp3.OkHttpClient
+import java.io.File
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.coroutineScope
 import com.tottodrillo.domain.model.PlatformInfo
 import com.tottodrillo.domain.model.RegionInfo
 import com.tottodrillo.domain.model.Rom
@@ -19,7 +28,6 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flow
-import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,10 +37,13 @@ import javax.inject.Singleton
  */
 @Singleton
 class RomRepositoryImpl @Inject constructor(
-    private val apiService: ApiService,
+    private val apiService: ApiService?, // Opzionale, deprecato - usa SourceManager invece
     @ApplicationContext private val context: Context,
     private val configRepository: DownloadConfigRepository,
-    private val platformManager: com.tottodrillo.domain.manager.PlatformManager
+    private val platformManager: com.tottodrillo.domain.manager.PlatformManager,
+    private val sourceManager: com.tottodrillo.domain.manager.SourceManager,
+    private val okHttpClient: OkHttpClient,
+    private val gson: Gson
 ) : RomRepository {
 
     // Cache in memoria per le piattaforme (evita chiamate ripetute)
@@ -57,29 +68,114 @@ class RomRepositoryImpl @Inject constructor(
         filters: SearchFilters,
         page: Int
     ): NetworkResult<List<Rom>> {
-        val requestBody = SearchRequestBody(
-            search_key = filters.query.takeIf { it.isNotEmpty() },
-            platforms = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList(),
-            regions = filters.selectedRegions.takeIf { it.isNotEmpty() } ?: emptyList(),
-            max_results = 50,
-            page = page
-        )
-
-        return when (val result = safeApiCall { apiService.searchRoms(requestBody) }.extractData()) {
-            is NetworkResult.Success -> {
-                val roms = result.data.results.map { it.toDomain() }
-                    .map { rom -> 
-                        // Arricchisci PlatformInfo con l'immagine
-                        val enrichedPlatform = enrichPlatformInfo(rom.platform)
-                        rom.copy(
-                            platform = enrichedPlatform,
-                            isFavorite = isFavorite(rom.slug)
-                        )
-                    }
-                NetworkResult.Success(roms)
+        // Verifica se ci sono sorgenti installate
+        val hasSources = sourceManager.hasInstalledSources()
+        if (!hasSources) {
+            return NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    "Nessuna sorgente installata. Installa almeno una sorgente per utilizzare l'app."
+                )
+            )
+        }
+        
+        return try {
+            // Ottieni tutte le sorgenti abilitate
+            val enabledSources = sourceManager.getEnabledSources()
+            if (enabledSources.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "Nessuna sorgente abilitata"
+                    )
+                )
             }
-            is NetworkResult.Error -> result
-            is NetworkResult.Loading -> result
+            
+            // Cerca in tutte le sorgenti in parallelo
+            val allRoms = coroutineScope {
+                enabledSources.map { source ->
+                    async {
+                        try {
+                            val sourceDir = File(source.installPath ?: return@async emptyList())
+                            val metadata = sourceManager.getSourceMetadata(source.id)
+                                ?: return@async emptyList()
+                            
+                            val executor = SourceExecutor.create(
+                                metadata,
+                                sourceDir,
+                                okHttpClient,
+                                gson
+                            )
+                            
+                            val result = executor.searchRoms(
+                                searchKey = filters.query.takeIf { it.isNotEmpty() },
+                                platforms = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList(),
+                                regions = filters.selectedRegions.takeIf { it.isNotEmpty() } ?: emptyList(),
+                                maxResults = 50,
+                                page = page
+                            )
+                            
+                            result.fold(
+                                onSuccess = { searchResults ->
+                                    searchResults.results.map { entry ->
+                                        entry.toDomain(sourceId = source.id)
+                                    }
+                                },
+                                onFailure = {
+                                    android.util.Log.e("RomRepositoryImpl", "Errore ricerca in sorgente ${source.id}", it)
+                                    emptyList()
+                                }
+                            )
+                        } catch (e: Exception) {
+                            android.util.Log.e("RomRepositoryImpl", "Errore ricerca in sorgente ${source.id}", e)
+                            emptyList()
+                        }
+                    }
+                }.awaitAll()
+            }.flatten()
+            
+            // Raggruppa ROM duplicate per slug e unisci i dati
+            val romsBySlug = allRoms.groupBy { it.slug }
+            
+            val enrichedRoms = romsBySlug.map { (slug, roms) ->
+                // Prendi la prima ROM come base (nome, immagine principale, sourceId)
+                val firstRom = roms.first()
+                
+                // Raccogli tutte le immagini (coverUrl) da tutte le ROM
+                val allCoverUrls = roms
+                    .mapNotNull { it.coverUrl }
+                    .distinct()
+                
+                // Unisci tutti i downloadLinks da tutte le ROM
+                val allDownloadLinks = roms
+                    .flatMap { it.downloadLinks }
+                    .distinctBy { it.url } // Rimuovi link duplicati (stesso URL)
+                
+                // Unisci tutte le regioni
+                val allRegions = roms
+                    .flatMap { it.regions }
+                    .distinctBy { it.code }
+                
+                // Arricchisci PlatformInfo
+                val enrichedPlatform = enrichPlatformInfo(firstRom.platform)
+                
+                firstRom.copy(
+                    platform = enrichedPlatform,
+                    coverUrl = allCoverUrls.firstOrNull(), // Prima immagine come principale
+                    coverUrls = allCoverUrls, // Tutte le immagini per il carosello
+                    downloadLinks = allDownloadLinks,
+                    regions = allRegions,
+                    isFavorite = isFavorite(slug),
+                    sourceId = firstRom.sourceId // SourceId della prima ROM
+                )
+            }
+            
+            NetworkResult.Success(enrichedRoms)
+        } catch (e: Exception) {
+            android.util.Log.e("RomRepositoryImpl", "Errore nella ricerca ROM", e)
+            NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    e.message ?: "Errore nella ricerca"
+                )
+            )
         }
     }
 
@@ -110,7 +206,23 @@ class RomRepositoryImpl @Inject constructor(
             return NetworkResult.Success(it) 
         }
 
-        return when (val result = safeApiCall { apiService.getRegions() }.extractData()) {
+        // Verifica se ci sono sorgenti installate
+        val hasSources = sourceManager.hasInstalledSources()
+        if (!hasSources) {
+            return NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    "Nessuna sorgente installata"
+                )
+            )
+        }
+        
+        val service = apiService ?: return NetworkResult.Error(
+            com.tottodrillo.data.remote.NetworkException.UnknownError(
+                "Nessuna sorgente configurata"
+            )
+        )
+        
+        return when (val result = safeApiCall { service.getRegions() }.extractData()) {
             is NetworkResult.Success<*> -> {
                 val data = result.data as com.tottodrillo.data.model.RegionsResponse
                 val regions = data.regions.map { it.toRegionInfo() }
@@ -127,47 +239,117 @@ class RomRepositoryImpl @Inject constructor(
         page: Int,
         limit: Int
     ): NetworkResult<List<Rom>> {
-        val requestBody = SearchRequestBody(
-            platforms = listOf(platform),
-            max_results = limit,
+        // Usa searchRoms con filtro piattaforma (stesso codice di aggregazione)
+        return searchRoms(
+            filters = SearchFilters(selectedPlatforms = listOf(platform)),
             page = page
         )
-
-        return when (val result = safeApiCall { apiService.searchRoms(requestBody) }.extractData()) {
-            is NetworkResult.Success -> {
-                val roms = result.data.results.map { it.toDomain() }
-                    .map { rom -> 
-                        // Arricchisci PlatformInfo con l'immagine
-                        val enrichedPlatform = enrichPlatformInfo(rom.platform)
-                        rom.copy(
-                            platform = enrichedPlatform,
-                            isFavorite = isFavorite(rom.slug)
-                        )
-                    }
-                NetworkResult.Success(roms)
-            }
-            is NetworkResult.Error -> result
-            is NetworkResult.Loading -> result
-        }
     }
 
     override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {
-        val requestBody = EntryRequestBody(slug = slug)
-
-        return when (val result = safeApiCall { apiService.getEntry(requestBody) }.extractData()) {
-            is NetworkResult.Success<*> -> {
-                val data = result.data as EntryResponse
-                val rom = data.entry.toDomain()
-                // Arricchisci PlatformInfo con l'immagine
-                val enrichedPlatform = enrichPlatformInfo(rom.platform)
-                val enrichedRom = rom.copy(
-                    platform = enrichedPlatform,
-                    isFavorite = isFavorite(data.entry.slug)
+        val hasSources = sourceManager.hasInstalledSources()
+        if (!hasSources) {
+            return NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    "Nessuna sorgente installata"
                 )
-                NetworkResult.Success(enrichedRom)
+            )
+        }
+        
+        return try {
+            // Cerca in tutte le sorgenti abilitate
+            val enabledSources = sourceManager.getEnabledSources()
+            if (enabledSources.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "Nessuna sorgente abilitata"
+                    )
+                )
             }
-            is NetworkResult.Error -> result
-            is NetworkResult.Loading -> NetworkResult.Loading
+            
+            // Cerca in parallelo in tutte le sorgenti
+            val results = coroutineScope {
+                enabledSources.map { source ->
+                    async {
+                        try {
+                            val sourceDir = File(source.installPath ?: return@async null)
+                            val metadata = sourceManager.getSourceMetadata(source.id)
+                                ?: return@async null
+                            
+                            val executor = SourceExecutor.create(
+                                metadata,
+                                sourceDir,
+                                okHttpClient,
+                                gson
+                            )
+                            
+                            val result = executor.getEntry(slug)
+                            result.fold(
+                                onSuccess = { entryResponse ->
+                                    entryResponse.entry.toDomain(sourceId = source.id)
+                                },
+                                onFailure = {
+                                    android.util.Log.e("RomRepositoryImpl", "Errore getEntry in sorgente ${source.id}", it)
+                                    null
+                                }
+                            )
+                        } catch (e: Exception) {
+                            android.util.Log.e("RomRepositoryImpl", "Errore getEntry in sorgente ${source.id}", e)
+                            null
+                        }
+                    }
+                }.awaitAll()
+            }
+            
+            // Filtra risultati nulli
+            val foundRoms = results.filterNotNull()
+            
+            if (foundRoms.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "ROM non trovata in nessuna sorgente"
+                    )
+                )
+            }
+            
+            // Se ci sono più ROM (da più sorgenti), uniscile
+            val firstRom = foundRoms.first()
+            
+            // Raccogli tutte le immagini (coverUrl) da tutte le ROM
+            val allCoverUrls = foundRoms
+                .mapNotNull { it.coverUrl }
+                .distinct()
+            
+            // Unisci tutti i downloadLinks da tutte le ROM
+            val allDownloadLinks = foundRoms
+                .flatMap { it.downloadLinks }
+                .distinctBy { it.url } // Rimuovi link duplicati (stesso URL)
+            
+            // Unisci tutte le regioni
+            val allRegions = foundRoms
+                .flatMap { it.regions }
+                .distinctBy { it.code }
+            
+            // Arricchisci con dati locali
+            val enrichedPlatform = enrichPlatformInfo(firstRom.platform)
+            val enrichedRom = firstRom.copy(
+                platform = enrichedPlatform,
+                coverUrl = allCoverUrls.firstOrNull(), // Prima immagine come principale
+                coverUrls = allCoverUrls, // Tutte le immagini per il carosello
+                downloadLinks = allDownloadLinks,
+                regions = allRegions,
+                isFavorite = isFavorite(firstRom.slug),
+                sourceId = firstRom.sourceId // SourceId della prima ROM
+            )
+            
+            NetworkResult.Success(enrichedRom)
+        } catch (e: Exception) {
+            android.util.Log.e("RomRepositoryImpl", "Errore nel recupero ROM", e)
+            NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    e.message ?: "Errore nel recupero ROM"
+                )
+            )
         }
     }
 
@@ -365,17 +547,28 @@ class RomRepositoryImpl @Inject constructor(
     }
 
     /**
-     * Arricchisce PlatformInfo con l'immagine dal PlatformManager
+     * Arricchisce PlatformInfo con i dati locali dal PlatformManager
+     * Sostituisce completamente i dati con quelli locali (nome, brand, immagine, descrizione)
+     * per rendere il sistema indipendente dalla sorgente API
      */
     private suspend fun enrichPlatformInfo(platformInfo: PlatformInfo): PlatformInfo {
         return try {
             // Carica tutte le piattaforme per trovare quella corrispondente
+            // Il codice in platformInfo è il codice sorgente (es. "nes" da CrocDB)
             val allPlatforms = platformManager.loadPlatforms()
             val matchingPlatform = allPlatforms.find { it.code == platformInfo.code }
             
-            if (matchingPlatform != null && matchingPlatform.imagePath != null) {
-                platformInfo.copy(imagePath = matchingPlatform.imagePath)
+            if (matchingPlatform != null) {
+                // Sostituisci completamente con i dati locali
+                // Mantieni il codice sorgente per le query API, ma usa tutti gli altri dati locali
+                platformInfo.copy(
+                    displayName = matchingPlatform.displayName, // Nome locale
+                    manufacturer = matchingPlatform.manufacturer, // Brand locale
+                    imagePath = matchingPlatform.imagePath, // Immagine locale
+                    description = matchingPlatform.description // Descrizione locale
+                )
             } else {
+                // Se non trovata, mantieni i dati originali (fallback)
                 platformInfo
             }
         } catch (e: Exception) {

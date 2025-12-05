@@ -1,0 +1,128 @@
+package com.tottodrillo.presentation.settings
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import com.tottodrillo.domain.manager.SourceManager
+import com.tottodrillo.domain.model.Source
+import kotlinx.coroutines.launch
+import androidx.compose.ui.res.stringResource
+import com.tottodrillo.R
+
+/**
+ * Sezione lista sorgenti nelle impostazioni
+ */
+@Composable
+fun SourcesListSection(
+    sourceManager: SourceManager,
+    onSourcesChanged: () -> Unit = {}
+) {
+    val manager = sourceManager
+    
+    var sources by remember { mutableStateOf<List<Source>>(emptyList()) }
+    var sourceConfigs by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
+    val scope = rememberCoroutineScope()
+    
+    LaunchedEffect(Unit) {
+        sources = manager.getInstalledSources()
+        // Carica lo stato abilitato/disabilitato
+        val configs = manager.loadInstalledConfigs()
+        sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
+    }
+    
+    if (sources.isEmpty()) {
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = stringResource(R.string.sources_list_empty),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    } else {
+        sources.forEach { source ->
+            val isEnabled = sourceConfigs[source.id] ?: true
+            
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(
+                            text = source.name,
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        if (source.description != null) {
+                            Text(
+                                text = source.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        Text(
+                            text = stringResource(R.string.sources_version_label, source.version),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                    Switch(
+                        checked = isEnabled,
+                        onCheckedChange = { enabled ->
+                            android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (prima della coroutine)")
+                            scope.launch {
+                                android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (dentro la coroutine)")
+                                manager.setSourceEnabled(source.id, enabled)
+                                // Aspetta che il salvataggio sia completato (delay più lungo)
+                                kotlinx.coroutines.delay(500)
+                                // Ricarica lo stato per verificare che sia stato salvato
+                                val configs = manager.loadInstalledConfigs()
+                                val savedConfig = configs.find { it.sourceId == source.id }
+                                android.util.Log.d("SourcesListSection", "🔄 Config salvato: ${savedConfig?.isEnabled}, atteso: $enabled")
+                                sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
+                                // Notifica che le sorgenti sono cambiate (dopo il salvataggio)
+                                android.util.Log.d("SourcesListSection", "🔄 Chiamo onSourcesChanged() - callback non null: ${onSourcesChanged != null}")
+                                try {
+                                    onSourcesChanged()
+                                    android.util.Log.d("SourcesListSection", "🔄 onSourcesChanged() chiamato con successo")
+                                } catch (e: Exception) {
+                                    android.util.Log.e("SourcesListSection", "❌ Errore chiamando onSourcesChanged(): ${e.message}", e)
+                                }
+                                android.util.Log.d("SourcesListSection", "🔄 Sorgente ${source.id} ${if (enabled) "attivata" else "disattivata"}, notifico cambio")
+                            }
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+

@@ -8,10 +8,12 @@ data class Rom(
     val id: String?,
     val title: String,
     val platform: PlatformInfo,
-    val coverUrl: String?,
+    val coverUrl: String?, // Immagine principale (prima che arriva)
+    val coverUrls: List<String> = emptyList(), // Lista di tutte le immagini per il carosello
     val regions: List<RegionInfo>,
     val downloadLinks: List<DownloadLink>,
-    val isFavorite: Boolean = false
+    val isFavorite: Boolean = false,
+    val sourceId: String? = null // ID della sorgente principale (prima che arriva)
 )
 
 /**
@@ -70,7 +72,8 @@ data class DownloadLink(
     val type: String,
     val format: String,
     val url: String,
-    val size: String?
+    val size: String?,
+    val sourceId: String? = null // ID della sorgente che ha fornito questo link
 )
 
 /**

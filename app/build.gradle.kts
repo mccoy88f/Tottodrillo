@@ -3,6 +3,7 @@ plugins {
     id("org.jetbrains.kotlin.android")
     id("com.google.dagger.hilt.android")
     id("com.google.devtools.ksp")
+    id("com.chaquo.python")
 }
 
 android {
@@ -19,6 +20,11 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
             useSupportLibrary = true
+        }
+        
+        // Configurazione NDK per Chaquopy (ABI supportate)
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64")
         }
     }
 
@@ -60,6 +66,11 @@ android {
     }
 }
 
+// Configurazione Chaquopy per supporto Python nelle sorgenti
+// Nota: La configurazione Python viene fatta tramite il plugin Chaquopy
+// Le dipendenze Python possono essere installate dinamicamente dalle sorgenti
+// oppure specificate nel blocco python {} se necessario
+
 dependencies {
     // Core Android
     implementation("androidx.core:core-ktx:1.12.0")
@@ -71,8 +82,9 @@ dependencies {
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.ui:ui-graphics")
     implementation("androidx.compose.ui:ui-tooling-preview")
-    implementation("androidx.compose.material3:material3:1.2.1")
+    implementation("androidx.compose.material3:material3")
     implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.foundation:foundation")
     
     // Navigation
     implementation("androidx.navigation:navigation-compose:2.7.5")

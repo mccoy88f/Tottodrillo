@@ -39,6 +39,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -62,6 +65,7 @@ import com.tottodrillo.presentation.components.RomCard
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HomeScreen(
+    refreshKey: Int = 0,
     onNavigateToSearch: () -> Unit,
     onNavigateToExplore: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
@@ -70,8 +74,16 @@ fun HomeScreen(
     viewModel: HomeViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-
-    // Ricarica i preferiti e le ROM recenti quando si torna alla home
+    
+    // Ricarica i dati quando cambia refreshKey (dopo modifiche alle sorgenti)
+    LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) {
+            android.util.Log.d("HomeScreen", "🔄 refreshKey cambiato a $refreshKey, ricarico dati home")
+            viewModel.loadHomeData()
+        }
+    }
+    
+    // Ricarica anche quando la schermata diventa visibile
     LaunchedEffect(Unit) {
         viewModel.loadFavoriteRoms()
         viewModel.loadRecentRoms()

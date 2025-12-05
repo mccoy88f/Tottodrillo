@@ -139,6 +139,18 @@
     <string name="settings_buy_me_coffee">Offrimi una birra</string>
     <string name="settings_paypal">PayPal</string>
     
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">Nessuna sorgente abilitata</string>
+    <string name="no_enabled_sources_body">Hai delle sorgenti installate ma tutte sono disabilitate. Vai nelle Impostazioni e abilita almeno una sorgente per utilizzare l\'app.</string>
+    <string name="no_enabled_sources_cta">Vai alle Impostazioni</string>
+    <string name="sources_list_empty">Nessuna sorgente installata</string>
+    <string name="sources_list_error">Impossibile caricare le sorgenti</string>
+    <string name="sources_version_label">Versione: %1$s</string>
+    <string name="sources_install_new">Installa nuova sorgente</string>
+    
+    <!-- ROM detail -->
+    <string name="rom_detail_image_item">%1$s - Immagine %2$d</string>
+    
     <!-- Common Actions -->
     <string name="action_open">Apri</string>
     <string name="action_delete">Elimina</string>

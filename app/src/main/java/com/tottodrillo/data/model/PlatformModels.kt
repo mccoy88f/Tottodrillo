@@ -25,7 +25,9 @@ data class MotherPlatform(
     @SerializedName("description")
     val description: String?,
     @SerializedName("brand")
-    val brand: String?
+    val brand: String?,
+    @SerializedName("source_mappings")
+    val sourceMappings: Map<String, List<String>> = emptyMap() // source_name -> lista codici
 )
 
 /**

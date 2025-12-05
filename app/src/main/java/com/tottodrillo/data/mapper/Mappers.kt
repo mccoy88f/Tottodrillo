@@ -10,7 +10,7 @@ import com.tottodrillo.domain.model.Rom
 /**
  * Mapper per convertire RomEntry (API) in Rom (Domain)
  */
-fun RomEntry.toDomain(): Rom {
+fun RomEntry.toDomain(sourceId: String? = null): Rom {
     return Rom(
         slug = this.slug,
         id = this.romId,
@@ -27,9 +27,11 @@ fun RomEntry.toDomain(): Rom {
                 type = link.type,
                 format = link.format,
                 url = link.url,
-                size = link.sizeStr
+                size = link.sizeStr,
+                sourceId = sourceId
             )
-        }
+        },
+        sourceId = sourceId
     )
 }
 

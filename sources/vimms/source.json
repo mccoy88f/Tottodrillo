@@ -1,0 +1,12 @@
+{
+  "id": "vimms",
+  "name": "Vimm's Lair",
+  "version": "1.0.0",
+  "type": "python",
+  "description": "Sorgente per scaricare ROM da Vimm's Lair - Database pubblico di ROM per retro gaming",
+  "author": "Tottodrillo Team",
+  "pythonScript": "vimms_source.py",
+  "dependencies": ["requirements.txt"],
+  "minAppVersion": "1.1.0"
+}
+
