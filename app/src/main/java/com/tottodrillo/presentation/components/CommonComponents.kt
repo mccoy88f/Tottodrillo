@@ -67,6 +67,7 @@ fun RomCard(
                 contentAlignment = Alignment.Center
             ) {
                 if (shouldLoadImage && rom.coverUrl != null) {
+                    android.util.Log.d("RomCard", "🖼️ Caricamento immagine per ${rom.title}: ${rom.coverUrl}")
                     SubcomposeAsyncImage(
                         model = rom.coverUrl,
                         contentDescription = rom.title,

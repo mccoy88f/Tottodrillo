@@ -64,7 +64,14 @@ class PythonSourceExecutor(
             )
             
             val jsonResult = executePythonScript(params)
+            android.util.Log.d("PythonSourceExecutor", "📦 Risultato JSON Python (primi 500 caratteri): ${jsonResult.take(500)}")
             val searchResults = gson.fromJson(jsonResult, SearchResults::class.java)
+            // Verifica se le ROM hanno immagini
+            val romsWithImages = searchResults.results.filterNotNull().filter { it.boxartUrl != null || !it.boxartUrls.isNullOrEmpty() }
+            android.util.Log.d("PythonSourceExecutor", "🖼️ ROM con immagini: ${romsWithImages.size}/${searchResults.results.size}")
+            if (romsWithImages.isNotEmpty()) {
+                android.util.Log.d("PythonSourceExecutor", "🖼️ Esempio ROM con immagine: ${romsWithImages.first().title} -> ${romsWithImages.first().boxartUrl}")
+            }
             Result.success(searchResults)
         } catch (e: Exception) {
             Result.failure(e)

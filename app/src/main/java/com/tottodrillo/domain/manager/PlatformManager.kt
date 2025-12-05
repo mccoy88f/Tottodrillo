@@ -195,9 +195,10 @@ class PlatformManager @Inject constructor(
      */
     suspend fun getMotherCodeFromSourceCode(sourceCode: String, sourceName: String = DEFAULT_SOURCE): String? {
         val mapping = sourceMappingCache ?: loadSourceMappings().also { sourceMappingCache = it }
-        // Cerca il mother_code che contiene questo codice sorgente
+        // Cerca il mother_code che contiene questo codice sorgente (case-insensitive)
+        val sourceCodeLower = sourceCode.lowercase()
         return mapping[sourceName]?.entries?.firstOrNull { entry ->
-            entry.value.contains(sourceCode)
+            entry.value.any { it.lowercase() == sourceCodeLower }
         }?.key
     }
     

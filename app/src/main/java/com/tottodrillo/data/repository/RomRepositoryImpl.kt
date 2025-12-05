@@ -106,7 +106,8 @@ class RomRepositoryImpl @Inject constructor(
                                 gson
                             )
                             
-                            val platformsList = filters.selectedPlatforms.takeIf { it.isNotEmpty() } ?: emptyList()
+                            // Normalizza i codici piattaforma a minuscolo per il mapping corretto
+                            val platformsList = filters.selectedPlatforms.takeIf { it.isNotEmpty() }?.map { it.lowercase() } ?: emptyList()
                             android.util.Log.d("RomRepositoryImpl", "🔍 Ricerca in sorgente ${source.id}: query='${filters.query}', platforms=$platformsList, page=$page")
                             
                             val result = executor.searchRoms(
@@ -120,9 +121,17 @@ class RomRepositoryImpl @Inject constructor(
                             result.fold(
                                 onSuccess = { searchResults ->
                                     android.util.Log.d("RomRepositoryImpl", "✅ Sorgente ${source.id}: ${searchResults.results.size} risultati trovati")
-                                    searchResults.results.map { entry ->
+                                    val roms = searchResults.results.map { entry ->
                                         entry?.toDomain(sourceId = source.id)
                                     }
+                                    // Log per verificare se le immagini sono presenti
+                                    val romsWithImages = roms.filterNotNull().filter { it.coverUrl != null }
+                                    if (romsWithImages.isNotEmpty()) {
+                                        android.util.Log.d("RomRepositoryImpl", "🖼️ ${romsWithImages.size} ROM con immagini (es. ${romsWithImages.first().title}: ${romsWithImages.first().coverUrl})")
+                                    } else {
+                                        android.util.Log.w("RomRepositoryImpl", "⚠️ Nessuna ROM con immagini nella ricerca")
+                                    }
+                                    roms
                                 },
                                 onFailure = {
                                     android.util.Log.e("RomRepositoryImpl", "❌ Errore ricerca in sorgente ${source.id}", it)
@@ -646,7 +655,10 @@ class RomRepositoryImpl @Inject constructor(
                 )
             } else {
                 // Se non trovata in platforms_main.json, mantieni i dati originali
-                android.util.Log.w("RomRepositoryImpl", "Piattaforma $finalMotherCode non trovata in platforms_main.json")
+                // Log solo se non è un codice sorgente non mappato (evita spam di warning)
+                if (finalMotherCode != platformInfo.code || sourceId != null) {
+                    android.util.Log.w("RomRepositoryImpl", "Piattaforma $finalMotherCode non trovata in platforms_main.json (source: $sourceId, original code: ${platformInfo.code})")
+                }
                 platformInfo
             }
         } catch (e: Exception) {
