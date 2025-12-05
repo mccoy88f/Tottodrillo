@@ -15,6 +15,9 @@ import androidx.work.WorkerParameters
 import androidx.work.workDataOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import okhttp3.Cookie
+import okhttp3.CookieJar
+import okhttp3.HttpUrl
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -49,9 +52,22 @@ class DownloadWorker(
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+    // CookieJar in memoria per gestire i cookie di sessione
+    private val cookieJar = object : CookieJar {
+        private val cookies = mutableListOf<Cookie>()
+        
+        override fun saveFromResponse(url: HttpUrl, cookies: List<Cookie>) {
+            this.cookies.addAll(cookies)
+        }
+        
+        override fun loadForRequest(url: HttpUrl): List<Cookie> {
+            return cookies.filter { it.matches(url) }
+        }
+    }
+
     // Client HTTP dedicato per il worker con CookieJar per gestire i cookie di sessione
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
-        .cookieJar(okhttp3.JavaNetCookieJar(java.net.CookieManager()))
+        .cookieJar(cookieJar)
         .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

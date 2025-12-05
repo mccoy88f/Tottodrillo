@@ -166,13 +166,36 @@ def map_system_to_mother_code(system: str) -> str:
     return SYSTEM_MAPPING.get(system, system.lower())
 
 
-def get_system_search_roms(search_key: str, system: str) -> List[Dict[str, Any]]:
-    """Cerca ROM per sistema specifico"""
+def get_system_search_roms(search_key: str, system: str, page_num: int = 1) -> List[Dict[str, Any]]:
+    """Cerca ROM per sistema specifico con paginazione"""
     roms = []
     try:
         # Mappa il sistema al codice URI di Vimm's Lair
         system_uri = URI_TO_SYSTEM.get(system, system)
-        url = f'https://vimm.net/vault/?p=list&system={system_uri}&q={search_key}'
+        # Usa il formato avanzato con mode=adv
+        import urllib.parse
+        query_params = {
+            'mode': 'adv',
+            'p': 'list',
+            'system': system_uri,
+            'q': search_key,
+            'players': '>=',
+            'playersValue': '1',
+            'simultaneous': '',
+            'publisher': '',
+            'year': '=',
+            'yearValue': '',
+            'rating': '>=',
+            'ratingValue': '',
+            'region': 'All',
+            'sort': 'Title',
+            'sortOrder': 'ASC'
+        }
+        # Aggiungi numero pagina se > 1
+        if page_num > 1:
+            query_params['page'] = str(page_num)
+        
+        url = 'https://vimm.net/vault/?' + urllib.parse.urlencode(query_params)
         
         headers = {'User-Agent': get_random_ua()}
         page = requests.get(url, headers=headers, timeout=10, verify=False)
@@ -183,6 +206,18 @@ def get_system_search_roms(search_key: str, system: str) -> List[Dict[str, Any]]
         if not result:
             return roms
         
+        # Estrai header per identificare le colonne
+        header_row = result.find('tr')
+        headers_list = []
+        if header_row:
+            ths = header_row.find_all(['th', 'td'])
+            for th in ths:
+                headers_list.append(th.get_text(strip=True))
+        
+        # Trova indici colonne
+        title_idx = headers_list.index('Title') if 'Title' in headers_list else 0
+        region_idx = headers_list.index('Region') if 'Region' in headers_list else -1
+        
         # Le righe sono direttamente <tr> con <td> che contengono i link
         rows = result.find_all('tr')
         for row in rows:
@@ -190,44 +225,86 @@ def get_system_search_roms(search_key: str, system: str) -> List[Dict[str, Any]]
             if row.find('th'):
                 continue
             
-            # Il primo <td> contiene il link alla ROM
-            first_td = row.find('td')
-            if first_td:
-                link = first_td.find('a', href=True)
-                if link:
-                    name = link.get_text(strip=True)
-                    uri = link['href']
-                    # Assicurati che l'URI sia completo
-                    if not uri.startswith('/'):
-                        uri = '/' + uri
-                    if not uri.startswith('/vault/'):
-                        uri = '/vault/' + uri.lstrip('/')
-                    slug = get_rom_slug_from_uri(uri)
-                    boxart_url = get_boxart_url_from_uri(uri)
-                    boxart_urls = get_boxart_urls_from_uri(uri)
-                    
-                    rom = {
-                        'slug': slug,
-                        'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
-                        'title': name,
-                        'platform': map_system_to_mother_code(system),
-                        'boxart_url': boxart_url,  # Mantieni per compatibilità
-                        'boxart_urls': boxart_urls,  # Lista per il carosello
-                        'regions': [],
-                        'links': []
-                    }
-                    roms.append(rom)
+            cells = row.find_all('td')
+            if len(cells) <= title_idx:
+                continue
+            
+            # Il <td> con indice title_idx contiene il link alla ROM
+            title_cell = cells[title_idx]
+            link = title_cell.find('a', href=True)
+            if link:
+                name = link.get_text(strip=True)
+                uri = link['href']
+                # Assicurati che l'URI sia completo
+                if not uri.startswith('/'):
+                    uri = '/' + uri
+                if not uri.startswith('/vault/'):
+                    uri = '/vault/' + uri.lstrip('/')
+                slug = get_rom_slug_from_uri(uri)
+                
+                # Estrai regione dall'immagine flag se disponibile
+                regions = []
+                if region_idx >= 0 and len(cells) > region_idx:
+                    region_cell = cells[region_idx]
+                    # Cerca immagine flag con attributo title
+                    flag_img = region_cell.find('img', class_='flag')
+                    if flag_img:
+                        region = flag_img.get('title', '').strip()
+                        if region:
+                            regions = [region]
+                    else:
+                        # Fallback: testo della cella
+                        region = region_cell.get_text(strip=True)
+                        if region:
+                            regions = [region]
+                
+                # Non includere immagini nei risultati di ricerca
+                # Le immagini verranno caricate quando si apre la ROM (getEntry)
+                # perché gli URL costruiti da URI restituiscono sempre il logo
+                
+                rom = {
+                    'slug': slug,
+                    'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
+                    'title': name,
+                    'platform': map_system_to_mother_code(system),
+                    'boxart_url': None,  # Non disponibile nei risultati di ricerca
+                    'boxart_urls': [],  # Non disponibile nei risultati di ricerca
+                    'regions': regions,
+                    'links': []
+                }
+                roms.append(rom)
     except Exception as e:
         print(f"Errore nella ricerca sistema: {e}", file=sys.stderr)
     
     return roms
 
 
-def get_general_search_roms(search_key: str) -> List[Dict[str, Any]]:
-    """Cerca ROM in generale su tutto il sito"""
+def get_general_search_roms(search_key: str, page_num: int = 1) -> List[Dict[str, Any]]:
+    """Cerca ROM in generale su tutto il sito con paginazione"""
     roms = []
     try:
-        url = f'https://vimm.net/vault/?p=list&q={search_key}'
+        import urllib.parse
+        query_params = {
+            'mode': 'adv',
+            'p': 'list',
+            'q': search_key,
+            'players': '>=',
+            'playersValue': '1',
+            'simultaneous': '',
+            'publisher': '',
+            'year': '=',
+            'yearValue': '',
+            'rating': '>=',
+            'ratingValue': '',
+            'region': 'All',
+            'sort': 'Title',
+            'sortOrder': 'ASC'
+        }
+        # Aggiungi numero pagina se > 1
+        if page_num > 1:
+            query_params['page'] = str(page_num)
+        
+        url = 'https://vimm.net/vault/?' + urllib.parse.urlencode(query_params)
         
         headers = {'User-Agent': get_random_ua()}
         page = requests.get(url, headers=headers, timeout=10, verify=False)
@@ -238,6 +315,19 @@ def get_general_search_roms(search_key: str) -> List[Dict[str, Any]]:
         if not result:
             return roms
         
+        # Estrai header per identificare le colonne
+        header_row = result.find('tr')
+        headers_list = []
+        if header_row:
+            ths = header_row.find_all(['th', 'td'])
+            for th in ths:
+                headers_list.append(th.get_text(strip=True))
+        
+        # Trova indici colonne (ricerca generale: System, Title, Region, Version, Languages)
+        system_idx = headers_list.index('System') if 'System' in headers_list else -1
+        title_idx = headers_list.index('Title') if 'Title' in headers_list else 1
+        region_idx = headers_list.index('Region') if 'Region' in headers_list else -1
+        
         # Le righe sono direttamente <tr> con <td> che contengono i link
         rows = result.find_all('tr')
         for row in rows:
@@ -245,35 +335,60 @@ def get_general_search_roms(search_key: str) -> List[Dict[str, Any]]:
             if row.find('th'):
                 continue
             
-            # Per ricerca generale, la prima colonna è il sistema, la seconda il nome
-            tds = row.find_all('td')
-            if len(tds) >= 2:
-                system = tds[0].get_text(strip=True)
-                link = tds[1].find('a', href=True)
+            cells = row.find_all('td')
+            if len(cells) <= title_idx:
+                continue
+            
+            # Estrai sistema se disponibile
+            system = None
+            if system_idx >= 0 and len(cells) > system_idx:
+                system = cells[system_idx].get_text(strip=True)
+            
+            # Estrai titolo e link
+            title_cell = cells[title_idx]
+            link = title_cell.find('a', href=True)
+            if link:
+                name = link.get_text(strip=True)
+                uri = link['href']
+                # Assicurati che l'URI sia completo
+                if not uri.startswith('/'):
+                    uri = '/' + uri
+                if not uri.startswith('/vault/'):
+                    uri = '/vault/' + uri.lstrip('/')
+                slug = get_rom_slug_from_uri(uri)
                 
-                if link:
-                    name = link.get_text(strip=True)
-                    uri = link['href']
-                    # Assicurati che l'URI sia completo
-                    if not uri.startswith('/'):
-                        uri = '/' + uri
-                    if not uri.startswith('/vault/'):
-                        uri = '/vault/' + uri.lstrip('/')
-                    slug = get_rom_slug_from_uri(uri)
-                    boxart_url = get_boxart_url_from_uri(uri)
-                    boxart_urls = get_boxart_urls_from_uri(uri)
-                    
-                    rom = {
-                        'slug': slug,
-                        'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
-                        'title': name,
-                        'platform': map_system_to_mother_code(system),
-                        'boxart_url': boxart_url,  # Mantieni per compatibilità
-                        'boxart_urls': boxart_urls,  # Lista per il carosello
-                        'regions': [],
-                        'links': []
-                    }
-                    roms.append(rom)
+                # Estrai regione dall'immagine flag se disponibile
+                regions = []
+                if region_idx >= 0 and len(cells) > region_idx:
+                    region_cell = cells[region_idx]
+                    # Cerca immagine flag con attributo title
+                    flag_img = region_cell.find('img', class_='flag')
+                    if flag_img:
+                        region = flag_img.get('title', '').strip()
+                        if region:
+                            regions = [region]
+                    else:
+                        # Fallback: testo della cella
+                        region = region_cell.get_text(strip=True)
+                        if region:
+                            regions = [region]
+                
+                # Mappa il sistema al mother_code
+                platform = 'unknown'
+                if system:
+                    platform = map_system_to_mother_code(system)
+                
+                rom = {
+                    'slug': slug,
+                    'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
+                    'title': name,
+                    'platform': platform,
+                    'boxart_url': None,  # Non disponibile nei risultati di ricerca
+                    'boxart_urls': [],  # Non disponibile nei risultati di ricerca
+                    'regions': regions,
+                    'links': []
+                }
+                roms.append(rom)
     except Exception as e:
         print(f"Errore nella ricerca generale: {e}", file=sys.stderr)
     
@@ -352,6 +467,9 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
                     boxart_url = src
                 else:
                     boxart_url = 'https://vimm.net/' + src
+                # Verifica che non sia il logo di Vimm's Lair
+                if 'vault.png' in boxart_url or 'logo' in boxart_url.lower():
+                    boxart_url = None
         
         # Se non trovata, cerca per pattern comune
         if not boxart_url:
@@ -367,9 +485,23 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
                         boxart_url = src
                     break
         
-        # Se ancora non trovata, costruisci dall'URI
+        # Se ancora non trovata, prova prima con type=cart (spesso più affidabile)
         if not boxart_url and rom_id:
-            boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
+            # Prova prima con cart, poi con box come fallback
+            cart_img = soup.find('img', src=lambda x: x and f'type=cart&id={rom_id}' in x)
+            if cart_img:
+                cart_src = cart_img.get('src', '')
+                if cart_src.startswith('//'):
+                    boxart_url = 'https:' + cart_src
+                elif cart_src.startswith('/'):
+                    boxart_url = 'https://vimm.net' + cart_src
+                elif cart_src.startswith('http'):
+                    boxart_url = cart_src
+                else:
+                    boxart_url = 'https://vimm.net/' + cart_src
+            else:
+                # Fallback a box solo se cart non disponibile
+                boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
         
         # Costruisci l'URL dell'immagine screen (se abbiamo l'ID)
         if rom_id:
@@ -604,22 +736,16 @@ def execute(params_json: str) -> str:
 
 def search_roms(params: Dict[str, Any]) -> str:
     """Cerca ROM nella sorgente"""
-    search_key = params.get("search_key", "").strip()
+    search_key = params.get("search_key") or ""
+    if search_key:
+        search_key = search_key.strip()
     platforms = params.get("platforms", [])
     max_results = params.get("max_results", 50)
     page = params.get("page", 1)
     
-    if not search_key:
-        return json.dumps({
-            "results": [],
-            "total_results": 0,
-            "current_page": page,
-            "total_pages": 1
-        })
-    
     all_roms = []
     
-    # Se ci sono piattaforme specificate, cerca per ogni piattaforma
+        # Se ci sono piattaforme specificate, cerca per ogni piattaforma
     if platforms:
         for platform in platforms:
             # Mappa il mother_code alla piattaforma Vimm's Lair
@@ -631,11 +757,20 @@ def search_roms(params: Dict[str, Any]) -> str:
                     break
             
             if system:
-                roms = get_system_search_roms(search_key, system)
+                # Vimm's Lair permette query vuota per ottenere tutte le ROM del sistema
+                query = search_key if search_key else ''
+                roms = get_system_search_roms(query, system, page)
                 all_roms.extend(roms)
     else:
-        # Ricerca generale
-        all_roms = get_general_search_roms(search_key)
+        # Ricerca generale - richiede una query
+        if not search_key:
+            return json.dumps({
+                "results": [],
+                "total_results": 0,
+                "current_page": page,
+                "total_pages": 1
+            })
+        all_roms = get_general_search_roms(search_key, page)
     
     # Limita i risultati
     total_results = len(all_roms)
