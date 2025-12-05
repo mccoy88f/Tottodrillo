@@ -224,11 +224,12 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1, sour
     """
     Cerca ROM per sistema specifico con paginazione
     Vimm's Lair restituisce massimo 200 righe per pagina
+    system: codice URI di Vimm's Lair (es. "N64", "SNES", "Gamecube")
     """
     roms = []
     try:
-        # Mappa il sistema al codice URI di Vimm's Lair
-        system_uri = URI_TO_SYSTEM.get(system, system)
+        # system è già il codice URI di Vimm's Lair (es. "N64"), non serve mapparlo
+        system_uri = system
         # Usa il formato avanzato con mode=adv
         import urllib.parse
         query_params = {
@@ -829,6 +830,11 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
         for platform in platforms:
             # Mappa il mother_code al codice URI Vimm's Lair usando platform_mapping.json
             system_uri = map_mother_code_to_vimm_uri(platform, source_dir)
+            
+            if not system_uri:
+                # Se non troviamo il mapping, prova a usare il codice direttamente (case-insensitive)
+                # Questo può succedere se il mapping non è completo
+                system_uri = platform.upper()  # Prova con uppercase
             
             if system_uri:
                 # Vimm's Lair permette query vuota per ottenere tutte le ROM del sistema

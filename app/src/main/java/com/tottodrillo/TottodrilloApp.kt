@@ -138,11 +138,15 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
                         val refererPattern = metadata?.imageRefererPattern
                         if (refererPattern != null) {
                             // Verifica se l'URL corrisponde a questa sorgente (controlla host o pattern)
-                            val sourceHost = metadata.baseUrl?.let { 
-                                try { it.toHttpUrlOrNull()?.host } catch (e: Exception) { null }
+                            val sourceHost = metadata.baseUrl?.let { baseUrl ->
+                                try { 
+                                    baseUrl.toHttpUrl().host
+                                } catch (e: Exception) { 
+                                    null 
+                                }
                             }
                             
-                            if (sourceHost != null && url.host.contains(sourceHost, ignoreCase = true)) {
+                            if (sourceHost != null && sourceHost.isNotBlank() && url.host.contains(sourceHost, ignoreCase = true)) {
                                 // Estrai l'ID dall'URL dell'immagine (cerca pattern comuni come ?id=, /id/, etc.)
                                 val imageId = url.queryParameter("id") 
                                     ?: url.pathSegments.lastOrNull()
