@@ -139,7 +139,7 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
                         if (refererPattern != null) {
                             // Verifica se l'URL corrisponde a questa sorgente (controlla host o pattern)
                             val sourceHost = metadata.baseUrl?.let { 
-                                try { okhttp3.HttpUrl.parse(it)?.host } catch (e: Exception) { null }
+                                try { it.toHttpUrlOrNull()?.host } catch (e: Exception) { null }
                             }
                             
                             if (sourceHost != null && url.host.contains(sourceHost, ignoreCase = true)) {
