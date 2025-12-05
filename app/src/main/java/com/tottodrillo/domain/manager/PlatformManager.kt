@@ -89,9 +89,9 @@ class PlatformManager @Inject constructor(
     }
     
     /**
-     * Carica platforms_main.json dalle assets
+     * Carica platforms_main.json dalle assets (metodo pubblico per uso esterno)
      */
-    private suspend fun loadPlatformsMain(): PlatformsMainResponse = withContext(Dispatchers.IO) {
+    suspend fun loadPlatformsMain(): PlatformsMainResponse = withContext(Dispatchers.IO) {
         try {
             val inputStream = context.assets.open(PLATFORMS_MAIN_FILE)
             val json = inputStream.bufferedReader().use { it.readText() }

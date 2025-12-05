@@ -162,7 +162,7 @@ class RomRepositoryImpl @Inject constructor(
                     .distinctBy { it.code }
                 
                 // Arricchisci PlatformInfo
-                val enrichedPlatform = enrichPlatformInfo(firstRom.platform)
+                val enrichedPlatform = enrichPlatformInfo(firstRom.platform, firstRom.sourceId)
                 
                 firstRom.copy(
                     platform = enrichedPlatform,
@@ -367,7 +367,7 @@ class RomRepositoryImpl @Inject constructor(
                 .distinctBy { it.code }
             
             // Arricchisci con dati locali
-            val enrichedPlatform = enrichPlatformInfo(firstRom.platform)
+            val enrichedPlatform = enrichPlatformInfo(firstRom.platform, firstRom.sourceId)
             val enrichedRom = firstRom.copy(
                 platform = enrichedPlatform,
                 coverUrl = allCoverUrls.firstOrNull(), // Prima immagine come principale
@@ -587,24 +587,48 @@ class RomRepositoryImpl @Inject constructor(
      * Sostituisce completamente i dati con quelli locali (nome, brand, immagine, descrizione)
      * per rendere il sistema indipendente dalla sorgente API
      */
-    private suspend fun enrichPlatformInfo(platformInfo: PlatformInfo): PlatformInfo {
+    private suspend fun enrichPlatformInfo(platformInfo: PlatformInfo, sourceId: String? = null): PlatformInfo {
         return try {
-            // Carica tutte le piattaforme per trovare quella corrispondente
-            // Il codice in platformInfo è il codice sorgente (es. "nes" da CrocDB)
-            val allPlatforms = platformManager.loadPlatforms()
-            val matchingPlatform = allPlatforms.find { it.code == platformInfo.code }
+            // Il codice in platformInfo potrebbe essere:
+            // 1. Un codice sorgente (es. "32x" da CrocDB) -> dobbiamo trovare il mother_code
+            // 2. Un mother_code (es. "nes" da Vimm's Lair) -> possiamo usarlo direttamente
             
-            if (matchingPlatform != null) {
-                // Sostituisci completamente con i dati locali
-                // Mantieni il codice sorgente per le query API, ma usa tutti gli altri dati locali
+            // Prova prima a vedere se è un mother_code cercando in tutte le sorgenti
+            val installedSources = sourceManager.getInstalledSources()
+            var motherCode: String? = null
+            
+            // Se abbiamo sourceId, prova a trovare il mother_code da quella sorgente
+            if (sourceId != null) {
+                motherCode = platformManager.getMotherCodeFromSourceCode(platformInfo.code, sourceId)
+            }
+            
+            // Se non trovato, prova in tutte le sorgenti
+            if (motherCode == null) {
+                for (source in installedSources) {
+                    motherCode = platformManager.getMotherCodeFromSourceCode(platformInfo.code, source.id)
+                    if (motherCode != null) break
+                }
+            }
+            
+            // Se non è un codice sorgente, potrebbe essere già un mother_code
+            val finalMotherCode = motherCode ?: platformInfo.code
+            
+            // Carica platforms_main.json per ottenere i dati della piattaforma
+            val platformsMain = platformManager.loadPlatformsMain()
+            val motherPlatform = platformsMain.platforms.find { it.motherCode == finalMotherCode }
+            
+            if (motherPlatform != null) {
+                // Usa i dati locali da platforms_main.json
                 platformInfo.copy(
-                    displayName = matchingPlatform.displayName, // Nome locale
-                    manufacturer = matchingPlatform.manufacturer, // Brand locale
-                    imagePath = matchingPlatform.imagePath, // Immagine locale
-                    description = matchingPlatform.description // Descrizione locale
+                    code = finalMotherCode, // Usa il mother_code
+                    displayName = motherPlatform.name ?: motherPlatform.motherCode, // Nome locale
+                    manufacturer = motherPlatform.brand, // Brand locale
+                    imagePath = motherPlatform.image, // Immagine locale
+                    description = motherPlatform.description // Descrizione locale
                 )
             } else {
-                // Se non trovata, mantieni i dati originali (fallback)
+                // Se non trovata in platforms_main.json, mantieni i dati originali
+                android.util.Log.w("RomRepositoryImpl", "Piattaforma $finalMotherCode non trovata in platforms_main.json")
                 platformInfo
             }
         } catch (e: Exception) {

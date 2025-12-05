@@ -69,7 +69,6 @@
     <!-- ROM Detail -->
     <string name="rom_detail_title">Dettaglio ROM</string>
     <string name="rom_detail_platform">Piattaforma</string>
-    <string name="rom_detail_platform_code">Codice: %1$s</string>
     <string name="rom_detail_region">Regione</string>
     <string name="rom_detail_release_date">Data di Rilascio</string>
     <string name="rom_detail_download">Download</string>

@@ -49,8 +49,10 @@ class DownloadWorker(
     private val notificationManager =
         appContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-    // Client HTTP dedicato per il worker
-    private val okHttpClient: OkHttpClient = OkHttpClient.Builder().build()
+    // Client HTTP dedicato per il worker con CookieJar per gestire i cookie di sessione
+    private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
+        .cookieJar(okhttp3.JavaNetCookieJar(java.net.CookieManager()))
+        .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val url = inputData.getString(KEY_URL) ?: return@withContext Result.failure()
@@ -134,23 +136,94 @@ class DownloadWorker(
      * Scarica il file e aggiorna il progresso
      */
     private suspend fun downloadFile(url: String, outputFile: File, romTitle: String, romSlug: String?) {
-        val request = Request.Builder()
-            .url(url)
-            .build()
+        Log.d("DownloadWorker", "📥 Avvio download: $url -> ${outputFile.absolutePath}")
+        
+        val requestBuilder = Request.Builder()
+        
+        // Per Vimm's Lair, visita prima la pagina ROM per ottenere i cookie di sessione
+        if (url.contains("vimm.net") && url.contains("mediaId")) {
+            Log.d("DownloadWorker", "🔧 Rilevato URL Vimm's Lair, visito pagina ROM per cookie")
+            
+            // Estrai mediaId e alt dall'URL
+            val mediaId = url.substringAfter("mediaId=").substringBefore("&")
+            val alt = if (url.contains("alt=")) url.substringAfter("alt=").substringBefore("&") else null
+            
+            // Costruisci l'URL della pagina ROM
+            val romPageUrl = if (romSlug != null && romSlug.isNotEmpty()) {
+                "https://vimm.net/vault/$romSlug"
+            } else {
+                // Se non abbiamo lo slug, prova a estrarre l'ID dall'URL originale
+                // Questo è un fallback, idealmente dovremmo sempre avere lo slug
+                "https://vimm.net/vault/"
+            }
+            
+            // Visita la pagina ROM per ottenere i cookie di sessione
+            val cookieStore = okHttpClient.cookieJar
+            try {
+                val pageRequest = Request.Builder()
+                    .url(romPageUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .build()
+                
+                okHttpClient.newCall(pageRequest).execute().use { pageResponse ->
+                    if (pageResponse.isSuccessful) {
+                        Log.d("DownloadWorker", "✅ Pagina ROM visitata, cookie ottenuti")
+                        // I cookie vengono salvati automaticamente dal CookieJar
+                    } else {
+                        Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina ROM: ${pageResponse.code}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("DownloadWorker", "⚠️ Errore nel visitare pagina ROM: ${e.message}")
+            }
+            
+            // Costruisci l'URL di download nel formato corretto
+            // Il dominio può essere dl2 o dl3 a seconda della ROM (estratto dal form)
+            val downloadUrl = if (url.contains("dl2.vimm.net") || url.contains("dl3.vimm.net")) {
+                // URL già nel formato corretto
+                url
+            } else {
+                // Usa dl2 come default (più comune), l'URL dovrebbe già contenere il dominio corretto
+                // Se non presente, prova dl2
+                val baseUrl = "https://dl2.vimm.net/?mediaId=$mediaId"
+                if (alt != null) {
+                    "$baseUrl&alt=$alt"
+                } else {
+                    baseUrl
+                }
+            }
+            
+            requestBuilder
+                .url(downloadUrl)
+                .header("Referer", romPageUrl)
+                .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+        } else {
+            requestBuilder.url(url)
+        }
+        
+        val request = requestBuilder.build()
 
         okHttpClient.newCall(request).execute().use { response ->
+            Log.d("DownloadWorker", "📥 Risposta: ${response.code} ${response.message}")
+            
             if (!response.isSuccessful) {
-                throw Exception("Download fallito: ${response.code}")
+                val errorBody = response.body?.string()?.take(200)
+                Log.e("DownloadWorker", "❌ Download fallito: ${response.code} - $errorBody")
+                throw Exception("Download fallito: ${response.code} ${response.message}")
             }
 
             val body = response.body ?: throw Exception("Response body vuoto")
             val contentLength = body.contentLength()
+            Log.d("DownloadWorker", "📥 Dimensione file: $contentLength bytes")
             
             body.byteStream().use { input ->
                 FileOutputStream(outputFile).use { output ->
                     downloadWithProgress(input, output, contentLength, romTitle, romSlug)
                 }
             }
+            
+            Log.d("DownloadWorker", "✅ Download completato: ${outputFile.length()} bytes")
         }
     }
 

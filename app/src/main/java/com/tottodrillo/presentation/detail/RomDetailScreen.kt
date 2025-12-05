@@ -388,58 +388,15 @@ fun RomDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Platform (cliccabile) con dettagli
-                Column(
+                // Platform (cliccabile)
+                Text(
+                    text = rom.platform.displayName,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier
                         .clickable { onNavigateToPlatform(rom.platform.code) }
                         .padding(vertical = 4.dp, horizontal = 4.dp)
-                ) {
-                    Text(
-                        text = stringResource(R.string.rom_detail_platform),
-                        style = MaterialTheme.typography.titleSmall,
-                        fontWeight = FontWeight.SemiBold,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.primaryContainer,
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Column(
-                            modifier = Modifier.padding(12.dp)
-                        ) {
-                            Text(
-                                text = rom.platform.displayName,
-                                style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.Bold,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer
-                            )
-                            if (rom.platform.manufacturer != null) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = rom.platform.manufacturer,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
-                                )
-                            }
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.rom_detail_platform_code, rom.platform.code),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.6f)
-                            )
-                            if (rom.platform.description != null) {
-                                Spacer(modifier = Modifier.height(4.dp))
-                                Text(
-                                    text = rom.platform.description,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
-                                )
-                            }
-                        }
-                    }
-                }
+                )
 
                 Spacer(modifier = Modifier.height(16.dp))
 
