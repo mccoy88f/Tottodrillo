@@ -147,6 +147,12 @@
     <string name="sources_list_error">Impossibile caricare le sorgenti</string>
     <string name="sources_version_label">Versione: %1$s</string>
     <string name="sources_install_new">Installa nuova sorgente</string>
+    <string name="sources_update">Aggiorna</string>
+    <string name="sources_uninstall">Disinstalla</string>
+    <string name="sources_update_available">Aggiornamento disponibile</string>
+    <string name="sources_update_success">Sorgente aggiornata con successo</string>
+    <string name="sources_uninstall_success">Sorgente disinstallata con successo</string>
+    <string name="sources_uninstall_error">Errore durante la disinstallazione</string>
     
     <!-- ROM detail -->
     <string name="rom_detail_image_item">%1$s - Immagine %2$d</string>

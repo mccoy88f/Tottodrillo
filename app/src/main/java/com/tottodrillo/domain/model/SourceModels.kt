@@ -11,7 +11,8 @@ data class Source(
     val author: String? = null, // Autore della sorgente
     val baseUrl: String, // URL base dell'API
     val isInstalled: Boolean = false, // Se è installata
-    val installPath: String? = null // Percorso di installazione
+    val installPath: String? = null, // Percorso di installazione
+    val type: String = "api" // Tipo sorgente: "api", "java", "python"
 )
 
 /**

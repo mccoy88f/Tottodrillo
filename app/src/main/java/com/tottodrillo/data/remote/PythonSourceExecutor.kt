@@ -128,6 +128,12 @@ class PythonSourceExecutor(
                 )
             }
             
+            // Aggiungi la directory della sorgente al sys.path di Python
+            val sysModule = python.getModule("sys")
+            val sourceDirPath = sourceDir.absolutePath
+            val pathList = sysModule["path"] as com.chaquo.python.PyObject
+            pathList.callAttr("insert", 0, sourceDirPath)
+            
             // Carica il modulo Python (il nome del modulo è il nome del file senza estensione)
             val moduleName = pythonScript.removeSuffix(".py")
             val module = python.getModule(moduleName)

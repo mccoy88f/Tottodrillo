@@ -83,7 +83,8 @@ class SourceManager @Inject constructor(
                                     author = metadata.author,
                                     baseUrl = metadata.baseUrl ?: "", // Può essere null per sorgenti non-API
                                     isInstalled = true,
-                                    installPath = sourceDir.absolutePath
+                                    installPath = sourceDir.absolutePath,
+                                    type = metadata.type // Aggiungi il tipo di sorgente
                                 )
                             )
                         } catch (e: Exception) {
@@ -258,6 +259,42 @@ class SourceManager @Inject constructor(
             val config = configs.find { it.sourceId == source.id }
             config?.isEnabled != false
         }
+    }
+    
+    /**
+     * Confronta due versioni e restituisce true se newVersion è più recente di oldVersion
+     * Supporta versioni nel formato semver (es. "1.0.0", "1.2.3")
+     */
+    fun isVersionNewer(newVersion: String, oldVersion: String): Boolean {
+        val newParts = newVersion.split(".").mapNotNull { it.toIntOrNull() }
+        val oldParts = oldVersion.split(".").mapNotNull { it.toIntOrNull() }
+        
+        val maxLength = maxOf(newParts.size, oldParts.size)
+        
+        for (i in 0 until maxLength) {
+            val newPart = newParts.getOrElse(i) { 0 }
+            val oldPart = oldParts.getOrElse(i) { 0 }
+            
+            when {
+                newPart > oldPart -> return true
+                newPart < oldPart -> return false
+                // Continua al prossimo livello se sono uguali
+            }
+        }
+        
+        return false // Le versioni sono uguali
+    }
+    
+    /**
+     * Verifica se una sorgente può essere aggiornata
+     */
+    suspend fun canUpdateSource(sourceId: String, newVersion: String): Boolean = withContext(Dispatchers.IO) {
+        val currentMetadata = getSourceMetadata(sourceId)
+        if (currentMetadata == null) {
+            return@withContext false
+        }
+        
+        isVersionNewer(newVersion, currentMetadata.version)
     }
 }
 

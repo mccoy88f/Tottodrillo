@@ -57,6 +57,19 @@ class SourceInstaller @Inject constructor(
                 // Valida struttura file
                 validateSourceStructure(tempDir, metadata)
                 
+                // Verifica se la sorgente è già installata
+                val isAlreadyInstalled = sourceManager.isSourceInstalled(metadata.id)
+                val isUpdate = if (isAlreadyInstalled) {
+                    val currentMetadata = sourceManager.getSourceMetadata(metadata.id)
+                    if (currentMetadata != null) {
+                        sourceManager.isVersionNewer(metadata.version, currentMetadata.version)
+                    } else {
+                        false
+                    }
+                } else {
+                    false
+                }
+                
                 // Sposta nella directory delle sorgenti
                 val targetDir = File(context.filesDir, "sources/${metadata.id}")
                 if (targetDir.exists()) {
@@ -66,8 +79,18 @@ class SourceInstaller @Inject constructor(
                 
                 tempDir.copyRecursively(targetDir, overwrite = true)
                 
-                // Registra la sorgente
-                sourceManager.registerSource(metadata.id, metadata.version)
+                // Registra la sorgente (mantiene lo stato enabled se era già installata)
+                if (isUpdate && isAlreadyInstalled) {
+                    val configs = sourceManager.loadInstalledConfigs()
+                    val existingConfig = configs.find { it.sourceId == metadata.id }
+                    val wasEnabled = existingConfig?.isEnabled ?: true
+                    
+                    sourceManager.registerSource(metadata.id, metadata.version)
+                    // Ripristina lo stato enabled/disabled
+                    sourceManager.setSourceEnabled(metadata.id, wasEnabled)
+                } else {
+                    sourceManager.registerSource(metadata.id, metadata.version)
+                }
                 
                 Result.success(metadata)
             } finally {

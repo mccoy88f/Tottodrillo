@@ -12,6 +12,9 @@ import com.tottodrillo.domain.model.Source
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.tottodrillo.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Update
 
 /**
  * Sezione lista sorgenti nelle impostazioni
@@ -19,7 +22,9 @@ import com.tottodrillo.R
 @Composable
 fun SourcesListSection(
     sourceManager: SourceManager,
-    onSourcesChanged: () -> Unit = {}
+    onSourcesChanged: () -> Unit = {},
+    onUninstallSource: (String) -> Unit = {},
+    onUpdateSource: () -> Unit = {}
 ) {
     val manager = sourceManager
     
@@ -66,59 +71,115 @@ fun SourcesListSection(
                     containerColor = MaterialTheme.colorScheme.surface
                 )
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .padding(16.dp)
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = source.name,
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        if (source.description != null) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(modifier = Modifier.weight(1f)) {
                             Text(
-                                text = source.description,
+                                text = source.name,
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Spacer(modifier = Modifier.height(4.dp))
+                            if (source.description != null) {
+                                Text(
+                                    text = source.description,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.sources_version_label, source.version),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
-                        Text(
-                            text = stringResource(R.string.sources_version_label, source.version),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        Switch(
+                            checked = isEnabled,
+                            onCheckedChange = { enabled ->
+                                android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (prima della coroutine)")
+                                scope.launch {
+                                    android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (dentro la coroutine)")
+                                    manager.setSourceEnabled(source.id, enabled)
+                                    // Aspetta che il salvataggio sia completato (delay più lungo)
+                                    kotlinx.coroutines.delay(500)
+                                    // Ricarica lo stato per verificare che sia stato salvato
+                                    val configs = manager.loadInstalledConfigs()
+                                    val savedConfig = configs.find { it.sourceId == source.id }
+                                    android.util.Log.d("SourcesListSection", "🔄 Config salvato: ${savedConfig?.isEnabled}, atteso: $enabled")
+                                    sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
+                                    // Notifica che le sorgenti sono cambiate (dopo il salvataggio)
+                                    android.util.Log.d("SourcesListSection", "🔄 Chiamo onSourcesChanged() - callback non null: ${onSourcesChanged != null}")
+                                    try {
+                                        onSourcesChanged()
+                                        android.util.Log.d("SourcesListSection", "🔄 onSourcesChanged() chiamato con successo")
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("SourcesListSection", "❌ Errore chiamando onSourcesChanged(): ${e.message}", e)
+                                    }
+                                    android.util.Log.d("SourcesListSection", "🔄 Sorgente ${source.id} ${if (enabled) "attivata" else "disattivata"}, notifico cambio")
+                                }
+                            }
                         )
                     }
-                    Switch(
-                        checked = isEnabled,
-                        onCheckedChange = { enabled ->
-                            android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (prima della coroutine)")
-                            scope.launch {
-                                android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (dentro la coroutine)")
-                                manager.setSourceEnabled(source.id, enabled)
-                                // Aspetta che il salvataggio sia completato (delay più lungo)
-                                kotlinx.coroutines.delay(500)
-                                // Ricarica lo stato per verificare che sia stato salvato
-                                val configs = manager.loadInstalledConfigs()
-                                val savedConfig = configs.find { it.sourceId == source.id }
-                                android.util.Log.d("SourcesListSection", "🔄 Config salvato: ${savedConfig?.isEnabled}, atteso: $enabled")
-                                sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
-                                // Notifica che le sorgenti sono cambiate (dopo il salvataggio)
-                                android.util.Log.d("SourcesListSection", "🔄 Chiamo onSourcesChanged() - callback non null: ${onSourcesChanged != null}")
-                                try {
-                                    onSourcesChanged()
-                                    android.util.Log.d("SourcesListSection", "🔄 onSourcesChanged() chiamato con successo")
-                                } catch (e: Exception) {
-                                    android.util.Log.e("SourcesListSection", "❌ Errore chiamando onSourcesChanged(): ${e.message}", e)
-                                }
-                                android.util.Log.d("SourcesListSection", "🔄 Sorgente ${source.id} ${if (enabled) "attivata" else "disattivata"}, notifico cambio")
+                    
+                    // Pulsanti di azione
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.End
+                    ) {
+                        // Pulsante aggiorna
+                        TextButton(
+                            onClick = {
+                                onUpdateSource()
                             }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Update,
+                                contentDescription = stringResource(R.string.sources_update),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.sources_update))
                         }
-                    )
+                        
+                        Spacer(modifier = Modifier.width(8.dp))
+                        
+                        // Pulsante disinstalla
+                        TextButton(
+                            onClick = {
+                                scope.launch {
+                                    val success = manager.uninstallSource(source.id)
+                                    if (success) {
+                                        onUninstallSource(source.id)
+                                        // Ricarica le sorgenti
+                                        sources = manager.getInstalledSources()
+                                        val configs = manager.loadInstalledConfigs()
+                                        sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
+                                        onSourcesChanged()
+                                    }
+                                }
+                            },
+                            colors = ButtonDefaults.textButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            )
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Delete,
+                                contentDescription = stringResource(R.string.sources_uninstall),
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text(stringResource(R.string.sources_uninstall))
+                        }
+                    }
                 }
             }
         }

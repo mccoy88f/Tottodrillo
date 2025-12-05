@@ -528,6 +528,16 @@ fun DownloadSettingsScreen(
                         android.util.Log.d("DownloadSettingsScreen", "🔄 Chiamo onSourcesChanged() callback")
                         onSourcesChanged()
                         android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged() callback chiamato")
+                    },
+                    onUninstallSource = { sourceId ->
+                        // La disinstallazione è già gestita in SourcesListSection
+                        // Qui possiamo mostrare un messaggio di successo se necessario
+                        refreshTrigger++
+                        onSourcesChanged()
+                    },
+                    onUpdateSource = {
+                        // Apri il file picker per selezionare il nuovo ZIP
+                        onInstallSource()
                     }
                 )
                 
