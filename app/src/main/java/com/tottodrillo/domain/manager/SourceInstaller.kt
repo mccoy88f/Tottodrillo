@@ -171,20 +171,32 @@ class SourceInstaller @Inject constructor(
      * Valida la struttura della sorgente
      */
     private fun validateSourceStructure(sourceDir: File, metadata: SourceMetadata) {
+        android.util.Log.d("SourceInstaller", "Validazione struttura sorgente ${metadata.id} in ${sourceDir.absolutePath}")
+        
+        // Lista tutti i file nella directory per debug
+        val files = sourceDir.listFiles()?.map { it.name } ?: emptyList()
+        android.util.Log.d("SourceInstaller", "File trovati nella directory: ${files.joinToString(", ")}")
+        
         // Verifica che platform_mapping.json esista (obbligatorio per tutte le sorgenti)
         val platformMappingFile = File(sourceDir, PLATFORM_MAPPING_FILE)
         if (!platformMappingFile.exists()) {
+            android.util.Log.e("SourceInstaller", "File $PLATFORM_MAPPING_FILE non trovato in ${sourceDir.absolutePath}")
             throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non trovato (obbligatorio per tutte le sorgenti)")
         }
+        
+        android.util.Log.d("SourceInstaller", "File $PLATFORM_MAPPING_FILE trovato, validazione JSON...")
         
         // Valida che platform_mapping.json sia JSON valido
         try {
             val mappingJson = platformMappingFile.readText()
             val mapping = gson.fromJson(mappingJson, Map::class.java)
             if (!mapping.containsKey("mapping") || mapping["mapping"] !is Map<*, *>) {
+                android.util.Log.e("SourceInstaller", "File $PLATFORM_MAPPING_FILE non contiene campo 'mapping' valido")
                 throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non valido: deve contenere un campo 'mapping'")
             }
+            android.util.Log.d("SourceInstaller", "File $PLATFORM_MAPPING_FILE validato con successo")
         } catch (e: Exception) {
+            android.util.Log.e("SourceInstaller", "Errore nella validazione $PLATFORM_MAPPING_FILE: ${e.message}", e)
             throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non valido: ${e.message}")
         }
         

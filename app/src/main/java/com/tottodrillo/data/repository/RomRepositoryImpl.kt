@@ -132,16 +132,23 @@ class RomRepositoryImpl @Inject constructor(
                 }.awaitAll()
             }.flatten()
             
-            // Raggruppa ROM duplicate per slug e unisci i dati
-            val romsBySlug = allRoms.groupBy { it.slug }
+            // Filtra ROM nulle e raggruppa per slug
+            val validRoms = allRoms.filterNotNull()
+            val romsBySlug = validRoms.groupBy { it.slug }
             
             val enrichedRoms = romsBySlug.map { (slug, roms) ->
                 // Prendi la prima ROM come base (nome, immagine principale, sourceId)
                 val firstRom = roms.first()
                 
-                // Raccogli tutte le immagini (coverUrl) da tutte le ROM
+                // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
                 val allCoverUrls = roms
-                    .mapNotNull { it.coverUrl }
+                    .flatMap { rom -> 
+                        // Combina coverUrl e coverUrls
+                        val urls = mutableListOf<String>()
+                        rom.coverUrl?.let { urls.add(it) }
+                        urls.addAll(rom.coverUrls)
+                        urls
+                    }
                     .distinct()
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
@@ -185,11 +192,39 @@ class RomRepositoryImpl @Inject constructor(
             return NetworkResult.Success(it) 
         }
 
-        // Usa PlatformManager per caricare le piattaforme dai file JSON locali
+        // Carica le piattaforme da tutte le sorgenti abilitate
         return try {
-            val platforms = platformManager.loadPlatforms()
-            platformsCache = platforms // Salva in cache
-            NetworkResult.Success(platforms)
+            val installedSources = sourceManager.getInstalledSources()
+            val allPlatforms = mutableMapOf<String, PlatformInfo>() // Usa mother_code come chiave per evitare duplicati
+            
+            // Carica le piattaforme da ogni sorgente installata (anche se disabilitata, per avere tutte le opzioni)
+            // Le piattaforme vengono mostrate se almeno una sorgente che le supporta è abilitata
+            for (source in installedSources) {
+                try {
+                    val platforms = platformManager.loadPlatforms(source.id)
+                    // Unisci le piattaforme, evitando duplicati per mother_code
+                    platforms.forEach { platform ->
+                        // Trova il mother_code per questa piattaforma
+                        val motherCode = platformManager.getMotherCodeFromSourceCode(platform.code, source.id)
+                        if (motherCode != null) {
+                            // Se non esiste già o se questa sorgente ha dati migliori, aggiorna
+                            if (!allPlatforms.containsKey(motherCode) || 
+                                (allPlatforms[motherCode]?.displayName.isNullOrBlank() && !platform.displayName.isNullOrBlank())) {
+                                allPlatforms[motherCode] = platform
+                            }
+                        } else {
+                            // Se non troviamo il mother_code, aggiungiamo comunque la piattaforma
+                            allPlatforms[platform.code] = platform
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento piattaforme per sorgente ${source.id}", e)
+                }
+            }
+            
+            val platformsList = allPlatforms.values.toList()
+            platformsCache = platformsList // Salva in cache
+            NetworkResult.Success(platformsList)
         } catch (e: Exception) {
             android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento piattaforme", e)
             NetworkResult.Error(
