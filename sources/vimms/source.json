@@ -7,6 +7,8 @@
   "author": "Tottodrillo Team",
   "pythonScript": "vimms_source.py",
   "dependencies": ["requirements.txt"],
-  "minAppVersion": "1.1.0"
+  "minAppVersion": "1.1.0",
+  "baseUrl": "https://vimm.net",
+  "imageRefererPattern": "https://vimm.net/vault/{id}"
 }
 

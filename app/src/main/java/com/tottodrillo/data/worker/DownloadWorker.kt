@@ -65,9 +65,27 @@ class DownloadWorker(
         }
     }
 
+    // Configura SSL per accettare certificati (necessario per Vimm's Lair)
+    // Nota: In produzione, dovresti usare certificati validi
+    private val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(
+        object : javax.net.ssl.X509TrustManager {
+            override fun checkClientTrusted(chain: Array<java.security.cert.X509Certificate>?, authType: String?) {}
+            override fun checkServerTrusted(chain: Array<java.security.cert.X509Certificate>?, authType: String?) {}
+            override fun getAcceptedIssuers(): Array<java.security.cert.X509Certificate> = arrayOf()
+        }
+    )
+    
+    private val sslContext = javax.net.ssl.SSLContext.getInstance("SSL").apply {
+        init(null, trustAllCerts, java.security.SecureRandom())
+    }
+    
+    private val sslSocketFactory = sslContext.socketFactory
+
     // Client HTTP dedicato per il worker con CookieJar per gestire i cookie di sessione
     private val okHttpClient: OkHttpClient = OkHttpClient.Builder()
         .cookieJar(cookieJar)
+        .sslSocketFactory(sslSocketFactory, trustAllCerts[0] as javax.net.ssl.X509TrustManager)
+        .hostnameVerifier { _, _ -> true } // Accetta tutti gli hostname
         .build()
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {

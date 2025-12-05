@@ -138,8 +138,12 @@ class PythonSourceExecutor(
             val moduleName = pythonScript.removeSuffix(".py")
             val module = python.getModule(moduleName)
             
+            // Passa anche il path della source directory per permettere al Python di leggere platform_mapping.json
+            val paramsWithSourceDir = params.toMutableMap()
+            paramsWithSourceDir["source_dir"] = sourceDir.absolutePath
+            
             // Chiama la funzione execute con i parametri JSON
-            val paramsJson = gson.toJson(params)
+            val paramsJson = gson.toJson(paramsWithSourceDir)
             val result = module.callAttr("execute", paramsJson)
             
             result.toString()

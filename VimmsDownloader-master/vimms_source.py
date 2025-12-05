@@ -5,6 +5,7 @@ Implementa l'interfaccia SourceExecutor
 import json
 import re
 import sys
+import os
 from typing import Dict, Any, List, Optional
 import requests
 from bs4 import BeautifulSoup
@@ -13,36 +14,85 @@ import urllib3
 # Disabilita warning SSL per test (in produzione dovresti usare certificati validi)
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-# Mapping sistemi Vimm's Lair -> mother_code Tottodrillo
-SYSTEM_MAPPING = {
-    'NES': 'nes',
-    'Genesis': 'genesis',
-    'SNES': 'snes',
-    'Saturn': 'saturn',
-    'PS1': 'psx',
-    'Playstation': 'psx',
-    'N64': 'n64',
-    'Dreamcast': 'dreamcast',
-    'PS2': 'ps2',
-    'Playstation-2': 'ps2',
-    'Xbox': 'xbox',
-    'Gamecube': 'gc',
-    'PS3': 'ps3',
-    'Playstation-3': 'ps3',
-    'Wii': 'wii',
-    'WiiWare': 'wii',  # WiiWare non esiste come mother_code separato, mappato a wii
-    'GB': 'gb',
-    'Game-Boy': 'gb',
-    'GBC': 'gbc',
-    'Game-Boy-Color': 'gbc',
-    'GBA': 'gba',
-    'Game-Boy-Advanced': 'gba',
-    'DS': 'nds',
-    'Nintendo-DS': 'nds',
-    'PSP': 'psp',
-}
+# Cache per il mapping delle piattaforme (caricato da platform_mapping.json)
+_platform_mapping_cache: Optional[Dict[str, Any]] = None
+_source_dir: Optional[str] = None
 
-# Mapping URI Vimm's Lair -> nome sistema
+def load_platform_mapping(source_dir: str) -> Dict[str, Any]:
+    """Carica platform_mapping.json dalla directory della source"""
+    global _platform_mapping_cache, _source_dir
+    
+    # Se già caricato e stessa directory, ritorna la cache
+    if _platform_mapping_cache is not None and _source_dir == source_dir:
+        return _platform_mapping_cache
+    
+    _source_dir = source_dir
+    mapping_file = os.path.join(source_dir, 'platform_mapping.json')
+    
+    if not os.path.exists(mapping_file):
+        raise FileNotFoundError(f"platform_mapping.json non trovato in {source_dir}")
+    
+    with open(mapping_file, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+        _platform_mapping_cache = data.get('mapping', {})
+    
+    return _platform_mapping_cache
+
+def map_vimm_code_to_mother_code(vimm_code: str, source_dir: str) -> str:
+    """
+    Mappa un codice Vimm's Lair (case-insensitive) a un mother_code Tottodrillo
+    Usa platform_mapping.json dalla source directory
+    """
+    if not vimm_code:
+        return 'unknown'
+    
+    # Carica il mapping
+    mapping = load_platform_mapping(source_dir)
+    
+    # Normalizza il codice Vimm's Lair (case-insensitive)
+    vimm_code_lower = vimm_code.lower().strip()
+    
+    # Cerca il mother_code corrispondente
+    # Il mapping è: mother_code -> codice/i Vimm's Lair
+    for mother_code, vimm_codes in mapping.items():
+        if isinstance(vimm_codes, list):
+            # Se è una lista, controlla tutti i codici
+            for code in vimm_codes:
+                if code.lower() == vimm_code_lower:
+                    return mother_code
+        else:
+            # Se è una stringa singola
+            if vimm_codes.lower() == vimm_code_lower:
+                return mother_code
+    
+    # Se non trovato, ritorna il codice normalizzato
+    return vimm_code_lower
+
+def map_mother_code_to_vimm_uri(mother_code: str, source_dir: str) -> Optional[str]:
+    """
+    Mappa un mother_code Tottodrillo al codice URI da usare nell'URL di ricerca Vimm's Lair
+    Ritorna il primo codice disponibile (case-sensitive per l'URL)
+    """
+    if not mother_code:
+        return None
+    
+    # Carica il mapping
+    mapping = load_platform_mapping(source_dir)
+    
+    # Cerca il mother_code
+    vimm_codes = mapping.get(mother_code)
+    if not vimm_codes:
+        return None
+    
+    # Se è una lista, prendi il primo
+    if isinstance(vimm_codes, list):
+        return vimm_codes[0] if vimm_codes else None
+    
+    # Se è una stringa singola
+    return vimm_codes
+
+# Mapping URI Vimm's Lair -> nome sistema per URL (per compatibilità con codice esistente)
+# Questo viene usato per convertire i nomi estratti dalla pagina in codici URI
 URI_TO_SYSTEM = {
     'NES': 'NES',
     'Genesis': 'Genesis',
@@ -53,7 +103,8 @@ URI_TO_SYSTEM = {
     'Dreamcast': 'Dreamcast',
     'PS2': 'PS2',
     'Xbox': 'Xbox',
-    'GameCube': 'Gamecube',
+    'Gamecube': 'GameCube',  # Vimm's Lair usa "GameCube" nell'URL
+    'GameCube': 'GameCube',  # Alias
     'PS3': 'PS3',
     'Wii': 'Wii',
     'WiiWare': 'Wii',  # Mappato a Wii per URI
@@ -161,13 +212,19 @@ def get_uri_from_slug(slug: str) -> Optional[str]:
     return None
 
 
-def map_system_to_mother_code(system: str) -> str:
-    """Mappa il sistema Vimm's Lair al mother_code di Tottodrillo"""
-    return SYSTEM_MAPPING.get(system, system.lower())
+def map_system_to_mother_code(system: str, source_dir: str) -> str:
+    """
+    Mappa un sistema Vimm's Lair a un mother_code Tottodrillo (case-insensitive)
+    Usa platform_mapping.json dalla source directory
+    """
+    return map_vimm_code_to_mother_code(system, source_dir)
 
 
-def get_system_search_roms(search_key: str, system: str, page_num: int = 1) -> List[Dict[str, Any]]:
-    """Cerca ROM per sistema specifico con paginazione"""
+def get_system_search_roms(search_key: str, system: str, page_num: int = 1, source_dir: str = None) -> List[Dict[str, Any]]:
+    """
+    Cerca ROM per sistema specifico con paginazione
+    Vimm's Lair restituisce massimo 200 righe per pagina
+    """
     roms = []
     try:
         # Mappa il sistema al codice URI di Vimm's Lair
@@ -266,7 +323,7 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1) -> L
                     'slug': slug,
                     'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
                     'title': name,
-                    'platform': map_system_to_mother_code(system),
+                    'platform': map_system_to_mother_code(system, source_dir) if source_dir else 'unknown',
                     'boxart_url': None,  # Non disponibile nei risultati di ricerca
                     'boxart_urls': [],  # Non disponibile nei risultati di ricerca
                     'regions': regions,
@@ -279,8 +336,11 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1) -> L
     return roms
 
 
-def get_general_search_roms(search_key: str, page_num: int = 1) -> List[Dict[str, Any]]:
-    """Cerca ROM in generale su tutto il sito con paginazione"""
+def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str = None) -> List[Dict[str, Any]]:
+    """
+    Cerca ROM in generale su tutto il sito con paginazione
+    Vimm's Lair restituisce massimo 200 righe per pagina
+    """
     roms = []
     try:
         import urllib.parse
@@ -375,8 +435,8 @@ def get_general_search_roms(search_key: str, page_num: int = 1) -> List[Dict[str
                 
                 # Mappa il sistema al mother_code
                 platform = 'unknown'
-                if system:
-                    platform = map_system_to_mother_code(system)
+                if system and source_dir:
+                    platform = map_system_to_mother_code(system, source_dir)
                 
                 rom = {
                     'slug': slug,
@@ -395,7 +455,7 @@ def get_general_search_roms(search_key: str, page_num: int = 1) -> List[Dict[str
     return roms
 
 
-def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
+def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
     """Ottiene i dettagli completi di una ROM dall'URI"""
     try:
         # Estrai informazioni dalla pagina ROM per ottenere nome e sistema
@@ -415,12 +475,21 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
         # Cerca il sistema
         system = None
         
+        # Carica il mapping per ottenere tutti i codici Vimm's Lair possibili
+        mapping = load_platform_mapping(source_dir)
+        all_vimm_codes = set()
+        for vimm_codes in mapping.values():
+            if isinstance(vimm_codes, list):
+                all_vimm_codes.update(vimm_codes)
+            else:
+                all_vimm_codes.add(vimm_codes)
+        
         # Prova prima a estrarre dal titolo (es. "New Super Mario Bros. Wii (Wii)" -> "Wii")
         if title and '(' in title:
             title_lower = title.lower()
-            for vimm_system in SYSTEM_MAPPING.keys():
-                if vimm_system.lower() in title_lower:
-                    system = vimm_system
+            for vimm_code in all_vimm_codes:
+                if vimm_code.lower() in title_lower:
+                    system = vimm_code
                     break
         
         # Se non trovato nel titolo, cerca nella pagina
@@ -430,17 +499,17 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
                 parent = system_elem.parent
                 if parent:
                     system_text = parent.get_text()
-                    for vimm_system in SYSTEM_MAPPING.keys():
-                        if vimm_system in system_text:
-                            system = vimm_system
+                    for vimm_code in all_vimm_codes:
+                        if vimm_code in system_text:
+                            system = vimm_code
                             break
         
-        # Se ancora non trovato, cerca in tutti i testi della pagina
+        # Se ancora non trovato, cerca in tutti i testi della pagina (case-insensitive)
         if not system:
             page_text = soup.get_text().lower()
-            for vimm_system in SYSTEM_MAPPING.keys():
-                if vimm_system.lower() in page_text:
-                    system = vimm_system
+            for vimm_code in all_vimm_codes:
+                if vimm_code.lower() in page_text:
+                    system = vimm_code
                     break
         
         # Estrai l'ID della ROM dall'URI per costruire gli URL delle immagini
@@ -696,7 +765,7 @@ def get_rom_entry_by_uri(uri: str) -> Optional[Dict[str, Any]]:
             'slug': slug,
             'rom_id': uri,
             'title': final_title,
-            'platform': map_system_to_mother_code(system) if system else 'unknown',
+            'platform': map_system_to_mother_code(system, source_dir) if system else 'unknown',
             'boxart_url': boxart_url,  # Mantieni per compatibilità
             'boxart_urls': cover_urls,  # Lista di tutte le immagini per il carosello
             'regions': [],
@@ -719,13 +788,17 @@ def execute(params_json: str) -> str:
     try:
         params = json.loads(params_json)
         method = params.get("method")
+        source_dir = params.get("source_dir")
+        
+        if not source_dir:
+            return json.dumps({"error": "source_dir non fornito"})
         
         if method == "searchRoms":
-            return search_roms(params)
+            return search_roms(params, source_dir)
         elif method == "getEntry":
-            return get_entry(params)
+            return get_entry(params, source_dir)
         elif method == "getPlatforms":
-            return get_platforms()
+            return get_platforms(source_dir)
         elif method == "getRegions":
             return get_regions()
         else:
@@ -734,8 +807,11 @@ def execute(params_json: str) -> str:
         return json.dumps({"error": str(e)})
 
 
-def search_roms(params: Dict[str, Any]) -> str:
-    """Cerca ROM nella sorgente"""
+def search_roms(params: Dict[str, Any], source_dir: str) -> str:
+    """
+    Cerca ROM nella sorgente
+    Vimm's Lair restituisce massimo 200 righe per pagina
+    """
     search_key = params.get("search_key") or ""
     if search_key:
         search_key = search_key.strip()
@@ -743,24 +819,36 @@ def search_roms(params: Dict[str, Any]) -> str:
     max_results = params.get("max_results", 50)
     page = params.get("page", 1)
     
+    # Vimm's Lair ha un limite di 200 righe per pagina
+    VIMMS_PAGE_SIZE = 200
+    
     all_roms = []
     
-        # Se ci sono piattaforme specificate, cerca per ogni piattaforma
+    # Se ci sono piattaforme specificate, cerca per ogni piattaforma
     if platforms:
         for platform in platforms:
-            # Mappa il mother_code alla piattaforma Vimm's Lair
-            # Cerca il sistema corrispondente
-            system = None
-            for vimm_system, mother_code in SYSTEM_MAPPING.items():
-                if mother_code == platform:
-                    system = vimm_system
-                    break
+            # Mappa il mother_code al codice URI Vimm's Lair usando platform_mapping.json
+            system_uri = map_mother_code_to_vimm_uri(platform, source_dir)
             
-            if system:
+            if system_uri:
                 # Vimm's Lair permette query vuota per ottenere tutte le ROM del sistema
                 query = search_key if search_key else ''
-                roms = get_system_search_roms(query, system, page)
-                all_roms.extend(roms)
+                
+                # Calcola quale pagina di Vimm's Lair serve per questa richiesta
+                # Se max_results=50 e page=1, prendiamo la pagina 1 di Vimm's Lair (righe 0-199)
+                # Se max_results=50 e page=2, prendiamo ancora la pagina 1 (righe 50-99)
+                # Se max_results=50 e page=5, prendiamo la pagina 2 di Vimm's Lair (righe 200-399)
+                vimms_page = ((page - 1) * max_results) // VIMMS_PAGE_SIZE + 1
+                offset_in_page = ((page - 1) * max_results) % VIMMS_PAGE_SIZE
+                
+                # Carica la pagina di Vimm's Lair
+                roms = get_system_search_roms(query, system_uri, vimms_page, source_dir)
+                
+                # Applica l'offset e limita i risultati
+                start_idx = offset_in_page
+                end_idx = start_idx + max_results
+                paginated_roms = roms[start_idx:end_idx]
+                all_roms.extend(paginated_roms)
     else:
         # Ricerca generale - richiede una query
         if not search_key:
@@ -770,18 +858,35 @@ def search_roms(params: Dict[str, Any]) -> str:
                 "current_page": page,
                 "total_pages": 1
             })
-        all_roms = get_general_search_roms(search_key, page)
+        
+        # Calcola quale pagina di Vimm's Lair serve
+        vimms_page = ((page - 1) * max_results) // VIMMS_PAGE_SIZE + 1
+        offset_in_page = ((page - 1) * max_results) % VIMMS_PAGE_SIZE
+        
+        # Carica la pagina di Vimm's Lair
+        roms = get_general_search_roms(search_key, vimms_page, source_dir)
+        
+        # Applica l'offset e limita i risultati
+        start_idx = offset_in_page
+        end_idx = start_idx + max_results
+        all_roms = roms[start_idx:end_idx]
     
-    # Limita i risultati
+    # Per il totale, dobbiamo stimare basandoci sui risultati ottenuti
+    # Se abbiamo ottenuto meno di max_results, siamo all'ultima pagina
+    # Altrimenti, potrebbe esserci di più
     total_results = len(all_roms)
-    start_idx = (page - 1) * max_results
-    end_idx = start_idx + max_results
-    paginated_roms = all_roms[start_idx:end_idx]
+    if len(all_roms) == max_results:
+        # Potrebbe esserci di più, ma non possiamo saperlo senza fare altre richieste
+        # Usiamo una stima conservativa
+        total_results = page * max_results + 1  # Indica che c'è almeno un'altra pagina
+    else:
+        # Siamo all'ultima pagina
+        total_results = (page - 1) * max_results + len(all_roms)
     
     response = {
-        "results": paginated_roms,
+        "results": all_roms,
         "total_results": total_results,
-        "current_results": len(paginated_roms),
+        "current_results": len(all_roms),
         "current_page": page,
         "total_pages": (total_results + max_results - 1) // max_results if total_results > 0 else 1
     }
@@ -789,7 +894,7 @@ def search_roms(params: Dict[str, Any]) -> str:
     return json.dumps(response)
 
 
-def get_entry(params: Dict[str, Any]) -> str:
+def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     """Ottiene una entry specifica per slug"""
     slug = params.get("slug")
     
@@ -815,7 +920,7 @@ def get_entry(params: Dict[str, Any]) -> str:
     
     # Se abbiamo un URI, usiamolo direttamente
     if uri:
-        entry = get_rom_entry_by_uri(uri)
+        entry = get_rom_entry_by_uri(uri, source_dir)
         if entry:
             # Assicuriamoci che lo slug corrisponda
             entry['slug'] = slug
@@ -827,14 +932,14 @@ def get_entry(params: Dict[str, Any]) -> str:
     if len(name_parts) > 1:
         # Prova a cercare usando le ultime parti come nome
         search_name = ' '.join(name_parts[-3:])  # Ultime 3 parti
-        roms = get_general_search_roms(search_name)
+        roms = get_general_search_roms(search_name, 1, source_dir)
         
         # Cerca la ROM con slug corrispondente
         for rom in roms:
             if rom['slug'] == slug and rom.get('rom_id'):
                 # Trovata! Ora ottieni i dettagli completi
                 uri = rom['rom_id']
-                entry = get_rom_entry_by_uri(uri)
+                entry = get_rom_entry_by_uri(uri, source_dir)
                 if entry:
                     return json.dumps({"entry": entry})
     
@@ -844,17 +949,32 @@ def get_entry(params: Dict[str, Any]) -> str:
     })
 
 
-def get_platforms() -> str:
-    """Ottiene le piattaforme disponibili"""
+def get_platforms(source_dir: str) -> str:
+    """Ottiene le piattaforme disponibili usando platform_mapping.json"""
+    # Carica il mapping dalla source directory
+    mapping = load_platform_mapping(source_dir)
+    
+    # Crea un dizionario con i mother_code come chiavi
+    # Ogni valore è un dizionario con "name" che contiene il primo codice Vimm's Lair
     platforms = {}
     
-    # Mappa i sistemi Vimm's Lair alle piattaforme Tottodrillo
-    for vimm_system, mother_code in SYSTEM_MAPPING.items():
+    for mother_code, vimm_codes in mapping.items():
+        # Prendi il primo codice Vimm's Lair come nome
+        if isinstance(vimm_codes, list):
+            name = vimm_codes[0] if vimm_codes else mother_code
+        else:
+            name = vimm_codes
+        
         platforms[mother_code] = {
-            "name": vimm_system
+            "name": name
         }
     
-    return json.dumps(platforms)
+    # Restituisci nel formato atteso: {"platforms": {...}}
+    response = {
+        "platforms": platforms
+    }
+    
+    return json.dumps(response)
 
 
 def get_regions() -> str:
