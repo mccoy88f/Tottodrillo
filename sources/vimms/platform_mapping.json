@@ -1,0 +1,22 @@
+{
+  "mapping": {
+    "nes": "NES",
+    "snes": "SNES",
+    "n64": "N64",
+    "gc": "Gamecube",
+    "wii": ["Wii", "WiiWare"],
+    "gb": ["GB", "Game-Boy"],
+    "gbc": ["GBC", "Game-Boy-Color"],
+    "gba": ["GBA", "Game-Boy-Advanced"],
+    "nds": ["DS", "Nintendo-DS"],
+    "genesis": "Genesis",
+    "saturn": "Saturn",
+    "dreamcast": "Dreamcast",
+    "psx": ["PS1", "Playstation"],
+    "ps2": ["PS2", "Playstation-2"],
+    "ps3": ["PS3", "Playstation-3"],
+    "psp": "PSP",
+    "xbox": "Xbox"
+  }
+}
+

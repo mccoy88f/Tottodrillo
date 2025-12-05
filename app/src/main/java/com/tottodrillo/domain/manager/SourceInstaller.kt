@@ -25,7 +25,7 @@ class SourceInstaller @Inject constructor(
     companion object {
         private const val METADATA_FILE = "source.json"
         private const val API_CONFIG_FILE = "api_config.json"
-        private const val MAPPING_FILE = "mapping.json" // Opzionale
+        private const val PLATFORM_MAPPING_FILE = "platform_mapping.json" // Obbligatorio per tutte le sorgenti
     }
     
     /**
@@ -171,6 +171,23 @@ class SourceInstaller @Inject constructor(
      * Valida la struttura della sorgente
      */
     private fun validateSourceStructure(sourceDir: File, metadata: SourceMetadata) {
+        // Verifica che platform_mapping.json esista (obbligatorio per tutte le sorgenti)
+        val platformMappingFile = File(sourceDir, PLATFORM_MAPPING_FILE)
+        if (!platformMappingFile.exists()) {
+            throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non trovato (obbligatorio per tutte le sorgenti)")
+        }
+        
+        // Valida che platform_mapping.json sia JSON valido
+        try {
+            val mappingJson = platformMappingFile.readText()
+            val mapping = gson.fromJson(mappingJson, Map::class.java)
+            if (!mapping.containsKey("mapping") || mapping["mapping"] !is Map<*, *>) {
+                throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non valido: deve contenere un campo 'mapping'")
+            }
+        } catch (e: Exception) {
+            throw IllegalArgumentException("File $PLATFORM_MAPPING_FILE non valido: ${e.message}")
+        }
+        
         val sourceType = metadata.type.lowercase()
         
         when (sourceType) {

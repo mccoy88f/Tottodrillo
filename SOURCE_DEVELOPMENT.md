@@ -6,6 +6,7 @@ Questa guida spiega come creare sorgenti personalizzate per Tottodrillo.
 
 Le sorgenti sono pacchetti ZIP che contengono:
 - **source.json**: Metadata della sorgente (obbligatorio)
+- **platform_mapping.json**: Mapping delle piattaforme (obbligatorio per tutte le sorgenti)
 - **api_config.json**: Configurazione degli endpoint API (solo per sorgenti API)
 - **README.md**: Documentazione (opzionale)
 
@@ -19,28 +20,31 @@ Tottodrillo supporta tre tipi di sorgenti:
 ### Sorgente API
 ```
 my-source.zip
-├── source.json          # Obbligatorio: Metadata
-├── api_config.json      # Obbligatorio: Configurazione API
-└── README.md            # Opzionale: Documentazione
+├── source.json              # Obbligatorio: Metadata
+├── platform_mapping.json    # Obbligatorio: Mapping piattaforme
+├── api_config.json          # Obbligatorio: Configurazione API
+└── README.md                # Opzionale: Documentazione
 ```
 
 ### Sorgente Java/Kotlin
 ```
 my-source.zip
-├── source.json          # Obbligatorio: Metadata
-├── libs/                # Opzionale: Cartella per JAR dependencies
+├── source.json              # Obbligatorio: Metadata
+├── platform_mapping.json    # Obbligatorio: Mapping piattaforme
+├── libs/                    # Opzionale: Cartella per JAR dependencies
 │   └── dependency.jar
-├── classes.jar          # Opzionale: JAR con le classi (se non in libs/)
-└── README.md            # Opzionale: Documentazione
+├── classes.jar              # Opzionale: JAR con le classi (se non in libs/)
+└── README.md                # Opzionale: Documentazione
 ```
 
 ### Sorgente Python
 ```
 my-source.zip
-├── source.json          # Obbligatorio: Metadata
-├── main.py              # Script Python principale
-├── requirements.txt     # Opzionale: Dipendenze Python
-└── README.md            # Opzionale: Documentazione
+├── source.json              # Obbligatorio: Metadata
+├── platform_mapping.json    # Obbligatorio: Mapping piattaforme
+├── main.py                  # Script Python principale
+├── requirements.txt         # Opzionale: Dipendenze Python
+└── README.md                # Opzionale: Documentazione
 ```
 
 ## 1. source.json
@@ -260,45 +264,83 @@ I modelli descrivono la struttura dei dati:
 }
 ```
 
-## 3. Mapping Piattaforme
+## 3. platform_mapping.json
 
-Le piattaforme sono definite in `platforms_main.json` dell'app. Per mappare le tue piattaforme:
+**Obbligatorio per tutte le sorgenti.** Questo file mappa i `mother_code` (codici standard di Tottodrillo) ai codici specifici della tua sorgente.
 
-1. Usa i `mother_code` esistenti da `platforms_main.json`
-2. Aggiungi i mapping nella sezione `source_mappings`:
+### Struttura
 
 ```json
 {
-  "mother_code": "nes",
-  "name": "Nintendo Entertainment System",
-  "source_mappings": {
-    "mysource": ["nes", "nintendo-nes"]  // I tuoi codici
+  "mapping": {
+    "mother_code_1": "codice_sorgente_1",
+    "mother_code_2": ["codice_sorgente_2a", "codice_sorgente_2b"],
+    "mother_code_3": "codice_sorgente_3"
   }
 }
 ```
+
+### Regole
+
+- **Chiave**: `mother_code` da `platforms_main.json` dell'app (es. `"nes"`, `"snes"`, `"psx"`)
+- **Valore**: Può essere:
+  - Una stringa singola: `"nes"` → `"Nintendo-Entertainment-System"`
+  - Un array di stringhe: `"nds"` → `["DS", "Nintendo-DS"]` (per piattaforme con più varianti)
+
+### Esempio Completo
+
+```json
+{
+  "mapping": {
+    "nes": "NES",
+    "snes": "SNES",
+    "n64": "N64",
+    "gc": "Gamecube",
+    "wii": ["Wii", "WiiWare"],
+    "gb": ["GB", "Game-Boy"],
+    "gbc": ["GBC", "Game-Boy-Color"],
+    "gba": ["GBA", "Game-Boy-Advanced"],
+    "nds": ["DS", "Nintendo-DS"],
+    "genesis": "Genesis",
+    "saturn": "Saturn",
+    "dreamcast": "Dreamcast",
+    "psx": ["PS1", "Playstation"],
+    "ps2": ["PS2", "Playstation-2"],
+    "ps3": ["PS3", "Playstation-3"],
+    "psp": "PSP",
+    "xbox": "Xbox"
+  }
+}
+```
+
+### Come Trovare i mother_code
+
+I `mother_code` sono definiti nel file `platforms_main.json` dell'app Tottodrillo. Puoi consultare questo file per vedere tutti i codici disponibili. Ogni `mother_code` rappresenta una piattaforma standardizzata che Tottodrillo riconosce.
+
+**Nota**: Il file `platforms_main.json` rimane nelle assets dell'app e contiene i dati comuni delle piattaforme (nome, brand, immagine, descrizione). Il file `platform_mapping.json` nel tuo ZIP contiene solo il mapping tra `mother_code` e i codici specifici della tua sorgente.
 
 ## Validazione
 
 L'app valida automaticamente in base al tipo di sorgente:
 
+**Per tutte le sorgenti:**
+- ✅ Presenza di `source.json` e `platform_mapping.json`
+- ✅ Validità JSON di entrambi i file
+- ✅ `platform_mapping.json` contiene un campo `mapping` di tipo oggetto
+
 **Per sorgenti API:**
-- ✅ Presenza di `source.json` e `api_config.json`
-- ✅ Validità JSON
-- ✅ Campi obbligatori presenti (`id`, `name`, `version`, `type`, `baseUrl`)
+- ✅ Presenza di `api_config.json`
+- ✅ Campi obbligatori in `source.json` (`id`, `name`, `version`, `type`, `baseUrl`)
 - ✅ Formato URL valido
-- ✅ Struttura endpoint corretta
+- ✅ Struttura endpoint corretta in `api_config.json`
 
 **Per sorgenti Java/Kotlin:**
-- ✅ Presenza di `source.json`
-- ✅ Validità JSON
-- ✅ Campi obbligatori presenti (`id`, `name`, `version`, `type`, `mainClass`)
+- ✅ Campi obbligatori in `source.json` (`id`, `name`, `version`, `type`, `mainClass`)
 - ✅ Verifica che la classe principale possa essere caricata (al runtime)
 
 **Per sorgenti Python:**
-- ✅ Presenza di `source.json`
-- ✅ Validità JSON
-- ✅ Campi obbligatori presenti (`id`, `name`, `version`, `type`, `pythonScript`)
-- ✅ Verifica che lo script Python esista nel pacchetto
+- ✅ Campi obbligatori in `source.json` (`id`, `name`, `version`, `type`, `pythonScript`)
+- ✅ Presenza dello script Python specificato
 
 ## Endpoint Richiesti
 

@@ -21,7 +21,8 @@ import javax.inject.Singleton
  */
 @Singleton
 class PlatformManager @Inject constructor(
-    @ApplicationContext private val context: Context
+    @ApplicationContext private val context: Context,
+    private val sourceManager: SourceManager
 ) {
     
     private val gson = Gson()
@@ -31,43 +32,50 @@ class PlatformManager @Inject constructor(
     companion object {
         // I file sono nella root del progetto, li leggiamo dalle assets
         private const val PLATFORMS_MAIN_FILE = "platforms_main.json"
+        private const val PLATFORM_MAPPING_FILE = "platform_mapping.json"
         private const val DEFAULT_SOURCE = "crocdb" // Sorgente predefinita
     }
     
     /**
-     * Carica tutte le piattaforme dal file platforms_main.json
-     * I mapping delle sorgenti sono ora integrati direttamente nel file JSON
+     * Carica tutte le piattaforme per una sorgente specifica
+     * I mapping vengono caricati dai file platform_mapping.json delle sorgenti installate
      */
     suspend fun loadPlatforms(sourceName: String = DEFAULT_SOURCE): List<PlatformInfo> = withContext(Dispatchers.IO) {
-        // Usa cache se disponibile
-        platformsCache?.let { return@withContext it }
-        
         try {
-            // Carica platforms_main.json
-            val platformsMain = loadPlatformsMain()
-            
-            // Crea il mapping delle sorgenti per accesso rapido
-            val sourceMapping = buildSourceMapping(platformsMain.platforms)
+            // Carica i mapping dalle sorgenti installate
+            val sourceMapping = loadSourceMappings()
             sourceMappingCache = sourceMapping
             
-            // Mappa le piattaforme madre a PlatformInfo usando i dati locali
-            val platforms = platformsMain.platforms.mapNotNull { motherPlatform ->
-                // Trova i codici per la sorgente specificata
-                val sourceCodes = motherPlatform.sourceMappings[sourceName] ?: emptyList()
+            // Carica platforms_main.json per ottenere i dati delle piattaforme (nome, brand, immagine, etc.)
+            val platformsMain = loadPlatformsMain()
+            val platformsMap = platformsMain.platforms.associateBy { it.motherCode }
+            
+            // Ottieni il mapping per la sorgente specificata
+            val sourcePlatformMapping = sourceMapping[sourceName] ?: emptyMap()
+            
+            // Crea le PlatformInfo per ogni mother_code mappato
+            val platforms = sourcePlatformMapping.mapNotNull { (motherCode, sourceCodes) ->
+                val motherPlatform = platformsMap[motherCode]
                 
-                // Se non c'è mapping per questa sorgente, salta questa piattaforma
-                if (sourceCodes.isEmpty()) {
-                    null
+                if (motherPlatform == null) {
+                    android.util.Log.w("PlatformManager", "Mother code $motherCode non trovato in platforms_main.json")
+                    // Crea comunque una PlatformInfo base se il mother_code non esiste
+                    PlatformInfo(
+                        code = sourceCodes.firstOrNull() ?: return@mapNotNull null,
+                        displayName = motherCode.uppercase(),
+                        manufacturer = null,
+                        imagePath = null,
+                        description = null
+                    )
                 } else {
-                    // Crea una PlatformInfo per ogni codice sorgente
-                    // Per ora creiamo solo la prima, ma potremmo crearne multiple
-                    val sourceCode = sourceCodes.first()
+                    // Usa il primo codice sorgente per la PlatformInfo
+                    val sourceCode = sourceCodes.firstOrNull() ?: return@mapNotNull null
                     PlatformInfo(
                         code = sourceCode, // Codice sorgente per le query API
-                        displayName = motherPlatform.name ?: motherPlatform.motherCode, // Usa nome locale
-                        manufacturer = motherPlatform.brand, // Usa brand locale
-                        imagePath = motherPlatform.image, // Usa immagine locale
-                        description = motherPlatform.description // Usa descrizione locale
+                        displayName = motherPlatform.name ?: motherPlatform.motherCode,
+                        manufacturer = motherPlatform.brand,
+                        imagePath = motherPlatform.image,
+                        description = motherPlatform.description
                     )
                 }
             }
@@ -75,7 +83,7 @@ class PlatformManager @Inject constructor(
             platformsCache = platforms
             platforms
         } catch (e: Exception) {
-            android.util.Log.e("PlatformManager", "Errore nel caricamento piattaforme", e)
+            android.util.Log.e("PlatformManager", "Errore nel caricamento piattaforme per sorgente $sourceName", e)
             emptyList()
         }
     }
@@ -95,7 +103,60 @@ class PlatformManager @Inject constructor(
     }
     
     /**
-     * Costruisce il mapping delle sorgenti dalle piattaforme caricate
+     * Carica i mapping delle piattaforme dalle sorgenti installate
+     * Ritorna: source_name -> (mother_code -> lista codici sorgente)
+     */
+    private suspend fun loadSourceMappings(): Map<String, Map<String, List<String>>> = withContext(Dispatchers.IO) {
+        val mapping = mutableMapOf<String, MutableMap<String, List<String>>>()
+        
+        try {
+            // Carica tutte le sorgenti installate
+            val installedSources = sourceManager.getInstalledSources()
+            
+            for (source in installedSources) {
+                val sourceDir = source.installPath?.let { File(it) } ?: continue
+                val mappingFile = File(sourceDir, PLATFORM_MAPPING_FILE)
+                
+                if (!mappingFile.exists()) {
+                    android.util.Log.w("PlatformManager", "File platform_mapping.json non trovato per sorgente ${source.id}")
+                    continue
+                }
+                
+                try {
+                    val mappingJson = mappingFile.readText()
+                    val mappingData = gson.fromJson(mappingJson, Map::class.java)
+                    val platformMapping = mappingData["mapping"] as? Map<*, *> ?: continue
+                    
+                    // Crea il mapping per questa sorgente
+                    val sourceMap = mapping.getOrPut(source.id) { mutableMapOf() }
+                    
+                    platformMapping.forEach { (motherCode, sourceCodes) ->
+                        val motherCodeStr = motherCode.toString()
+                        val codesList = when (sourceCodes) {
+                            is String -> listOf(sourceCodes)
+                            is List<*> -> sourceCodes.mapNotNull { it?.toString() }
+                            else -> emptyList()
+                        }
+                        
+                        if (codesList.isNotEmpty()) {
+                            sourceMap[motherCodeStr] = codesList
+                        }
+                    }
+                    
+                    android.util.Log.d("PlatformManager", "Caricato mapping per sorgente ${source.id}: ${sourceMap.size} piattaforme")
+                } catch (e: Exception) {
+                    android.util.Log.e("PlatformManager", "Errore nel caricamento mapping per sorgente ${source.id}", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("PlatformManager", "Errore nel caricamento mapping sorgenti", e)
+        }
+        
+        return@withContext mapping
+    }
+    
+    /**
+     * Costruisce il mapping delle sorgenti dalle piattaforme caricate (metodo legacy per compatibilità)
      * Ritorna: source_name -> (mother_code -> lista codici)
      */
     private fun buildSourceMapping(platforms: List<MotherPlatform>): Map<String, Map<String, List<String>>> {
@@ -117,10 +178,7 @@ class PlatformManager @Inject constructor(
      * Ottiene il codice sorgente per un mother_code
      */
     suspend fun getSourceCode(motherCode: String, sourceName: String = DEFAULT_SOURCE): String? {
-        val mapping = sourceMappingCache ?: run {
-            val platformsMain = loadPlatformsMain()
-            buildSourceMapping(platformsMain.platforms)
-        }
+        val mapping = sourceMappingCache ?: loadSourceMappings().also { sourceMappingCache = it }
         return mapping[sourceName]?.get(motherCode)?.firstOrNull()
     }
     
@@ -128,10 +186,7 @@ class PlatformManager @Inject constructor(
      * Ottiene tutti i codici sorgente per un mother_code (può essere multiplo)
      */
     suspend fun getSourceCodes(motherCode: String, sourceName: String = DEFAULT_SOURCE): List<String> {
-        val mapping = sourceMappingCache ?: run {
-            val platformsMain = loadPlatformsMain()
-            buildSourceMapping(platformsMain.platforms)
-        }
+        val mapping = sourceMappingCache ?: loadSourceMappings().also { sourceMappingCache = it }
         return mapping[sourceName]?.get(motherCode) ?: emptyList()
     }
     
@@ -139,10 +194,7 @@ class PlatformManager @Inject constructor(
      * Ottiene il mother_code da un codice sorgente (reverse lookup)
      */
     suspend fun getMotherCodeFromSourceCode(sourceCode: String, sourceName: String = DEFAULT_SOURCE): String? {
-        val mapping = sourceMappingCache ?: run {
-            val platformsMain = loadPlatformsMain()
-            buildSourceMapping(platformsMain.platforms)
-        }
+        val mapping = sourceMappingCache ?: loadSourceMappings().also { sourceMappingCache = it }
         // Cerca il mother_code che contiene questo codice sorgente
         return mapping[sourceName]?.entries?.firstOrNull { entry ->
             entry.value.contains(sourceCode)
@@ -170,14 +222,12 @@ class PlatformManager @Inject constructor(
     }
     
     /**
-     * Ottiene tutte le sorgenti disponibili dalle piattaforme caricate
+     * Ottiene tutte le sorgenti disponibili dalle sorgenti installate
      */
     suspend fun getAvailableSources(): Set<String> = withContext(Dispatchers.IO) {
         try {
-            val platformsMain = loadPlatformsMain()
-            platformsMain.platforms
-                .flatMap { it.sourceMappings.keys }
-                .toSet()
+            val mapping = sourceMappingCache ?: loadSourceMappings().also { sourceMappingCache = it }
+            mapping.keys.toSet()
         } catch (e: Exception) {
             android.util.Log.e("PlatformManager", "Errore nel recupero sorgenti disponibili", e)
             emptySet()
