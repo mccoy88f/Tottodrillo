@@ -415,15 +415,17 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
             # Costruisci l'URL della pagina della piattaforma
             # ROMsFun usa URL tipo: /roms/nintendo-ds?keywords=query&orderby=popular&order=desc
             # Il formato cambia in base alla piattaforma, ma lo slug è sempre quello dal mapping
+            # Assicurati che lo slug sia in minuscolo per la costruzione dell'URL
+            platform_slug_lower = platform_slug.lower().strip()
             if search_key:
                 # Ricerca per piattaforma con query: usa keywords invece di s
                 # Codifica la query per l'URL (sostituisce spazi con +)
                 keywords = urllib.parse.quote_plus(search_key)
-                search_url = f'https://romsfun.com/roms/{platform_slug}?keywords={keywords}&orderby=popular&order=desc'
+                search_url = f'https://romsfun.com/roms/{platform_slug_lower}?keywords={keywords}&orderby=popular&order=desc'
             else:
                 # Solo elenco piattaforma senza query
                 # URL formato: https://romsfun.com/roms/{platform_slug}/
-                search_url = f'https://romsfun.com/roms/{platform_slug}/'
+                search_url = f'https://romsfun.com/roms/{platform_slug_lower}/'
             
             print(f"🔗 [search_roms] URL costruito per piattaforma '{platform}' (slug: '{platform_slug}'): {search_url}", file=sys.stderr)
             
@@ -728,26 +730,31 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     if not slug:
         return json.dumps({"error": "Slug non fornito"})
     
-    # Costruisci l'URL della pagina ROM
-    if slug.startswith('http'):
-        # URL completo
-        page_url = slug
-    elif slug.startswith('/'):
-        # URL relativo
-        page_url = 'https://romsfun.com' + slug
+    # Normalizza lo slug per costruire l'URL (tutto in minuscolo)
+    slug_normalized = slug.strip().lower()
+    
+    # Costruisci l'URL della pagina ROM (tutti gli slug negli URL devono essere in minuscolo)
+    if slug_normalized.startswith('http'):
+        # URL completo, normalizza la parte path
+        page_url = re.sub(r'(https?://romsfun\.com/roms/)([^/?#]+)', 
+                         lambda m: m.group(1) + m.group(2).lower(), 
+                         slug_normalized)
+    elif slug_normalized.startswith('/'):
+        # URL relativo, normalizza tutto in minuscolo
+        page_url = 'https://romsfun.com' + slug_normalized.lower()
     else:
         # Slug parziale - potrebbe essere solo il nome o l'URL completo senza protocollo
-        if '.html' in slug:
+        if '.html' in slug_normalized:
             # Ha già l'estensione
-            if slug.startswith('roms/'):
-                page_url = 'https://romsfun.com/' + slug
+            if slug_normalized.startswith('roms/'):
+                page_url = 'https://romsfun.com/' + slug_normalized.lower()
             else:
                 # Assumiamo che sia nella forma: piattaforma/nome-rom.html
-                # Ma non abbiamo la piattaforma, quindi proviamo a cercare
-                page_url = f'https://romsfun.com/roms/{slug}'
+                # Normalizza tutto in minuscolo
+                page_url = f'https://romsfun.com/roms/{slug_normalized.lower()}'
         else:
-            # Solo il nome, dobbiamo cercare (non ideale, ma proviamo)
-            page_url = f'https://romsfun.com/roms/{slug}.html'
+            # Solo il nome, normalizza in minuscolo
+            page_url = f'https://romsfun.com/roms/{slug_normalized.lower()}.html'
     
     try:
         entry = get_rom_entry_by_url(page_url, source_dir)
