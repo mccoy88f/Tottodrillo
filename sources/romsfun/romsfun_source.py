@@ -70,8 +70,8 @@ def map_mother_code_to_romsfun_slug(mother_code: str, source_dir: str) -> Option
     Mappa un mother_code Tottodrillo allo slug ROMsFun da usare nell'URL
     Ritorna il primo slug disponibile
     
-    Se il mother_code non viene trovato, prova a cercarlo come slug ROMsFun diretto
-    (per gestire casi in cui l'app passa lo slug invece del mother_code)
+    Gestisce sia mother_code ('psx') che slug ROMsFun diretti ('playstation')
+    Tutti i confronti sono case-insensitive come in Tottodrillo
     """
     if not mother_code:
         return None
@@ -83,26 +83,26 @@ def map_mother_code_to_romsfun_slug(mother_code: str, source_dir: str) -> Option
     mapping = load_platform_mapping(source_dir)
     
     # PRIMA: Cerca il mother_code come chiave nel mapping (case-insensitive)
-    romsfun_slugs = mapping.get(mother_code_lower)
-    if romsfun_slugs:
-        # Se è una lista, prendi il primo
-        if isinstance(romsfun_slugs, list):
-            return romsfun_slugs[0].lower() if romsfun_slugs else None
-        # Se è una stringa singola
-        return romsfun_slugs.lower()
+    # Normalizza anche le chiavi del mapping per il confronto
+    for key, value in mapping.items():
+        if key.lower() == mother_code_lower:
+            # Trovato come chiave (mother_code)
+            if isinstance(value, list):
+                return value[0].lower().strip() if value else None
+            return value.lower().strip()
     
     # SECONDA: Se non trovato, prova a cercare se il mother_code è già uno slug ROMsFun
     # Cerca nei valori del mapping (slug ROMsFun) - questo gestisce il caso in cui
-    # l'app passa 'nintendo-wii' invece di 'wii'
+    # l'app passa 'playstation' invece di 'psx' o 'nintendo-wii' invece di 'wii'
     for mapped_mother_code, mapped_slugs in mapping.items():
         if isinstance(mapped_slugs, list):
-            # Cerca nella lista di slug
+            # Cerca nella lista di slug (case-insensitive)
             for slug in mapped_slugs:
-                if slug.lower() == mother_code_lower:
+                if slug.lower().strip() == mother_code_lower:
                     return mother_code_lower  # È già uno slug ROMsFun valido
         else:
-            # Confronta con lo slug singolo
-            if mapped_slugs.lower() == mother_code_lower:
+            # Confronta con lo slug singolo (case-insensitive)
+            if mapped_slugs.lower().strip() == mother_code_lower:
                 return mother_code_lower  # È già uno slug ROMsFun valido
     
     # TERZA: Se ancora non trovato, potrebbe essere già uno slug ROMsFun non mappato
@@ -1078,7 +1078,14 @@ def get_platform_display_name(romsfun_slug: str) -> str:
     """
     Converte uno slug ROMsFun nel nome esatto come appare nelle pagine ROMsFun
     Mapping completo basato sui dati ufficiali di ROMsFun
+    Tutti i confronti sono case-insensitive come in Tottodrillo
     """
+    if not romsfun_slug:
+        return romsfun_slug
+    
+    # Normalizza lo slug per il matching (case-insensitive)
+    romsfun_slug_lower = romsfun_slug.lower().strip()
+    
     # Mapping completo slug -> nome esatto come appare su ROMsFun
     # Basato sui dati ufficiali estratti dal sito
     platform_name_mapping = {
