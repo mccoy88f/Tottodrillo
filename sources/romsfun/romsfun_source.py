@@ -151,7 +151,7 @@ def get_browser_headers(referer: Optional[str] = None) -> Dict[str, str]:
     
     return headers
 
-def get_final_download_url(sub_link_url: str, session: requests.Session, referer: str) -> Optional[str]:
+def get_final_download_url(sub_link_url: str, session, referer: str) -> Optional[str]:
     """
     Segue un link di download intermedio per ottenere l'URL finale del file
     Es: /download/slug-12345/1 -> URL finale del file con token
@@ -517,8 +517,13 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
     roms = []
     
     try:
-        # Usa session per mantenere i cookie tra le richieste
-        session = requests.Session()
+        # Usa cloudscraper se disponibile (bypass Cloudflare), altrimenti requests.Session
+        if CLOUDSCRAPER_AVAILABLE:
+            session = cloudscraper.create_scraper()
+            print(f"✅ [get_roms_from_platform_page] Usando cloudscraper per bypassare Cloudflare", file=sys.stderr)
+        else:
+            session = requests.Session()
+            print(f"⚠️ [get_roms_from_platform_page] cloudscraper non disponibile, usando requests.Session", file=sys.stderr)
         
         # Simula navigazione browser reale per bypassare Cloudflare:
         # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali
@@ -792,8 +797,13 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
     Ottiene i dettagli completi di una ROM dall'URL della pagina
     """
     try:
-        # Usa session per mantenere i cookie tra le richieste
-        session = requests.Session()
+        # Usa cloudscraper se disponibile (bypass Cloudflare), altrimenti requests.Session
+        if CLOUDSCRAPER_AVAILABLE:
+            session = cloudscraper.create_scraper()
+            print(f"✅ [get_rom_entry_by_url] Usando cloudscraper per bypassare Cloudflare", file=sys.stderr)
+        else:
+            session = requests.Session()
+            print(f"⚠️ [get_rom_entry_by_url] cloudscraper non disponibile, usando requests.Session", file=sys.stderr)
         
         # Simula navigazione browser reale per bypassare Cloudflare:
         # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali
