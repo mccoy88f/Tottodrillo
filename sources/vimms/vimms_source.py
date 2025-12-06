@@ -817,6 +817,39 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
         
         slug = get_rom_slug_from_uri(uri)
         
+        # Estrai le regioni dalla tabella della pagina ROM
+        # La struttura è: <tr><td>Region</td><td></td><td><img class="flag" title="USA">...</td></tr>
+        regions = []
+        # Cerca tutte le righe della tabella
+        table_rows = soup.find_all('tr')
+        for row in table_rows:
+            cells = row.find_all('td')
+            if len(cells) >= 3:
+                # Il primo <td> dovrebbe contenere "Region"
+                first_cell_text = cells[0].get_text(strip=True)
+                if first_cell_text.lower() == 'region':
+                    # Il terzo <td> contiene le immagini flag
+                    region_cell = cells[2] if len(cells) > 2 else None
+                    if region_cell:
+                        # Trova tutte le immagini flag con attributo title
+                        flag_imgs = region_cell.find_all('img', class_='flag')
+                        for flag_img in flag_imgs:
+                            region = flag_img.get('title', '').strip()
+                            if region and region not in regions:
+                                regions.append(region)
+                    break  # Trovata la riga Region, esci dal loop
+        
+        # Se non trovate regioni nella tabella, prova a cercare in modo alternativo
+        if not regions:
+            # Cerca direttamente tutte le immagini flag nella pagina
+            all_flag_imgs = soup.find_all('img', class_='flag')
+            for flag_img in all_flag_imgs:
+                region = flag_img.get('title', '').strip()
+                if region and region not in regions:
+                    regions.append(region)
+        
+        print(f"🌍 [get_rom_entry_by_uri] Regioni trovate: {regions}", file=sys.stderr)
+        
         # Estrai la versione dai link se disponibile (prendi la prima versione trovata)
         version_string = None
         if links:
@@ -838,7 +871,7 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
             'platform': map_system_to_mother_code(system, source_dir) if system else 'unknown',
             'boxart_url': boxart_url,  # Mantieni per compatibilità
             'boxart_urls': cover_urls,  # Lista di tutte le immagini per il carosello
-            'regions': [],
+            'regions': regions,  # Regioni estratte dalla pagina ROM
             'links': links
         }
         
