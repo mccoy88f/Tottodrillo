@@ -349,8 +349,67 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                 
                 print(f"✅ [get_entry] Trovati {len(download_links)} link download", file=sys.stderr)
         
-        # Estrai regioni (non disponibili su SwitchRoms, ma possiamo provare a dedurle dal titolo)
+        # Estrai regioni dalla tabella Language
         regions = []
+        try:
+            # Cerca tutte le righe tr e trova quella con Language
+            language_row = None
+            for tr in soup.find_all('tr'):
+                th = tr.find('th')
+                if th and 'Language' in th.get_text():
+                    language_row = tr
+                    break
+            
+            if language_row:
+                language_td = language_row.find('td', class_='text-muted')
+                if language_td:
+                    languages_text = language_td.get_text(strip=True)
+                    # Parse le lingue separate da virgola
+                    languages = [lang.strip() for lang in languages_text.split(',')]
+                    print(f"🌐 [get_entry] Lingue trovate: {', '.join(languages)}", file=sys.stderr)
+                    
+                    # Mappa le lingue ai codici regione di Tottodrillo
+                    language_to_regions = {
+                        'english': ['US', 'UK'],
+                        'french': ['FR', 'EU'],
+                        'german': ['DE', 'EU'],
+                        'italian': ['IT', 'EU'],
+                        'japanese': ['JP'],
+                        'dutch': ['NL', 'EU'],
+                        'korean': ['KR'],
+                        'portuguese': ['BR', 'EU'],
+                        'russian': ['RU'],  # RU potrebbe non essere supportato, ma lo includiamo
+                        'spanish': ['ES', 'EU'],
+                        'chinese': ['CN'],
+                        'simplified chinese': ['CN'],
+                        'traditional chinese': ['CN', 'TW'],  # Traditional Chinese -> Taiwan
+                    }
+                    
+                    # Converti le lingue in regioni
+                    region_codes = set()
+                    for lang in languages:
+                        lang_lower = lang.lower().strip()
+                        matched = False
+                        # Cerca match esatto o parziale
+                        for lang_key, region_codes_list in language_to_regions.items():
+                            if lang_key == lang_lower or lang_key in lang_lower or lang_lower in lang_key:
+                                region_codes.update(region_codes_list)
+                                matched = True
+                                break
+                        # Se non trovato, prova match parziale più flessibile
+                        if not matched:
+                            if 'english' in lang_lower:
+                                region_codes.update(['US', 'UK'])
+                            elif 'chinese' in lang_lower:
+                                region_codes.add('CN')
+                                if 'traditional' in lang_lower:
+                                    region_codes.add('TW')
+                    
+                    # Converti in lista e ordina
+                    regions = sorted(list(region_codes))
+                    print(f"✅ [get_entry] Regioni estratte: {', '.join(regions)}", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ [get_entry] Errore estrazione regioni: {e}", file=sys.stderr)
         
         # Estrai publisher e genere dalla pagina (se disponibili)
         publisher = None
