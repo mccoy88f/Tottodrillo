@@ -188,24 +188,66 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
         
         # Estrai titolo
         title = None
-        h1 = soup.find('h1')
+        # Cerca prima in h1 con classe h1-title (titolo principale del gioco)
+        h1 = soup.find('h1', class_='h1-title')
         if h1:
             title = h1.get_text(strip=True)
-        else:
-            # Fallback: cerca nel title della pagina
+            # Rimuovi "NSP, XCI Switch Rom V..." dal titolo
+            title = re.sub(r'\s+NSP.*$', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'\s+XCI.*$', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'\s+Switch\s+Rom.*$', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'\s+V\d+\.\d+.*$', '', title, flags=re.IGNORECASE)
+            title = re.sub(r'\s+Free\s+Download.*$', '', title, flags=re.IGNORECASE)
+        
+        # Fallback: cerca nel title della pagina
+        if not title or title.lower() in ['switch rom', 'switchrom']:
             title_tag = soup.find('title')
             if title_tag:
                 title = title_tag.get_text(strip=True)
                 # Rimuovi "Switch Rom" o simili dal titolo
                 title = re.sub(r'\s*-\s*Switch\s*Rom.*$', '', title, flags=re.IGNORECASE)
+                title = re.sub(r'\s*\|\s*Switch\s*Rom.*$', '', title, flags=re.IGNORECASE)
+                title = re.sub(r'\s+NSP.*$', '', title, flags=re.IGNORECASE)
+                title = re.sub(r'\s+XCI.*$', '', title, flags=re.IGNORECASE)
+        
+        # Pulisci il titolo
+        if title:
+            title = title.strip()
         
         # Estrai immagine box art
         box_image = None
-        img_elem = soup.find('img', class_='bg-img')
-        if img_elem:
-            box_image = img_elem.get('src', '')
-        else:
-            # Cerca altre immagini
+        
+        # Prima cerca l'immagine che ha l'alt text corrispondente al titolo
+        if title:
+            # Crea una versione semplificata del titolo per il matching
+            title_words = re.sub(r'[^\w\s]', '', title.lower()).split()
+            if title_words:
+                # Cerca immagini nell'articolo principale
+                article = soup.find('article') or soup.find('main')
+                if article:
+                    for img in article.find_all('img', src=re.compile(r'\.(jpg|jpeg|png|webp)', re.I)):
+                        alt_text = img.get('alt', '').lower()
+                        # Verifica se almeno 2 parole del titolo sono nell'alt text
+                        matches = sum(1 for word in title_words[:3] if word in alt_text)
+                        if matches >= 2:
+                            box_image = img.get('src', '')
+                            print(f"✅ [get_entry] Immagine trovata per matching alt text: {box_image[:80]}...", file=sys.stderr)
+                            break
+        
+        # Fallback: cerca l'immagine principale nell'articolo (prima immagine che non è bg-img)
+        if not box_image:
+            article = soup.find('article') or soup.find('main')
+            if article:
+                for img in article.find_all('img', src=re.compile(r'\.(jpg|jpeg|png|webp)', re.I)):
+                    # Salta immagini con classe bg-img (sono quelle dei giochi correlati)
+                    if 'bg-img' not in (img.get('class', []) or []):
+                        box_image = img.get('src', '')
+                        if box_image:
+                            print(f"✅ [get_entry] Immagine trovata nell'articolo: {box_image[:80]}...", file=sys.stderr)
+                            break
+        
+        # Ultimo fallback: prima immagine valida
+        if not box_image:
             img_elem = soup.find('img', src=re.compile(r'\.(jpg|jpeg|png|webp)', re.I))
             if img_elem:
                 box_image = img_elem.get('src', '')
