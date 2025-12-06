@@ -267,11 +267,15 @@ private fun ActiveFiltersBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "$totalFilters filtro${if (totalFilters == 1) "" else "i"} attivo${if (totalFilters == 1) "" else "i"}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
+                text = if (totalFilters == 1) {
+                    "$totalFilters filtro attivo"
+                } else {
+                    "$totalFilters filtri attivi"
+                },
+                style = MaterialTheme.typography.labelMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
+            )
         }
 
         Text(
