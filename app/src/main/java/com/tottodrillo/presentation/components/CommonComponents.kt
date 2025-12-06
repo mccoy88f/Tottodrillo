@@ -66,10 +66,19 @@ fun RomCard(
                     .aspectRatio(0.75f),
                 contentAlignment = Alignment.Center
             ) {
-                if (shouldLoadImage && rom.coverUrl != null) {
-                    android.util.Log.d("RomCard", "🖼️ Caricamento immagine per ${rom.title}: ${rom.coverUrl}")
+                // Usa coverUrl se disponibile, altrimenti usa il primo elemento di coverUrls (placeholder)
+                val imageUrl = rom.coverUrl ?: rom.coverUrls.firstOrNull()
+                
+                android.util.Log.d("RomCard", "🎴 [RomCard] ROM: ${rom.title}")
+                android.util.Log.d("RomCard", "   coverUrl: ${rom.coverUrl}")
+                android.util.Log.d("RomCard", "   coverUrls: ${rom.coverUrls}")
+                android.util.Log.d("RomCard", "   imageUrl selezionato: $imageUrl")
+                android.util.Log.d("RomCard", "   shouldLoadImage: $shouldLoadImage")
+                
+                if (shouldLoadImage && imageUrl != null) {
+                    android.util.Log.d("RomCard", "🖼️ Caricamento immagine per ${rom.title}: $imageUrl")
                     SubcomposeAsyncImage(
-                        model = rom.coverUrl,
+                        model = imageUrl,
                         contentDescription = rom.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit, // Centra l'immagine mantenendo le proporzioni
@@ -98,7 +107,7 @@ fun RomCard(
                         }
                     )
                 } else {
-                    // Placeholder quando l'immagine non deve essere caricata
+                    // Placeholder quando l'immagine non deve essere caricata o non c'è nessuna immagine
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

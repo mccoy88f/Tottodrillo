@@ -345,7 +345,7 @@ fun RomDetailScreen(
                     contentAlignment = Alignment.Center
                 ) {
                     SubcomposeAsyncImage(
-                        model = rom.coverUrl,
+                        model = rom.coverUrl ?: rom.coverUrls.firstOrNull(),
                         contentDescription = rom.title,
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Fit,

@@ -16,6 +16,12 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     val boxImage = this.boxImage
     val screenImage = this.screenImage
     
+    android.util.Log.d("Mappers", "🔄 [toDomain] ROM: ${this.title}")
+    android.util.Log.d("Mappers", "   boxImage: $boxImage")
+    android.util.Log.d("Mappers", "   screenImage: $screenImage")
+    android.util.Log.d("Mappers", "   boxartUrl (deprecato): ${this.boxartUrl}")
+    android.util.Log.d("Mappers", "   boxartUrls (deprecato): ${this.boxartUrls}")
+    
     // Costruisci la lista coverUrls: prima box (se presente), poi screen (se presente)
     val coverUrls = mutableListOf<String>()
     if (boxImage != null) {
@@ -28,14 +34,18 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     // Fallback al vecchio formato per compatibilità
     if (coverUrls.isEmpty()) {
         val oldCoverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
-        ?: this.boxartUrl?.let { listOf(it) } 
-        ?: emptyList()
+            ?: this.boxartUrl?.let { listOf(it) } 
+            ?: emptyList()
         coverUrls.addAll(oldCoverUrls)
+        android.util.Log.d("Mappers", "   ⚠️ Usato fallback vecchio formato: $oldCoverUrls")
     }
     
-    // coverUrl principale è la box image (o la prima immagine se non c'è box)
+    // coverUrl principale è SOLO la box image (non lo screen)
     // Se non c'è box, coverUrl sarà null e il repository aggiungerà il placeholder
-    val coverUrl = boxImage ?: coverUrls.firstOrNull()
+    // IMPORTANTE: non usare screenImage come coverUrl, perché potrebbe essere un placeholder di errore
+    val coverUrl = boxImage
+    
+    android.util.Log.d("Mappers", "   ✅ Risultato: coverUrl=$coverUrl, coverUrls=$coverUrls")
     
     return Rom(
         slug = this.slug,

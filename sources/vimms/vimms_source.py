@@ -338,7 +338,6 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1, sour
                     rom_id = match.group(1)
                     # Costruisci l'URL dell'immagine box art (l'app caricherà solo se visibile)
                     boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
-                    print(f"✅ [get_system_search_roms] Immagine costruita per {name}: {boxart_url} (URI: {uri})", file=sys.stderr)
                 else:
                     # Log per debug se l'URI non contiene l'ID
                     print(f"⚠️ [get_system_search_roms] URI non contiene ID numerico: {uri} (originale: {uri_original})", file=sys.stderr)
@@ -485,7 +484,6 @@ def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str 
                     rom_id = match.group(1)
                     # Costruisci l'URL dell'immagine box art (l'app caricherà solo se visibile)
                     boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
-                    print(f"✅ [get_general_search_roms] Immagine costruita per {name}: {boxart_url} (URI: {uri})", file=sys.stderr)
                 else:
                     # Log per debug se l'URI non contiene l'ID
                     print(f"⚠️ [get_general_search_roms] URI non contiene ID numerico: {uri} (originale: {uri_original})", file=sys.stderr)
@@ -1054,13 +1052,10 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     
     # Debug: verifica quante ROM hanno boxart_url
     roms_with_images = [r for r in all_roms if r.get('boxart_url')]
-    print(f"📊 [search_roms] ROM con immagini: {len(roms_with_images)}/{len(all_roms)}", file=sys.stderr)
-    if roms_with_images:
-        print(f"📊 [search_roms] Esempio ROM con immagine: {roms_with_images[0].get('title')} -> {roms_with_images[0].get('boxart_url')}", file=sys.stderr)
+    # Log solo per ROM senza immagini (debug placeholder)
     if len(all_roms) > 0 and not roms_with_images:
-        # Debug: verifica la prima ROM senza immagine
         first_rom = all_roms[0]
-        print(f"⚠️ [search_roms] Prima ROM senza immagine: {first_rom.get('title')}, rom_id: {first_rom.get('rom_id')}, boxart_url: {first_rom.get('boxart_url')}", file=sys.stderr)
+        print(f"⚠️ [search_roms] ROM senza immagini: {first_rom.get('title')}, box_image: {first_rom.get('box_image')}", file=sys.stderr)
     
     response = {
         "results": all_roms,

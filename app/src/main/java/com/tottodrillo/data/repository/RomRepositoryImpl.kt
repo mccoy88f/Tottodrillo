@@ -158,6 +158,12 @@ class RomRepositoryImpl @Inject constructor(
                 
                 // Raccogli tutte le immagini da tutte le ROM
                 // coverUrl è la box image (obbligatoria), coverUrls contiene box + screen
+                android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Processando ROM: ${firstRom.title}")
+                android.util.Log.d("RomRepositoryImpl", "   Numero ROM aggregate: ${roms.size}")
+                roms.forEachIndexed { index, rom ->
+                    android.util.Log.d("RomRepositoryImpl", "   ROM[$index]: coverUrl=${rom.coverUrl}, coverUrls=${rom.coverUrls}")
+                }
+                
                 var allCoverUrls = roms
                     .flatMap { rom -> 
                         // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
@@ -165,13 +171,25 @@ class RomRepositoryImpl @Inject constructor(
                     }
                     .distinct()
                 
-                // Se non c'è box image (coverUrl è null), aggiungi il placeholder come prima immagine
-                // Il placeholder va prima delle screen images
+                android.util.Log.d("RomRepositoryImpl", "   allCoverUrls iniziale: $allCoverUrls")
+                
+                // Se non c'è box image (coverUrl è null), rimuovi eventuali screen placeholder di errore
+                // e aggiungi il placeholder corretto come prima immagine
                 val hasBoxImage = roms.any { it.coverUrl != null }
+                android.util.Log.d("RomRepositoryImpl", "   hasBoxImage: $hasBoxImage")
+                
                 if (!hasBoxImage) {
+                    // Se non c'è box image, rimuoviamo tutte le immagini esistenti (potrebbero essere placeholder di errore)
+                    // e aggiungiamo solo il placeholder corretto
+                    android.util.Log.d("RomRepositoryImpl", "   ⚠️ Nessuna box image trovata, rimuovo immagini esistenti")
+                    allCoverUrls = emptyList()
                     val placeholderImages = getPlaceholderImages(roms)
-                    // Aggiungi placeholder all'inizio (prima delle screen images se presenti)
+                    android.util.Log.d("RomRepositoryImpl", "   📱 Placeholder ottenuti: $placeholderImages")
+                    // Aggiungi placeholder all'inizio
                     allCoverUrls = placeholderImages + allCoverUrls
+                    android.util.Log.d("RomRepositoryImpl", "   ✅ allCoverUrls finale: $allCoverUrls")
+                } else {
+                    android.util.Log.d("RomRepositoryImpl", "   ✅ Box image presente, mantengo allCoverUrls: $allCoverUrls")
                 }
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
@@ -187,9 +205,12 @@ class RomRepositoryImpl @Inject constructor(
                 // Arricchisci PlatformInfo
                 val enrichedPlatform = enrichPlatformInfo(firstRom.platform, firstRom.sourceId)
                 
+                val finalCoverUrl = allCoverUrls.firstOrNull()
+                android.util.Log.d("RomRepositoryImpl", "   🎯 Finale per ${firstRom.title}: coverUrl=$finalCoverUrl, coverUrls=$allCoverUrls")
+                
                 firstRom.copy(
                     platform = enrichedPlatform,
-                    coverUrl = allCoverUrls.firstOrNull(), // Prima immagine (box o placeholder)
+                    coverUrl = finalCoverUrl, // Prima immagine (box o placeholder)
                     coverUrls = allCoverUrls, // Box/placeholder prima, poi screen
                     downloadLinks = allDownloadLinks,
                     regions = allRegions,
@@ -393,13 +414,17 @@ class RomRepositoryImpl @Inject constructor(
                 }
                 .distinct()
             
-            // Se non c'è box image (coverUrl è null), aggiungi il placeholder come prima immagine
-            // Il placeholder va prima delle screen images
+            // Se non c'è box image (coverUrl è null), rimuovi eventuali screen placeholder di errore
+            // e aggiungi il placeholder corretto come prima immagine
             val hasBoxImage = foundRoms.any { it.coverUrl != null }
             if (!hasBoxImage) {
+                // Se non c'è box image, rimuoviamo tutte le immagini esistenti (potrebbero essere placeholder di errore)
+                // e aggiungiamo solo il placeholder corretto
+                allCoverUrls = emptyList()
                 val placeholderImages = getPlaceholderImages(foundRoms)
-                // Aggiungi placeholder all'inizio (prima delle screen images se presenti)
+                // Aggiungi placeholder all'inizio
                 allCoverUrls = placeholderImages + allCoverUrls
+                android.util.Log.d("RomRepositoryImpl", "📱 Aggiunto placeholder per ROM ${firstRom.title} (box image mancante)")
             }
             
             // Unisci tutti i downloadLinks da tutte le ROM
@@ -635,16 +660,22 @@ class RomRepositoryImpl @Inject constructor(
         val placeholderUrls = mutableListOf<String>()
         val sourceIds = roms.mapNotNull { it.sourceId }.distinct()
         
+        android.util.Log.d("RomRepositoryImpl", "🔍 [getPlaceholderImages] Cercando placeholder per sourceIds: $sourceIds")
+        
         for (sourceId in sourceIds) {
             val metadata = sourceManager.getSourceMetadata(sourceId)
-            metadata?.defaultImage?.let { placeholderUrls.add(it) }
+            val defaultImage = metadata?.defaultImage
+            android.util.Log.d("RomRepositoryImpl", "   Source $sourceId: defaultImage=$defaultImage")
+            defaultImage?.let { placeholderUrls.add(it) }
         }
         
         // Se non ci sono placeholder dalle sorgenti, usa il logo dell'app come ultima spiaggia
         if (placeholderUrls.isEmpty()) {
             val appLogoUri = "android.resource://${context.packageName}/mipmap/ic_launcher_foreground"
             placeholderUrls.add(appLogoUri)
-            android.util.Log.d("RomRepositoryImpl", "📱 Usando logo app come placeholder (nessun placeholder dalle sorgenti)")
+            android.util.Log.d("RomRepositoryImpl", "📱 Usando logo app come placeholder (nessun placeholder dalle sorgenti): $appLogoUri")
+        } else {
+            android.util.Log.d("RomRepositoryImpl", "✅ Placeholder trovati: $placeholderUrls")
         }
         
         return placeholderUrls.distinct()
