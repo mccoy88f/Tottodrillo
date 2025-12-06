@@ -1160,9 +1160,10 @@ def get_platform_display_name(romsfun_slug: str) -> str:
     # Normalizza lo slug per il matching (case-insensitive)
     slug_lower = romsfun_slug.lower()
     
-    # Se c'è un mapping specifico, usalo
-    if slug_lower in platform_name_mapping:
-        return platform_name_mapping[slug_lower]
+    # Se c'è un mapping specifico, usalo (case-insensitive)
+    for slug_key, name in platform_name_mapping.items():
+        if slug_key.lower().strip() == romsfun_slug_lower:
+            return name
     
     # Fallback: converte lo slug in un nome leggibile
     # Lista di abbreviazioni che devono rimanere in maiuscolo
