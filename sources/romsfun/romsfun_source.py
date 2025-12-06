@@ -739,8 +739,16 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
                 print(f"⚠️ [get_roms_from_platform_page] Errore estrazione ROM da card: {e}", file=sys.stderr)
                 continue
         
-    except requests.exceptions.RequestException as e:
-        print(f"❌ [get_roms_from_platform_page] Errore richiesta: {e}", file=sys.stderr)
+    except Exception as e:
+        # Gestisce sia requests.exceptions che altre eccezioni
+        if 'requests' in sys.modules:
+            import requests as _requests
+            if isinstance(e, _requests.exceptions.RequestException):
+                print(f"❌ [get_roms_from_platform_page] Errore richiesta: {e}", file=sys.stderr)
+            else:
+                print(f"❌ [get_roms_from_platform_page] Errore: {e}", file=sys.stderr)
+        else:
+            print(f"❌ [get_roms_from_platform_page] Errore: {e}", file=sys.stderr)
     except Exception as e:
         import traceback
         print(f"❌ [get_roms_from_platform_page] Errore: {e}\n{traceback.format_exc()}", file=sys.stderr)
@@ -1133,8 +1141,16 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         
         return entry
         
-    except requests.exceptions.RequestException as e:
-        print(f"❌ [get_rom_entry_by_url] Errore richiesta: {e}", file=sys.stderr)
+    except Exception as e:
+        # Gestisce sia requests.exceptions che altre eccezioni
+        if 'requests' in sys.modules:
+            import requests as _requests
+            if isinstance(e, _requests.exceptions.RequestException):
+                print(f"❌ [get_rom_entry_by_url] Errore richiesta: {e}", file=sys.stderr)
+            else:
+                print(f"❌ [get_rom_entry_by_url] Errore: {e}", file=sys.stderr)
+        else:
+            print(f"❌ [get_rom_entry_by_url] Errore: {e}", file=sys.stderr)
         return None
     except Exception as e:
         import traceback
