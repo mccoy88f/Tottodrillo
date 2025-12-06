@@ -69,6 +69,9 @@ def map_mother_code_to_romsfun_slug(mother_code: str, source_dir: str) -> Option
     """
     Mappa un mother_code Tottodrillo allo slug ROMsFun da usare nell'URL
     Ritorna il primo slug disponibile
+    
+    Se il mother_code non viene trovato, prova a cercarlo come slug ROMsFun diretto
+    (per gestire casi in cui l'app passa lo slug invece del mother_code)
     """
     if not mother_code:
         return None
@@ -81,15 +84,26 @@ def map_mother_code_to_romsfun_slug(mother_code: str, source_dir: str) -> Option
     
     # Cerca il mother_code (case-insensitive)
     romsfun_slugs = mapping.get(mother_code_lower)
-    if not romsfun_slugs:
-        return None
+    if romsfun_slugs:
+        # Se è una lista, prendi il primo
+        if isinstance(romsfun_slugs, list):
+            return romsfun_slugs[0] if romsfun_slugs else None
+        # Se è una stringa singola
+        return romsfun_slugs
     
-    # Se è una lista, prendi il primo
-    if isinstance(romsfun_slugs, list):
-        return romsfun_slugs[0] if romsfun_slugs else None
+    # Se non trovato, prova a cercare se il mother_code è già uno slug ROMsFun
+    # Cerca nei valori del mapping (slug ROMsFun)
+    for mapped_mother_code, mapped_slugs in mapping.items():
+        if isinstance(mapped_slugs, list):
+            if mother_code_lower in [s.lower() for s in mapped_slugs]:
+                return mother_code_lower  # È già uno slug ROMsFun valido
+        else:
+            if mapped_slugs.lower() == mother_code_lower:
+                return mother_code_lower  # È già uno slug ROMsFun valido
     
-    # Se è una stringa singola
-    return romsfun_slugs
+    # Se ancora non trovato, potrebbe essere già uno slug ROMsFun non mappato
+    # In questo caso, restituiscilo così com'è (potrebbe funzionare)
+    return mother_code_lower
 
 def get_random_ua() -> str:
     """Genera un User-Agent casuale"""
@@ -508,7 +522,21 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
         # 2. Poi visita la pagina della piattaforma con Referer dalla homepage
         # Questo simula un click da homepage alla pagina della piattaforma
         headers = get_browser_headers(referer='https://romsfun.com/')
+        
+        # Aggiungi un piccolo delay per simulare comportamento umano
+        import time
+        time.sleep(0.5)
+        
         page = session.get(page_url, headers=headers, timeout=15)
+        
+        # Se riceviamo 403, prova a riprovare con un delay più lungo
+        if page.status_code == 403:
+            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 2 secondi e riprovo...", file=sys.stderr)
+            time.sleep(2)
+            # Riprova con un nuovo User-Agent
+            headers = get_browser_headers(referer='https://romsfun.com/')
+            page = session.get(page_url, headers=headers, timeout=15)
+        
         page.raise_for_status()
         
         # Debug: verifica status e dimensione risposta
@@ -737,13 +765,17 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         # Usa session per mantenere i cookie tra le richieste
         session = requests.Session()
         
-        # Prima visita la homepage per ottenere cookie (simula navigazione reale)
+        # Simula navigazione browser reale:
+        # 1. Prima visita la homepage per ottenere cookie iniziali
         try:
-            session.get('https://romsfun.com/', headers=get_browser_headers(), timeout=5)
-        except:
-            pass  # Non critico se fallisce
+            home_headers = get_browser_headers()
+            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=10)
+            home_response.raise_for_status()
+        except Exception as e:
+            print(f"⚠️ [get_rom_entry_by_url] Errore visita homepage: {e}", file=sys.stderr)
+            # Continua comunque
         
-        # Estrai la piattaforma dall'URL per usarla come Referer
+        # 2. Estrai la piattaforma dall'URL per usarla come Referer
         # Es: /roms/nintendo-wii/... -> https://romsfun.com/roms/nintendo-wii/
         referer_url = None
         match = re.search(r'(https://romsfun\.com/roms/[^/]+/)', page_url)
@@ -752,9 +784,22 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         else:
             referer_url = 'https://romsfun.com/roms/'
         
-        # Visita la pagina ROM con Referer (simula click da lista)
+        # 3. Visita la pagina ROM con Referer (simula click da lista)
+        # Aggiungi un piccolo delay per simulare comportamento umano
+        import time
+        time.sleep(0.5)
+        
         headers = get_browser_headers(referer=referer_url)
-        page = session.get(page_url, headers=headers, timeout=10)
+        page = session.get(page_url, headers=headers, timeout=15)
+        
+        # Se riceviamo 403, prova a riprovare con un delay più lungo e nuovo User-Agent
+        if page.status_code == 403:
+            print(f"⚠️ [get_rom_entry_by_url] Ricevuto 403 per {page_url}, attendo 2 secondi e riprovo...", file=sys.stderr)
+            time.sleep(2)
+            # Riprova con un nuovo User-Agent
+            headers = get_browser_headers(referer=referer_url)
+            page = session.get(page_url, headers=headers, timeout=15)
+        
         page.raise_for_status()
         soup = BeautifulSoup(page.content, 'html.parser')
         
