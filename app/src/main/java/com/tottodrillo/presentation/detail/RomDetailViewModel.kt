@@ -444,31 +444,99 @@ class RomDetailViewModel @Inject constructor(
                 _uiState.update { it.copy(downloadStatus = DownloadStatus.Idle) }
             }
             else -> {
-                // Avvia o riavvia il download
-                viewModelScope.launch {
-                    try {
-                        _uiState.update {
-                            it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
-                        }
-
-                        val workId = downloadManager.startDownload(
-                            romSlug = currentRom.slug,
-                            romTitle = currentRom.title,
-                            downloadLink = link
+                // Se il link richiede WebView, apri il WebView headless
+                if (link.requiresWebView) {
+                    _uiState.update {
+                        it.copy(
+                            showWebView = true,
+                            webViewUrl = link.url,
+                            webViewLink = link
                         )
-                        currentWorkId = workId
+                    }
+                } else {
+                    // Avvia direttamente il download
+                    viewModelScope.launch {
+                        try {
+                            _uiState.update {
+                                it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                            }
 
-                        // Usa la funzione helper per osservare il download
-                        observeDownloadForLink(link, workId)
-                    } catch (e: Exception) {
-                        _uiState.update {
-                            it.copy(
-                                error = e.message ?: "Errore nell'avvio del download"
+                            val workId = downloadManager.startDownload(
+                                romSlug = currentRom.slug,
+                                romTitle = currentRom.title,
+                                downloadLink = link
                             )
+                            currentWorkId = workId
+
+                            // Usa la funzione helper per osservare il download
+                            observeDownloadForLink(link, workId)
+                        } catch (e: Exception) {
+                            _uiState.update {
+                                it.copy(
+                                    error = e.message ?: "Errore nell'avvio del download"
+                                )
+                            }
                         }
                     }
                 }
             }
+        }
+    }
+    
+    /**
+     * Gestisce l'URL finale estratto dal WebView
+     */
+    fun onWebViewDownloadUrlExtracted(finalUrl: String, link: DownloadLink) {
+        val currentRom = _uiState.value.rom ?: return
+        
+        // Chiudi il WebView
+        _uiState.update {
+            it.copy(
+                showWebView = false,
+                webViewUrl = null,
+                webViewLink = null
+            )
+        }
+        
+        // Avvia il download con l'URL finale
+        viewModelScope.launch {
+            try {
+                _uiState.update {
+                    it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                }
+
+                // Crea un nuovo link con l'URL finale
+                val finalLink = link.copy(url = finalUrl, requiresWebView = false)
+                
+                val workId = downloadManager.startDownload(
+                    romSlug = currentRom.slug,
+                    romTitle = currentRom.title,
+                    downloadLink = finalLink
+                )
+                currentWorkId = workId
+
+                // Usa la funzione helper per osservare il download
+                observeDownloadForLink(finalLink, workId)
+            } catch (e: Exception) {
+                _uiState.update {
+                    it.copy(
+                        error = e.message ?: "Errore nell'avvio del download"
+                    )
+                }
+            }
+        }
+    }
+    
+    /**
+     * Chiude il WebView
+     */
+    fun onCloseWebView() {
+        _uiState.update {
+            it.copy(
+                showWebView = false,
+                webViewUrl = null,
+                webViewLink = null
+            )
         }
     }
 

@@ -272,10 +272,10 @@ private fun ActiveFiltersBar(
                 } else {
                     "$totalFilters filtri attivi"
                 },
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
         }
 
         Text(

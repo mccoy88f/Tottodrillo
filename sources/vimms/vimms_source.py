@@ -622,7 +622,7 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
                     screen_url = 'https://vimm.net' + screen_src
                 elif screen_src.startswith('http'):
                     screen_url = screen_src
-                else:
+        else:
                     screen_url = 'https://vimm.net/' + screen_src
         
         if not screen_url and rom_id:
@@ -657,7 +657,7 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
                         elif width == 400 and height == 100:
                             # Dimensione tipica per immagini di errore Vimm's Lair
                             print(f"⚠️ [get_rom_entry_by_uri] Screen ha dimensioni tipiche di errore ({width}x{height}): {screen_url}", file=sys.stderr)
-                        else:
+        else:
                             valid_screen_url = screen_url
                             print(f"✅ [get_rom_entry_by_uri] Screen valido trovato: {screen_url} (size: {width}x{height})", file=sys.stderr)
                     except ImportError:

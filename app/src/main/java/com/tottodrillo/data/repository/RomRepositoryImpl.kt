@@ -450,10 +450,10 @@ class RomRepositoryImpl @Inject constructor(
             val enabledSources = sourceManager.getEnabledSources()
             if (enabledSources.isEmpty()) {
                 return NetworkResult.Error(
-                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+            com.tottodrillo.data.remote.NetworkException.UnknownError(
                         "Nessuna sorgente abilitata"
-                    )
-                )
+            )
+        )
             }
             
             val allRegions = mutableMapOf<String, RegionInfo>() // Usa codice regione come chiave per evitare duplicati

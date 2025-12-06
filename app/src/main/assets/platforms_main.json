@@ -1893,7 +1893,17 @@
       "source_mappings": {
         "crocdb": []
       }
+    },
+    {
+      "mother_code": "other",
+      "name": "Other",
+      "image": "logos/other.svg",
+      "description": "Other platforms and systems",
+      "brand": "Various",
+      "source_mappings": {
+        "crocdb": []
+      }
     }
   ],
-  "total": 180
+  "total": 181
 }

@@ -75,7 +75,11 @@ data class RomDetailUiState(
     val downloadStatus: DownloadStatus = DownloadStatus.Idle,
     val extractionStatus: ExtractionStatus = ExtractionStatus.Idle,
     // Mappa di stati per ogni link (URL -> Pair<DownloadStatus, ExtractionStatus>)
-    val linkStatuses: Map<String, Pair<DownloadStatus, ExtractionStatus>> = emptyMap()
+    val linkStatuses: Map<String, Pair<DownloadStatus, ExtractionStatus>> = emptyMap(),
+    // WebView headless per gestire download con JavaScript/countdown
+    val showWebView: Boolean = false,
+    val webViewUrl: String? = null,
+    val webViewLink: com.tottodrillo.domain.model.DownloadLink? = null
 )
 
 /**

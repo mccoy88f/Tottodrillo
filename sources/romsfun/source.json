@@ -1,0 +1,14 @@
+{
+  "id": "romsfun",
+  "name": "ROMsFun",
+  "version": "1.0.0",
+  "type": "python",
+  "description": "Sorgente per scaricare ROM da ROMsFun.com - Database pubblico di ROM per retro gaming",
+  "author": "Tottodrillo Team",
+  "pythonScript": "romsfun_source.py",
+  "dependencies": ["requirements.txt"],
+  "minAppVersion": "1.1.0",
+  "baseUrl": "https://romsfun.com",
+  "defaultImage": "https://romsfun.com/wp-content/uploads/2023/08/LOGO.png"
+}
+

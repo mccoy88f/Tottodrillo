@@ -85,7 +85,9 @@ data class RomLink(
     @SerializedName("size_str")
     val sizeStr: String? = null,
     @SerializedName("source_url")
-    val sourceUrl: String? = null
+    val sourceUrl: String? = null,
+    @SerializedName("requires_webview")
+    val requiresWebView: Boolean = false // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
 )
 
 /**

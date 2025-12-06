@@ -34,8 +34,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     // Fallback al vecchio formato per compatibilità
     if (coverUrls.isEmpty()) {
         val oldCoverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
-            ?: this.boxartUrl?.let { listOf(it) } 
-            ?: emptyList()
+        ?: this.boxartUrl?.let { listOf(it) } 
+        ?: emptyList()
         coverUrls.addAll(oldCoverUrls)
         android.util.Log.d("Mappers", "   ⚠️ Usato fallback vecchio formato: $oldCoverUrls")
     }
@@ -43,7 +43,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     // coverUrl principale è SOLO la box image (non lo screen)
     // Se non c'è box, coverUrl sarà null e il repository aggiungerà il placeholder
     // IMPORTANTE: non usare screenImage come coverUrl, perché potrebbe essere un placeholder di errore
-    val coverUrl = boxImage
+    // Se boxImage è null ma abbiamo immagini dal fallback (boxart_url), usiamo la prima
+    val coverUrl = boxImage ?: coverUrls.firstOrNull()
     
     android.util.Log.d("Mappers", "   ✅ Risultato: coverUrl=$coverUrl, coverUrls=$coverUrls")
     
@@ -69,7 +70,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
                 format = link.format,
                 url = link.url,
                 size = link.sizeStr,
-                sourceId = sourceId
+                sourceId = sourceId,
+                requiresWebView = link.requiresWebView
             )
         },
         sourceId = sourceId
