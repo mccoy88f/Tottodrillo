@@ -243,7 +243,7 @@ class SourceInstaller @Inject constructor(
     
     /**
      * Installa le dipendenze Python usando Chaquopy
-     * Nota: Le dipendenze comuni (requests, beautifulsoup4) sono già installate nel build.gradle.kts
+     * Nota: Le dipendenze comuni (requests, beautifulsoup4, cloudscraper) sono già installate nel build.gradle.kts
      * Questo metodo installa solo dipendenze aggiuntive specificate nel requirements.txt
      */
     private fun installPythonDependencies(sourceDir: File, dependencies: List<String>) {
@@ -265,17 +265,21 @@ class SourceInstaller @Inject constructor(
                     .filter { 
                         // Filtra dipendenze già installate nel build.gradle.kts
                         val dep = it.lowercase()
-                        !dep.startsWith("requests") && !dep.startsWith("beautifulsoup4")
+                        !dep.startsWith("requests") && 
+                        !dep.startsWith("beautifulsoup4") && 
+                        !dep.startsWith("cloudscraper")
                     }
             } else {
                 dependencies.filter { 
                     val dep = it.lowercase()
-                    !dep.startsWith("requests") && !dep.startsWith("beautifulsoup4")
+                    !dep.startsWith("requests") && 
+                    !dep.startsWith("beautifulsoup4") && 
+                    !dep.startsWith("cloudscraper")
                 }
             }
             
             if (requirementsToInstall.isEmpty()) {
-                android.util.Log.d("SourceInstaller", "Nessuna dipendenza aggiuntiva da installare (requests e beautifulsoup4 sono già installate)")
+                android.util.Log.d("SourceInstaller", "Nessuna dipendenza aggiuntiva da installare (requests, beautifulsoup4 e cloudscraper sono già installate)")
                 return
             }
             

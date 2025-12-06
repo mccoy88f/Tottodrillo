@@ -74,6 +74,7 @@ chaquopy {
             // Dipendenze Python comuni per le sorgenti
             install("requests")
             install("beautifulsoup4")
+            install("cloudscraper")
         }
     }
 }
