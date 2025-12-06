@@ -313,21 +313,62 @@ class RomRepositoryImpl @Inject constructor(
             )
         }
         
-        val service = apiService ?: return NetworkResult.Error(
-            com.tottodrillo.data.remote.NetworkException.UnknownError(
-                "Nessuna sorgente configurata"
-            )
-        )
-        
-        return when (val result = safeApiCall { service.getRegions() }.extractData()) {
-            is NetworkResult.Success<*> -> {
-                val data = result.data as com.tottodrillo.data.model.RegionsResponse
-                val regions = data.regions.map { it.toRegionInfo() }
-                regionsCache = regions // Salva in cache
-                NetworkResult.Success(regions)
+        return try {
+            val enabledSources = sourceManager.getEnabledSources()
+            if (enabledSources.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "Nessuna sorgente abilitata"
+                    )
+                )
             }
-            is NetworkResult.Error -> result
-            is NetworkResult.Loading -> NetworkResult.Loading
+            
+            val allRegions = mutableMapOf<String, RegionInfo>() // Usa codice regione come chiave per evitare duplicati
+            
+            // Carica le regioni da tutte le sorgenti abilitate
+            for (source in enabledSources) {
+                try {
+                    val sourceDir = File(source.installPath ?: continue)
+                    val metadata = sourceManager.getSourceMetadata(source.id) ?: continue
+                    
+                    val executor = SourceExecutor.create(
+                        metadata,
+                        sourceDir,
+                        okHttpClient,
+                        gson
+                    )
+                    
+                    val result = executor.getRegions()
+                    result.fold(
+                        onSuccess = { regionsResponse ->
+                            // Aggiungi le regioni, evitando duplicati
+                            regionsResponse.regions.forEach { (code, name) ->
+                                if (!allRegions.containsKey(code)) {
+                                    // Crea RegionInfo dal codice (usa fromCode per gestire i codici standard)
+                                    val regionInfo = RegionInfo.fromCode(code)
+                                    allRegions[code] = regionInfo
+                                }
+                            }
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento regioni per sorgente ${source.id}", error)
+                        }
+                    )
+                } catch (e: Exception) {
+                    android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento regioni per sorgente ${source.id}", e)
+                }
+            }
+            
+            val regionsList = allRegions.values.toList()
+            regionsCache = regionsList // Salva in cache
+            NetworkResult.Success(regionsList)
+        } catch (e: Exception) {
+            android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento regioni", e)
+            NetworkResult.Error(
+                com.tottodrillo.data.remote.NetworkException.UnknownError(
+                    e.message ?: "Errore nel caricamento regioni"
+                )
+            )
         }
     }
 
