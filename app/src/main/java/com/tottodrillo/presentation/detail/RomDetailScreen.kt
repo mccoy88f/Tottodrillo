@@ -211,17 +211,21 @@ fun RomDetailRoute(
     val rom = uiState.rom
 
     // WebView dialog per download con JavaScript/countdown
-    if (uiState.showWebView && uiState.webViewUrl != null && uiState.webViewLink != null) {
-        com.tottodrillo.presentation.components.WebViewDownloadDialog(
-            url = uiState.webViewUrl,
-            link = uiState.webViewLink,
-            onDownloadUrlExtracted = { finalUrl, link ->
-                viewModel.onWebViewDownloadUrlExtracted(finalUrl, link)
-            },
-            onDismiss = {
-                viewModel.onCloseWebView()
-            }
-        )
+    if (uiState.showWebView) {
+        val webViewUrl = uiState.webViewUrl
+        val webViewLink = uiState.webViewLink
+        if (webViewUrl != null && webViewLink != null) {
+            com.tottodrillo.presentation.components.WebViewDownloadDialog(
+                url = webViewUrl,
+                link = webViewLink,
+                onDownloadUrlExtracted = { finalUrl, link ->
+                    viewModel.onWebViewDownloadUrlExtracted(finalUrl, link)
+                },
+                onDismiss = {
+                    viewModel.onCloseWebView()
+                }
+            )
+        }
     }
 
     when {

@@ -6,6 +6,7 @@ import json
 import re
 import sys
 import os
+import urllib.parse
 from typing import Dict, Any, List, Optional
 import requests
 from bs4 import BeautifulSoup
@@ -111,7 +112,7 @@ def get_browser_headers(referer: Optional[str] = None) -> Dict[str, str]:
         'User-Agent': get_random_ua(),
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
         'Accept-Language': 'en-US,en;q=0.9',
-        'Accept-Encoding': 'gzip, deflate, br',
+        'Accept-Encoding': 'gzip, deflate',  # Rimuoviamo 'br' (Brotli) perché requests non lo decomprime automaticamente
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Dest': 'document',
@@ -388,30 +389,38 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
             platform_slug = map_mother_code_to_romsfun_slug(platform, source_dir)
             
             if not platform_slug:
+                print(f"⚠️ [search_roms] Piattaforma '{platform}' non mappata in platform_mapping.json, saltata", file=sys.stderr)
+                print(f"   Verifica che '{platform}' sia presente nel mapping con lo slug ROMsFun corretto", file=sys.stderr)
                 continue
             
             # Costruisci l'URL della pagina della piattaforma
-            # ROMsFun usa URL tipo: /roms/nintendo-wii/
-            platform_url = f'https://romsfun.com/roms/{platform_slug}/'
-            
-            # Se c'è una query, aggiungila come parametro (se supportato)
-            # Altrimenti, estrai tutte le ROM dalla pagina
+            # ROMsFun usa URL tipo: /roms/nintendo-ds?keywords=query&orderby=popular&order=desc
+            # Il formato cambia in base alla piattaforma, ma lo slug è sempre quello dal mapping
             if search_key:
-                # ROMsFun potrebbe supportare ricerca tramite query parameter
-                # Proviamo prima senza, poi aggiungiamo se necessario
-                search_url = f'{platform_url}?s={search_key}'
+                # Ricerca per piattaforma con query: usa keywords invece di s
+                # Codifica la query per l'URL (sostituisce spazi con +)
+                keywords = urllib.parse.quote_plus(search_key)
+                search_url = f'https://romsfun.com/roms/{platform_slug}?keywords={keywords}&orderby=popular&order=desc'
             else:
-                search_url = platform_url
+                # Solo elenco piattaforma senza query
+                # URL formato: https://romsfun.com/roms/{platform_slug}/
+                search_url = f'https://romsfun.com/roms/{platform_slug}/'
+            
+            print(f"🔗 [search_roms] URL costruito per piattaforma '{platform}' (slug: '{platform_slug}'): {search_url}", file=sys.stderr)
             
             # Aggiungi paginazione se page > 1
+            # ROMsFun usa 'page' come parametro di paginazione
             if page > 1:
                 if '?' in search_url:
                     search_url += f'&page={page}'
                 else:
                     search_url += f'?page={page}'
             
+            print(f"🔍 [search_roms] Cercando ROM su {search_url}", file=sys.stderr)
+            
             # Estrai ROM dalla pagina
             roms = get_roms_from_platform_page(search_url, platform_slug, source_dir, regions)
+            print(f"✅ [search_roms] Trovate {len(roms)} ROM per piattaforma {platform}", file=sys.stderr)
             all_roms.extend(roms)
             
             # Se abbiamo raggiunto max_results, fermiamoci
@@ -419,8 +428,27 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
                 all_roms = all_roms[:max_results]
                 break
     else:
-        # Ricerca generale - richiede una query
-        if not search_key:
+        # Ricerca generale senza piattaforma specifica
+        # ROMsFun usa: https://romsfun.com/?s=query
+        if search_key:
+            # Usa la pagina di ricerca generale
+            # Codifica la query per l'URL (sostituisce spazi con +)
+            query_encoded = urllib.parse.quote_plus(search_key)
+            search_url = f'https://romsfun.com/?s={query_encoded}'
+            
+            # Aggiungi paginazione se page > 1
+            if page > 1:
+                search_url += f'&page={page}'
+            
+            print(f"🔍 [search_roms] Ricerca generale su {search_url}", file=sys.stderr)
+            
+            # Per la ricerca generale, dobbiamo estrarre ROM da tutte le piattaforme
+            # Usiamo get_roms_from_platform_page con un URL di ricerca generale
+            roms = get_roms_from_platform_page(search_url, None, source_dir, regions)
+            all_roms.extend(roms)
+        else:
+            # Senza query e senza piattaforma, non possiamo fare una ricerca significativa
+            print(f"⚠️ [search_roms] Nessuna piattaforma o query specificata", file=sys.stderr)
             return json.dumps({
                 "results": [],
                 "total_results": 0,
@@ -428,10 +456,6 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
                 "current_page": page,
                 "total_pages": 1
             })
-        
-        # ROMsFun potrebbe avere una pagina di ricerca generale
-        # Per ora, restituiamo lista vuota se non c'è piattaforma
-        # TODO: Implementare ricerca generale se supportata
     
     # Nota: Il filtro per regioni non viene applicato qui perché le regioni
     # non sono disponibili nella pagina di elenco. Il repository applicherà
@@ -439,6 +463,8 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     
     # Limita i risultati
     all_roms = all_roms[:max_results]
+    
+    print(f"✅ [search_roms] Totale ROM trovate: {len(all_roms)}", file=sys.stderr)
     
     # Stima totale risultati (non possiamo saperlo esattamente senza fare altre richieste)
     total_results = len(all_roms)
@@ -457,9 +483,10 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     return json.dumps(response)
 
 
-def get_roms_from_platform_page(page_url: str, platform_slug: str, source_dir: str, regions_filter: List[str] = None) -> List[Dict[str, Any]]:
+def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], source_dir: str, regions_filter: List[str] = None) -> List[Dict[str, Any]]:
     """
-    Estrae le ROM dalla pagina di elenco di una piattaforma
+    Estrae le ROM dalla pagina di elenco di una piattaforma o dalla pagina di ricerca
+    platform_slug può essere None per ricerca generale
     """
     roms = []
     
@@ -467,30 +494,86 @@ def get_roms_from_platform_page(page_url: str, platform_slug: str, source_dir: s
         # Usa session per mantenere i cookie tra le richieste
         session = requests.Session()
         
-        # Prima visita la homepage per ottenere cookie (simula navigazione reale)
+        # Simula navigazione browser reale:
+        # 1. Prima visita la homepage per ottenere cookie iniziali
         try:
-            session.get('https://romsfun.com/', headers=get_browser_headers(), timeout=5)
-        except:
+            home_headers = get_browser_headers()
+            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=10)
+            home_response.raise_for_status()
+            pass  # Cookie ottenuti
+        except Exception as e:
             pass  # Non critico se fallisce
+            # Continua comunque
         
-        # Poi visita la pagina della piattaforma con Referer
+        # 2. Poi visita la pagina della piattaforma con Referer dalla homepage
+        # Questo simula un click da homepage alla pagina della piattaforma
         headers = get_browser_headers(referer='https://romsfun.com/')
-        page = session.get(page_url, headers=headers, timeout=10)
+        page = session.get(page_url, headers=headers, timeout=15)
         page.raise_for_status()
-        soup = BeautifulSoup(page.content, 'html.parser')
+        
+        # Debug: verifica status e dimensione risposta
+        print(f"📊 [get_roms_from_platform_page] Status code: {page.status_code}, Dimensione: {len(page.content)} bytes", file=sys.stderr)
+        print(f"📊 [get_roms_from_platform_page] Content-Type: {page.headers.get('Content-Type', 'N/A')}", file=sys.stderr)
+        
+        # Debug: verifica encoding e compressione
+        print(f"📊 [get_roms_from_platform_page] Encoding: {page.encoding}, Apparent encoding: {page.apparent_encoding}", file=sys.stderr)
+        print(f"📊 [get_roms_from_platform_page] Content-Encoding header: {page.headers.get('Content-Encoding', 'N/A')}", file=sys.stderr)
+        
+        # Debug: primi caratteri della risposta (usa text per vedere il contenuto decompresso)
+        try:
+            # requests dovrebbe già aver decompresso automaticamente
+            content_preview = page.text[:500] if hasattr(page, 'text') and page.text else str(page.content[:500])
+            # Rimuovi caratteri non stampabili per il debug
+            content_preview_clean = ''.join(c for c in content_preview if c.isprintable() or c.isspace())[:200]
+            print(f"📄 [get_roms_from_platform_page] Anteprima risposta (primi 200 caratteri stampabili): {content_preview_clean}", file=sys.stderr)
+        except Exception as e:
+            print(f"⚠️ [get_roms_from_platform_page] Errore lettura contenuto: {e}", file=sys.stderr)
+        
+        # Usa page.text se disponibile (già decompresso e decodificato), altrimenti page.content
+        if hasattr(page, 'text') and page.text:
+            soup = BeautifulSoup(page.text, 'html.parser')
+        else:
+            soup = BeautifulSoup(page.content, 'html.parser', from_encoding=page.encoding or 'utf-8')
+        
+        # Debug: verifica se la pagina è stata caricata correttamente
+        page_title = soup.find('title')
+        if page_title:
+            title_text = page_title.get_text(strip=True)
+            print(f"📄 [get_roms_from_platform_page] Titolo pagina: {title_text[:100]}", file=sys.stderr)
+        
+        # Verifica se è una pagina Cloudflare
+        page_text_lower = soup.get_text().lower()
+        if 'just a moment' in page_text_lower or 'cloudflare' in page_text_lower or 'checking your browser' in page_text_lower:
+            print(f"⚠️ [get_roms_from_platform_page] Possibile blocco Cloudflare per {page_url}", file=sys.stderr)
+            print(f"   Primi 500 caratteri della pagina: {page_text_lower[:500]}", file=sys.stderr)
+        
+        # Debug: verifica struttura HTML
+        all_divs = soup.find_all('div')
+        print(f"🔍 [get_roms_from_platform_page] Totale div trovati: {len(all_divs)}", file=sys.stderr)
+        
+        # Cerca classi che contengono "archive" o "rom"
+        archive_divs = soup.find_all('div', class_=lambda x: x and ('archive' in str(x).lower() or 'rom' in str(x).lower()))
+        print(f"🔍 [get_roms_from_platform_page] Div con 'archive' o 'rom' nella classe: {len(archive_divs)}", file=sys.stderr)
         
         # Cerca le card delle ROM
-        # Le card hanno classe "col-archive-rom" o "archive-container"
-        rom_cards = soup.find_all('div', class_=lambda x: x and 'archive-container' in x)
+        # Le card sono in <div class="archive-left">
+        rom_cards = soup.find_all('div', class_='archive-left')
+        print(f"🔍 [get_roms_from_platform_page] Trovate {len(rom_cards)} card con classe 'archive-left'", file=sys.stderr)
         
         if not rom_cards:
-            # Prova pattern alternativo
-            rom_cards = soup.find_all('div', class_=lambda x: x and 'col-archive-rom' in x)
+            # Fallback: cerca qualsiasi div con classe che contiene "archive"
+            rom_cards = soup.find_all('div', class_=lambda x: x and 'archive' in x.lower())
+            print(f"🔍 [get_roms_from_platform_page] Trovate {len(rom_cards)} card con 'archive' nel nome classe", file=sys.stderr)
+        
+        # Se ancora non trova, cerca link diretti a /roms/
+        if not rom_cards:
+            all_links = soup.find_all('a', href=re.compile(r'/roms/[^/]+/[^/]+\.html'))
+            print(f"🔍 [get_roms_from_platform_page] Trovati {len(all_links)} link diretti a /roms/", file=sys.stderr)
         
         for card in rom_cards:
             try:
-                # Estrai il link alla ROM
-                link = card.find('a', href=re.compile(r'/roms/'))
+                # Estrai il link alla ROM (dentro <a href="...">)
+                link = card.find('a', href=re.compile(r'/roms/[^/]+/[^/]+\.html'))
                 if not link:
                     continue
                 
@@ -502,17 +585,28 @@ def get_roms_from_platform_page(page_url: str, platform_slug: str, source_dir: s
                 if not rom_url.startswith('http'):
                     rom_url = 'https://romsfun.com' + rom_url
                 
-                # Estrai il titolo
-                title_elem = card.find('h3', class_=lambda x: x and 'h6' in x and 'font-weight-semibold' in x)
+                # Estrai il titolo da <h3 class="h6 font-weight-semibold text-truncate text-body mt-3">
+                title_elem = card.find('h3', class_=lambda x: x and 'h6' in x and 'font-weight-semibold' in x and 'text-truncate' in x)
                 if not title_elem:
+                    # Fallback: cerca qualsiasi h3
+                    title_elem = card.find('h3')
+                if not title_elem:
+                    # Ultimo fallback: usa il testo del link
                     title_elem = link
                 
                 title = title_elem.get_text(strip=True)
                 if not title:
                     continue
                 
-                # Estrai l'immagine
-                img = card.find('img', class_=lambda x: x and 'attachment-thumbnail' in x)
+                # Estrai l'immagine da <img> dentro <div class="archive-cover-container">
+                # L'immagine ha classe "attachment-thumbnail size-thumbnail wp-post-image"
+                cover_container = card.find('div', class_=lambda x: x and 'archive-cover-container' in x)
+                img = None
+                if cover_container:
+                    img = cover_container.find('img', class_=lambda x: x and 'attachment-thumbnail' in x)
+                if not img:
+                    # Fallback: cerca qualsiasi img nella card
+                    img = card.find('img')
                 box_image = None
                 if img:
                     srcset = img.get('srcset', '')
@@ -545,7 +639,17 @@ def get_roms_from_platform_page(page_url: str, platform_slug: str, source_dir: s
                     rom_slug = re.sub(r'[^a-z0-9]+', '-', title.lower()).strip('-')
                 
                 # Mappa la piattaforma al mother_code
-                platform_mother_code = map_romsfun_slug_to_mother_code(platform_slug, source_dir)
+                if platform_slug:
+                    # Usa la piattaforma fornita
+                    platform_mother_code = map_romsfun_slug_to_mother_code(platform_slug, source_dir)
+                else:
+                    # Estrai la piattaforma dall'URL (es. /roms/nintendo-wii/title.html -> nintendo-wii)
+                    platform_match = re.search(r'/roms/([^/]+)/', rom_url)
+                    if platform_match:
+                        extracted_platform_slug = platform_match.group(1)
+                        platform_mother_code = map_romsfun_slug_to_mother_code(extracted_platform_slug, source_dir)
+                    else:
+                        platform_mother_code = 'unknown'
                 
                 # Le regioni non sono disponibili nella lista, le otterremo dal dettaglio se necessario
                 # Per ora, lasciamo vuoto
@@ -920,6 +1024,111 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         print(f"❌ [get_rom_entry_by_url] Errore: {e}\n{traceback.format_exc()}", file=sys.stderr)
         return None
 
+def get_platform_display_name(romsfun_slug: str) -> str:
+    """
+    Converte uno slug ROMsFun nel nome esatto come appare nelle pagine ROMsFun
+    Mapping completo basato sui dati ufficiali di ROMsFun
+    """
+    # Mapping completo slug -> nome esatto come appare su ROMsFun
+    # Basato sui dati ufficiali estratti dal sito
+    platform_name_mapping = {
+        "3do": "3DO",
+        "atari-2600": "Atari 2600",
+        "atari-jaguar": "Atari Jaguar",
+        "amiga": "Commodore - Amiga",
+        "fujitsu-fm-towns-marty": "Fujitsu FM Towns Marty",
+        "game-boy": "Game Boy (GB)",
+        "game-boy-color": "Game Boy Color",
+        "gamecube": "GameCube",
+        "gamepark-gp32": "GamePark GP32",
+        "game-boy-advance": "GBA",
+        "mame": "MAME",
+        "microsoft-msx": "Microsoft MSX",
+        "microsoft-msx2": "Microsoft MSX2",
+        "ms-dos": "MS-DOS",
+        "mugen": "MUGEN",
+        "nec-pc-9801": "NEC PC-9801",
+        "nec-pc-fx": "NEC PC-FX",
+        "turbografx-cd": "NEC TurboGrafx CD",
+        "turbografx": "NEC TurboGrafx-16",
+        "neo-geo": "Neo Geo",
+        "neo-geo-aes": "Neo Geo AES",
+        "neo-geo-cd": "Neo Geo CD",
+        "snk-neo-geo-pocket-color": "Neo Geo Pocket Color",
+        "nes": "NES",
+        "nintendo-3ds": "Nintendo 3DS",
+        "nintendo-64": "Nintendo 64",
+        "nintendo-ds": "Nintendo DS",
+        "nintendo-pokemon-mini": "Nintendo Pokemon Mini",
+        "nintendo-virtual-boy": "Nintendo Virtual Boy",
+        "nintendo-wii": "Nintendo Wii",
+        "nokia-n-gage": "Nokia N-Gage",
+        "openbor": "OpenBOR",
+        "other": "Other",
+        "ouya": "Ouya",
+        "philips-cd-i": "Philips CD-i",
+        "playstation": "PlayStation (PS)",
+        "ps-vita": "PS Vita",
+        "playstation-2": "PS2",
+        "ps3": "PS3",
+        "playstation-4": "PS4",
+        "playstation-portable": "PSP",
+        "scummvm": "ScummVM",
+        "32x": "SEGA 32X",
+        "sega-cd": "Sega CD",
+        "dreamcast": "Sega Dreamcast",
+        "sega-game-gear": "Sega Game Gear",
+        "lindbergh": "Sega Lindbergh",
+        "sega-master-system": "Sega Master System",
+        "sega-naomi": "Sega Naomi",
+        "sega-pico": "Sega Pico",
+        "sega-ringedge": "Sega RingEdge",
+        "sega-ringedge-2": "Sega RingEdge 2",
+        "sega-saturn": "Sega Saturn",
+        "sega-sg-1000": "Sega SG-1000",
+        "sega-genesis": "Sega Genesis",
+        "sharp-x1": "Sharp - X1",
+        "sharp-x68000": "Sharp X68000",
+        "super-nintendo": "SNES",
+        "teknoparrot": "TeknoParrot",
+        "wii-u": "Wii U",
+        "windows": "Windows",
+        "windows-3x": "Windows 3x",
+        "wonderswan": "WonderSwan",
+        "wonderswan-color": "WonderSwan Color",
+        "xbox": "XBOX",
+        "xbox-360": "Xbox 360"
+    }
+    
+    # Normalizza lo slug per il matching (case-insensitive)
+    slug_lower = romsfun_slug.lower()
+    
+    # Se c'è un mapping specifico, usalo
+    if slug_lower in platform_name_mapping:
+        return platform_name_mapping[slug_lower]
+    
+    # Fallback: converte lo slug in un nome leggibile
+    # Lista di abbreviazioni che devono rimanere in maiuscolo
+    abbreviations = {'fm', 'cd', 'ds', 'gb', 'gbc', 'gba', 'ps', 'ps2', 'ps3', 'ps4', 'psp', 'psvita', 
+                    'xbox', 'xbox360', 'msx', 'msx1', 'msx2', 'pc', 'pc98', 'pcfx', 'pcengine', 'pcenginecd',
+                    '3do', '3ds', 'n3ds', 'n64', 'nes', 'snes', 'nds', 'wii', 'wiiu', 'gc', 'ngc',
+                    '32x', 'cdi', 'cdimono1', 'mame', 'scummvm', 'mugen', 'dos', 'windows', 'windows3x'}
+    
+    # Rimuovi i trattini e capitalizza ogni parola
+    words = romsfun_slug.split('-')
+    formatted_words = []
+    
+    for word in words:
+        # Se la parola è un'abbreviazione, mantienila in maiuscolo
+        if word.lower() in abbreviations:
+            formatted_words.append(word.upper())
+        else:
+            # Capitalizza la prima lettera
+            formatted_words.append(word.capitalize())
+    
+    name = ' '.join(formatted_words)
+    return name
+
 def get_platforms(source_dir: str) -> str:
     """Ottiene le piattaforme disponibili usando platform_mapping.json"""
     # Carica il mapping dalla source directory
@@ -929,14 +1138,18 @@ def get_platforms(source_dir: str) -> str:
     platforms = {}
     
     for mother_code, romsfun_slugs in mapping.items():
-        # Prendi il primo slug ROMsFun come nome
+        # Prendi il primo slug ROMsFun
         if isinstance(romsfun_slugs, list):
-            name = romsfun_slugs[0] if romsfun_slugs else mother_code
+            slug = romsfun_slugs[0] if romsfun_slugs else mother_code
         else:
-            name = romsfun_slugs
+            slug = romsfun_slugs
+        
+        # Converti lo slug in un nome completo leggibile
+        # Es: "fujitsu-fm-towns-marty" -> "Fujitsu FM Towns Marty"
+        display_name = get_platform_display_name(slug)
         
         platforms[mother_code] = {
-            "name": name
+            "name": display_name
         }
     
     # Restituisci nel formato atteso: {"platforms": {...}}
