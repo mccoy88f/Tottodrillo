@@ -560,19 +560,26 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
         # Questo simula un click da homepage alla pagina della piattaforma
         headers = get_browser_headers(referer='https://romsfun.com/')
         
-        # Aggiungi un piccolo delay per simulare comportamento umano
-        time.sleep(0.5)
+        # Aggiungi un delay più lungo per simulare comportamento umano
+        time.sleep(3)
         
         print(f"🔗 [get_roms_from_platform_page] Richiesta pagina: {page_url}", file=sys.stderr)
-        page = session.get(page_url, headers=headers, timeout=20)
+        page = session.get(page_url, headers=headers, timeout=30)
         
-        # Se riceviamo 403, prova a riprovare con un delay più lungo
+        # Se riceviamo 403, prova a riprovare con un delay ancora più lungo
         if page.status_code == 403:
-            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 3 secondi e riprovo...", file=sys.stderr)
-            time.sleep(3)
+            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 5 secondi e riprovo...", file=sys.stderr)
+            time.sleep(5)
             # Riprova con un nuovo User-Agent e stesso Referer
             headers = get_browser_headers(referer='https://romsfun.com/')
-            page = session.get(page_url, headers=headers, timeout=20)
+            page = session.get(page_url, headers=headers, timeout=30)
+            
+            # Se ancora 403, prova un'ultima volta dopo un delay ancora più lungo
+            if page.status_code == 403:
+                print(f"⚠️ [get_roms_from_platform_page] Ancora 403, attendo 10 secondi e riprovo un'ultima volta...", file=sys.stderr)
+                time.sleep(10)
+                headers = get_browser_headers(referer='https://romsfun.com/')
+                page = session.get(page_url, headers=headers, timeout=30)
         
         page.raise_for_status()
         
