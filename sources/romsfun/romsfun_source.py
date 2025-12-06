@@ -574,13 +574,23 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
         print(f"🔗 [get_roms_from_platform_page] Richiesta pagina: {page_url}", file=sys.stderr)
         page = session.get(page_url, headers=headers, timeout=20)
         
-        # Se riceviamo 403, prova a riprovare con un delay più lungo
-        if page.status_code == 403:
-            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 3 secondi e riprovo...", file=sys.stderr)
-            time.sleep(3)
+        # Se riceviamo 403, prova retry multipli con delay crescenti
+        retry_count = 0
+        max_retries = 3
+        while page.status_code == 403 and retry_count < max_retries:
+            wait_time = (retry_count + 1) * 2  # 2, 4, 6 secondi
+            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo {wait_time} secondi (tentativo {retry_count + 1}/{max_retries})...", file=sys.stderr)
+            time.sleep(wait_time)
             # Riprova con un nuovo User-Agent e stesso Referer
             headers = get_browser_headers(referer='https://romsfun.com/')
             page = session.get(page_url, headers=headers, timeout=20)
+            retry_count += 1
+        
+        # Se ancora 403 dopo tutti i retry, solleva eccezione con messaggio più chiaro
+        if page.status_code == 403:
+            error_msg = f"403 Client Error: Forbidden for url: {page_url}\nCloudflare sta bloccando le richieste. Potrebbe essere necessario attendere o verificare la connessione."
+            print(f"❌ [get_roms_from_platform_page] {error_msg}", file=sys.stderr)
+            raise requests.exceptions.HTTPError(error_msg, response=page)
         
         page.raise_for_status()
         
@@ -892,13 +902,23 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         headers = get_browser_headers(referer=referer_url)
         page = session.get(page_url, headers=headers, timeout=20)
         
-        # Se riceviamo 403, prova a riprovare con un delay più lungo e nuovo User-Agent
-        if page.status_code == 403:
-            print(f"⚠️ [get_rom_entry_by_url] Ricevuto 403 per {page_url}, attendo 3 secondi e riprovo...", file=sys.stderr)
-            time.sleep(3)
-            # Riprova con un nuovo User-Agent
+        # Se riceviamo 403, prova retry multipli con delay crescenti
+        retry_count = 0
+        max_retries = 3
+        while page.status_code == 403 and retry_count < max_retries:
+            wait_time = (retry_count + 1) * 2  # 2, 4, 6 secondi
+            print(f"⚠️ [get_rom_entry_by_url] Ricevuto 403 per {page_url}, attendo {wait_time} secondi (tentativo {retry_count + 1}/{max_retries})...", file=sys.stderr)
+            time.sleep(wait_time)
+            # Riprova con un nuovo User-Agent e stesso Referer
             headers = get_browser_headers(referer=referer_url)
             page = session.get(page_url, headers=headers, timeout=20)
+            retry_count += 1
+        
+        # Se ancora 403 dopo tutti i retry, solleva eccezione con messaggio più chiaro
+        if page.status_code == 403:
+            error_msg = f"403 Client Error: Forbidden for url: {page_url}\nCloudflare sta bloccando le richieste. Potrebbe essere necessario attendere o verificare la connessione."
+            print(f"❌ [get_rom_entry_by_url] {error_msg}", file=sys.stderr)
+            raise requests.exceptions.HTTPError(error_msg, response=page)
         
         page.raise_for_status()
         soup = BeautifulSoup(page.content, 'html.parser')
