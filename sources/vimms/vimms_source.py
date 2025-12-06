@@ -958,8 +958,13 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     if search_key:
         search_key = search_key.strip()
     platforms = params.get("platforms", [])
+    regions = params.get("regions", [])  # Filtro regioni
     max_results = params.get("max_results", 50)
     page = params.get("page", 1)
+    
+    # Normalizza i codici regione per il confronto (uppercase)
+    if regions:
+        regions = [r.upper().strip() for r in regions if r]
     
     # Vimm's Lair ha un limite di 200 righe per pagina
     VIMMS_PAGE_SIZE = 200
@@ -1017,6 +1022,74 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
         start_idx = offset_in_page
         end_idx = start_idx + max_results
         all_roms = roms[start_idx:end_idx]
+    
+    # Filtra per regioni se specificate
+    if regions:
+        filtered_roms = []
+        # Mapping completo: codici -> nomi possibili
+        region_mapping = {
+            'EU': ['EU', 'EUROPE', 'E', 'EUROPEAN'],
+            'US': ['US', 'USA', 'U', 'UNITED STATES', 'AMERICA', 'NORTH AMERICA'],
+            'JP': ['JP', 'JAPAN', 'J', 'JAPANESE'],
+            'WW': ['WW', 'WORLDWIDE', 'W', 'WORLD'],
+            'KR': ['KR', 'KOREA', 'SOUTH KOREA'],
+            'CN': ['CN', 'CHINA', 'CHINESE'],
+            'AU': ['AU', 'AUSTRALIA'],
+            'BR': ['BR', 'BRAZIL'],
+            'UK': ['UK', 'UNITED KINGDOM', 'BRITAIN', 'BRITISH'],
+            'FR': ['FR', 'FRANCE', 'FRENCH'],
+            'DE': ['DE', 'GERMANY', 'GERMAN'],
+            'IT': ['IT', 'ITALY', 'ITALIAN'],
+            'ES': ['ES', 'SPAIN', 'SPANISH'],
+            'NL': ['NL', 'NETHERLANDS', 'HOLLAND', 'DUTCH'],
+            'SE': ['SE', 'SWEDEN', 'SWEDISH'],
+            'NO': ['NO', 'NORWAY', 'NORWEGIAN'],
+            'DK': ['DK', 'DENMARK', 'DANISH'],
+            'FI': ['FI', 'FINLAND', 'FINNISH']
+        }
+        
+        for rom in all_roms:
+            rom_regions = rom.get('regions', [])
+            if not rom_regions:
+                # Se la ROM non ha regioni, la includiamo solo se non ci sono filtri (ma questo non dovrebbe succedere qui)
+                continue
+            
+            # Normalizza le regioni della ROM per il confronto
+            rom_regions_normalized = [r.upper().strip() if isinstance(r, str) else str(r).upper().strip() for r in rom_regions]
+            
+            # Verifica se almeno una regione della ROM corrisponde a una regione richiesta
+            matches = False
+            for requested_region_code in regions:
+                requested_region_code = requested_region_code.upper().strip()
+                
+                # Verifica corrispondenza diretta
+                if requested_region_code in rom_regions_normalized:
+                    matches = True
+                    break
+                
+                # Verifica tramite mapping
+                if requested_region_code in region_mapping:
+                    # Ottieni tutti i possibili nomi per questo codice
+                    possible_names = region_mapping[requested_region_code]
+                    # Verifica se almeno uno dei nomi possibili è presente nelle regioni della ROM
+                    if any(name in rom_regions_normalized for name in possible_names):
+                        matches = True
+                        break
+                else:
+                    # Se il codice non è nel mapping, verifica corrispondenza diretta con qualsiasi alias
+                    for key, aliases in region_mapping.items():
+                        if requested_region_code in aliases:
+                            # Verifica se la ROM ha questo codice o uno dei suoi alias
+                            if key in rom_regions_normalized or any(alias in rom_regions_normalized for alias in aliases):
+                                matches = True
+                                break
+                    if matches:
+                        break
+            
+            if matches:
+                filtered_roms.append(rom)
+        
+        all_roms = filtered_roms
     
     # Per il totale, dobbiamo stimare basandoci sui risultati ottenuti
     # Se abbiamo ottenuto meno di max_results, siamo all'ultima pagina
