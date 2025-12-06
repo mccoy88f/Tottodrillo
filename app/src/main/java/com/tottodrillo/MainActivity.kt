@@ -111,7 +111,6 @@ class MainActivity : ComponentActivity() {
     private val installSourceLauncher =
         registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
             uri?.let {
-                android.util.Log.d("MainActivity", "📦 File sorgente selezionato: $uri")
                 activityScope.launch {
                     try {
                         // Copia il file nella cache temporanea
@@ -130,7 +129,6 @@ class MainActivity : ComponentActivity() {
                         val result = installer.installFromZip(tempFile)
                         result.fold(
                             onSuccess = { metadata ->
-                                android.util.Log.d("MainActivity", "✅ Sorgente installata: ${metadata.name}")
                                 // Notifica che una sorgente è stata installata
                                 onSourceInstalled?.invoke()
                             },
@@ -152,10 +150,8 @@ class MainActivity : ComponentActivity() {
         registerForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
             val (archivePath, romTitle, romSlug) = pendingExtraction ?: return@registerForActivityResult
             uri?.let {
-                android.util.Log.d("MainActivity", "📁 URI selezionato per estrazione: $uri")
                 val path = convertTreeUriToPath(it)
                 if (path != null) {
-                    android.util.Log.d("MainActivity", "✅ Path convertito: $path")
                     downloadsViewModel.startExtraction(archivePath, path, romTitle, romSlug)
                 } else {
                     android.util.Log.e("MainActivity", "❌ Impossibile convertire URI in path: $uri")
@@ -228,17 +224,13 @@ class MainActivity : ComponentActivity() {
                     }
                     val previousState = hasEnabledSources
                     hasEnabledSources = hasEnabled
-                    android.util.Log.d("MainActivity", "🔍 Stato sorgenti: installed=$hasInstalled, enabled=$hasEnabled, refreshTrigger=$refreshTrigger, previous=$previousState")
-                    
                     // Se lo stato è cambiato (qualsiasi cambiamento), forza sempre il refresh della home
                     if (previousState != null && previousState != hasEnabled) {
                         homeRefreshTrigger++
-                        android.util.Log.d("MainActivity", "🔄 Stato cambiato da $previousState a $hasEnabled, forzo refresh home: homeRefreshTrigger=$homeRefreshTrigger")
                     } else if (refreshTrigger > 0) {
                         // Anche se lo stato non è cambiato, se c'è stato un trigger, forza comunque il refresh
                         // (per assicurarsi che la home si aggiorni dopo attivazione/disattivazione)
                         homeRefreshTrigger++
-                        android.util.Log.d("MainActivity", "🔄 Trigger ricevuto, forzo refresh home anche se stato non cambiato: homeRefreshTrigger=$homeRefreshTrigger")
                     }
                 }
                 
@@ -259,9 +251,7 @@ class MainActivity : ComponentActivity() {
                             onInstallDefaultSources = {
                                 activityScope.launch {
                                     try {
-                                        android.util.Log.d("MainActivity", "📦 Installazione sorgenti predefinite...")
                                         installDefaultSources()
-                                        android.util.Log.d("MainActivity", "✅ Sorgenti predefinite installate")
                                         refreshTrigger++
                                     } catch (e: Exception) {
                                         android.util.Log.e("MainActivity", "❌ Errore installazione sorgenti predefinite", e)
@@ -288,7 +278,6 @@ class MainActivity : ComponentActivity() {
                                 },
                                 onSourcesChanged = {
                                     // Quando cambiano le sorgenti, ricontrolla lo stato
-                                    android.util.Log.d("MainActivity", "🔄 onSourcesChanged da DownloadSettingsScreen (no enabled), incremento refreshTrigger")
                                     refreshTrigger++
                                 }
                             )
@@ -332,15 +321,11 @@ class MainActivity : ComponentActivity() {
                         },
                         onSourcesStateChanged = {
                             // Incrementa il trigger per ricontrollare lo stato delle sorgenti
-                            android.util.Log.d("MainActivity", "🔄 onSourcesStateChanged chiamato, incremento refreshTrigger")
                             refreshTrigger++
-                            android.util.Log.d("MainActivity", "🔄 refreshTrigger incrementato a $refreshTrigger")
                         },
                         onHomeRefresh = {
                             // Incrementa il trigger per forzare il refresh della home
-                            android.util.Log.d("MainActivity", "🔄 onHomeRefresh chiamato, incremento homeRefreshTrigger")
                             homeRefreshTrigger++
-                            android.util.Log.d("MainActivity", "🔄 homeRefreshTrigger incrementato a $homeRefreshTrigger")
                         },
                         homeRefreshKey = homeRefreshTrigger,
                         onRequestExtraction = { archivePath, romTitle, romSlug, platformCode ->
@@ -436,14 +421,12 @@ class MainActivity : ComponentActivity() {
                 // Storage principale (memoria interna)
                 val base = Environment.getExternalStorageDirectory().path
                 val path = if (relPath.isNotEmpty()) "$base/$relPath" else base
-                android.util.Log.d("MainActivity", "✅ Path primary: $path")
                 path
             } else {
                 // SD card esterna o altro storage
                 // Prova a ottenere il percorso usando StorageVolume
                 val path = getExternalStoragePath(uri, type, relPath)
                 if (path != null) {
-                    android.util.Log.d("MainActivity", "✅ Path SD card: $path")
                     path
                 } else {
                     android.util.Log.e("MainActivity", "❌ Impossibile ottenere path per type=$type")
@@ -461,14 +444,10 @@ class MainActivity : ComponentActivity() {
      */
     private fun getExternalStoragePath(uri: Uri, storageId: String, relPath: String): String? {
         return try {
-            android.util.Log.d("MainActivity", "🔍 Ricerca path per storageId=$storageId, relPath=$relPath")
-            
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
                 // Android 10+: usa StorageVolume
                 val storageManager = getSystemService(Context.STORAGE_SERVICE) as android.os.storage.StorageManager
                 val storageVolumes = storageManager.storageVolumes
-                
-                android.util.Log.d("MainActivity", "📦 Trovati ${storageVolumes.size} volumi di storage")
                 
                 for (volume in storageVolumes) {
                     val volumeUuid = volume.uuid
@@ -481,7 +460,6 @@ class MainActivity : ComponentActivity() {
                     if (volumeUuid != null && (volumeUuid == storageId || storageId.contains(volumeUuid) || volumeUuid.contains(storageId))) {
                         if (volumePath != null) {
                             val path = if (relPath.isNotEmpty()) "$volumePath/$relPath" else volumePath
-                            android.util.Log.d("MainActivity", "✅ Trovato volume corrispondente: $volumeUuid -> $path")
                             return path
                         }
                     }
@@ -492,7 +470,6 @@ class MainActivity : ComponentActivity() {
                 val standardFile = java.io.File(standardPath)
                 if (standardFile.exists() && standardFile.canRead()) {
                     val path = if (relPath.isNotEmpty()) "$standardPath/$relPath" else standardPath
-                    android.util.Log.d("MainActivity", "✅ Path standard funziona: $path")
                     return path
                 }
                 
@@ -501,14 +478,12 @@ class MainActivity : ComponentActivity() {
                 val mediaRwFile = java.io.File(mediaRwPath)
                 if (mediaRwFile.exists() && mediaRwFile.canRead()) {
                     val path = if (relPath.isNotEmpty()) "$mediaRwPath/$relPath" else mediaRwPath
-                    android.util.Log.d("MainActivity", "✅ Path media_rw funziona: $path")
                     return path
                 }
                 
                 // Fallback 3: Prova a ottenere il path dal URI usando MediaStore
                 val path = getPathFromUri(uri)
                 if (path != null) {
-                    android.util.Log.d("MainActivity", "✅ Path ottenuto da URI: $path")
                     return path
                 }
             } else {
@@ -518,7 +493,6 @@ class MainActivity : ComponentActivity() {
                 val standardFile = java.io.File(standardPath)
                 if (standardFile.exists()) {
                     val path = if (relPath.isNotEmpty()) "$standardPath/$relPath" else standardPath
-                    android.util.Log.d("MainActivity", "✅ Path standard (Android < 10): $path")
                     return path
                 }
                 
@@ -555,8 +529,6 @@ class MainActivity : ComponentActivity() {
         
         for ((url, sourceName) in defaultSources) {
             try {
-                android.util.Log.d("MainActivity", "📥 Scaricamento sorgente $sourceName da $url")
-                
                 // Scarica il file
                 val request = Request.Builder()
                     .url(url)
@@ -576,13 +548,10 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 
-                android.util.Log.d("MainActivity", "✅ File scaricato: ${tempFile.absolutePath}")
-                
                 // Installa la sorgente
                 val result = installer.installFromZip(tempFile)
                 result.fold(
                     onSuccess = { metadata ->
-                        android.util.Log.d("MainActivity", "✅ Sorgente $sourceName installata: ${metadata.name} v${metadata.version}")
                         // Abilita la sorgente di default
                         sourceManager.setSourceEnabled(metadata.id, true)
                     },

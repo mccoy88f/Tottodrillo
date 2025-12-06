@@ -550,22 +550,16 @@ fun DownloadSettingsScreen(
                     sourceManager = it,
                     externalRefreshTrigger = refreshTrigger,
                     onSourcesChanged = {
-                        // Notifica che le sorgenti sono cambiate
-                        android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged ricevuto da SourcesListSection")
                         // Invalida la cache delle piattaforme e regioni
                         romRepository?.clearCache()
-                        android.util.Log.d("DownloadSettingsScreen", "🗑️ Cache invalidata")
                         refreshTrigger++
                         // Notifica anche MainActivity che le sorgenti sono cambiate
-                        android.util.Log.d("DownloadSettingsScreen", "🔄 Chiamo onSourcesChanged() callback")
                         onSourcesChanged()
-                        android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged() callback chiamato")
                     },
                     onUninstallSource = { sourceId ->
                         // La disinstallazione è già gestita in SourcesListSection
                         // Invalida la cache delle piattaforme e regioni
                         romRepository?.clearCache()
-                        android.util.Log.d("DownloadSettingsScreen", "🗑️ Cache invalidata dopo disinstallazione")
                         refreshTrigger++
                         onSourcesChanged()
                     },

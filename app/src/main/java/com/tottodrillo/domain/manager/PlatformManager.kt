@@ -3,8 +3,6 @@ package com.tottodrillo.domain.manager
 import android.content.Context
 import com.tottodrillo.data.model.MotherPlatform
 import com.tottodrillo.data.model.PlatformsMainResponse
-import com.tottodrillo.data.model.SourceConfig
-import com.tottodrillo.data.model.SourceSetting
 import com.tottodrillo.domain.model.PlatformInfo
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken

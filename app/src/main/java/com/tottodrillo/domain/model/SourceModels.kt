@@ -31,7 +31,8 @@ data class SourceMetadata(
     val mainClass: String? = null, // Classe principale per sorgenti Java (es. "com.example.MySource")
     val pythonScript: String? = null, // Script Python principale per sorgenti Python (es. "main.py")
     val dependencies: List<String>? = null, // Dipendenze per sorgenti Java (JAR files) o Python (requirements.txt)
-    val imageRefererPattern: String? = null // Pattern per costruire il Referer header per le immagini (es. "https://vimm.net/vault/{id}")
+    val imageRefererPattern: String? = null, // Pattern per costruire il Referer header per le immagini (es. "https://vimm.net/vault/{id}")
+    val defaultImage: String? = null // URL dell'immagine placeholder da usare quando una ROM non ha immagini
 )
 
 /**

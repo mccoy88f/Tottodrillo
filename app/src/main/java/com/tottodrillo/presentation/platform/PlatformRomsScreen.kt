@@ -104,34 +104,38 @@ fun PlatformRomsScreen(
             )
         }
     ) { padding ->
-        when {
-            uiState.isLoading && romsForPlatform == null -> {
-                LoadingIndicator(modifier = Modifier.padding(padding))
-            }
-            uiState.error != null && romsForPlatform.isNullOrEmpty() -> {
-                EmptyState(
-                    message = "Errore: ${uiState.error}",
-                    modifier = Modifier.padding(padding)
-                )
-            }
-            romsForPlatform.isNullOrEmpty() -> {
-                EmptyState(
-                    message = "Nessuna ROM trovata per ${platformCode.uppercase()}",
-                    modifier = Modifier.padding(padding)
-                )
-            }
-            else -> {
-                // Calcola quali ROM sono visibili e limita a 10 immagini caricate contemporaneamente
-                val visibleItems = remember {
-                    derivedStateOf {
-                        val layoutInfo = gridState.layoutInfo
-                        val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
-                        // Prendi i primi 10 indici visibili
-                        visibleIndices.take(10).toSet()
+        Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+            when {
+                uiState.isLoading && romsForPlatform == null -> {
+                    // Mostra indicatore di caricamento quando si sta caricando una nuova piattaforma
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
                     }
                 }
-                
-                Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                uiState.error != null && romsForPlatform.isNullOrEmpty() -> {
+                    EmptyState(
+                        message = "Errore: ${uiState.error}"
+                    )
+                }
+                romsForPlatform.isNullOrEmpty() -> {
+                    EmptyState(
+                        message = "Nessuna ROM trovata per ${platformCode.uppercase()}"
+                    )
+                }
+                else -> {
+                    // Calcola quali ROM sono visibili e limita a 10 immagini caricate contemporaneamente
+                    val visibleItems = remember {
+                        derivedStateOf {
+                            val layoutInfo = gridState.layoutInfo
+                            val visibleIndices = layoutInfo.visibleItemsInfo.map { it.index }
+                            // Prendi i primi 10 indici visibili
+                            visibleIndices.take(10).toSet()
+                        }
+                    }
+                    
                     LazyVerticalGrid(
                         state = gridState,
                         columns = GridCells.Adaptive(180.dp),

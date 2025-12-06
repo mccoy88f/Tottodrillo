@@ -120,7 +120,6 @@ class RomRepositoryImpl @Inject constructor(
                             
                             // Normalizza i codici piattaforma a minuscolo per il mapping corretto
                             val platformsList = filters.selectedPlatforms.takeIf { it.isNotEmpty() }?.map { it.lowercase() } ?: emptyList()
-                            android.util.Log.d("RomRepositoryImpl", "🔍 Ricerca in sorgente ${source.id}: query='${filters.query}', platforms=$platformsList, page=$page")
                             
                             val result = executor.searchRoms(
                                 searchKey = filters.query.takeIf { it.isNotEmpty() },
@@ -132,21 +131,12 @@ class RomRepositoryImpl @Inject constructor(
                             
                             result.fold(
                                 onSuccess = { searchResults ->
-                                    android.util.Log.d("RomRepositoryImpl", "✅ Sorgente ${source.id}: ${searchResults.results.size} risultati trovati")
-                                    val roms = searchResults.results.map { entry ->
+                                    searchResults.results.map { entry ->
                                         entry?.toDomain(sourceId = source.id)
                                     }
-                                    // Log per verificare se le immagini sono presenti
-                                    val romsWithImages = roms.filterNotNull().filter { it.coverUrl != null }
-                                    if (romsWithImages.isNotEmpty()) {
-                                        android.util.Log.d("RomRepositoryImpl", "🖼️ ${romsWithImages.size} ROM con immagini (es. ${romsWithImages.first().title}: ${romsWithImages.first().coverUrl})")
-                                    } else {
-                                        android.util.Log.w("RomRepositoryImpl", "⚠️ Nessuna ROM con immagini nella ricerca")
-                                    }
-                                    roms
                                 },
                                 onFailure = {
-                                    android.util.Log.e("RomRepositoryImpl", "❌ Errore ricerca in sorgente ${source.id}", it)
+                                    android.util.Log.e("RomRepositoryImpl", "Errore ricerca in sorgente ${source.id}", it)
                                     emptyList()
                                 }
                             )
@@ -167,7 +157,7 @@ class RomRepositoryImpl @Inject constructor(
                 val firstRom = roms.first()
                 
                 // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
-                val allCoverUrls = roms
+                var allCoverUrls = roms
                     .flatMap { rom -> 
                         // Combina coverUrl e coverUrls
                         val urls = mutableListOf<String>()
@@ -176,6 +166,11 @@ class RomRepositoryImpl @Inject constructor(
                         urls
                     }
                     .distinct()
+                
+                // Se non ci sono immagini, usa le immagini placeholder delle sorgenti
+                if (allCoverUrls.isEmpty()) {
+                    allCoverUrls = getPlaceholderImages(roms)
+                }
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
                 val allDownloadLinks = roms
@@ -307,24 +302,11 @@ class RomRepositoryImpl @Inject constructor(
         page: Int,
         limit: Int
     ): NetworkResult<List<Rom>> {
-        android.util.Log.d("RomRepositoryImpl", "🔍 getRomsByPlatform: platform=$platform, page=$page, limit=$limit")
         // Usa searchRoms con filtro piattaforma (stesso codice di aggregazione)
-        val result = searchRoms(
+        return searchRoms(
             filters = SearchFilters(selectedPlatforms = listOf(platform)),
             page = page
         )
-        when (result) {
-            is NetworkResult.Success -> {
-                android.util.Log.d("RomRepositoryImpl", "✅ getRomsByPlatform success: ${result.data.size} ROM trovate")
-            }
-            is NetworkResult.Error -> {
-                android.util.Log.e("RomRepositoryImpl", "❌ getRomsByPlatform error: ${result.exception.getUserMessage()}")
-            }
-            is NetworkResult.Loading -> {
-                android.util.Log.d("RomRepositoryImpl", "⏳ getRomsByPlatform loading...")
-            }
-        }
-        return result
     }
 
     override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {
@@ -368,11 +350,7 @@ class RomRepositoryImpl @Inject constructor(
                             result.fold(
                                 onSuccess = { entryResponse ->
                                     // Verifica che entry non sia null prima di chiamare toDomain()
-                                    val rom = entryResponse.entry?.toDomain(sourceId = source.id)
-                                    if (rom != null) {
-                                        android.util.Log.d("RomRepositoryImpl", "🖼️ getEntry per ${rom.title}: ${rom.coverUrls.size} immagini - ${rom.coverUrls}")
-                                    }
-                                    rom
+                                    entryResponse.entry?.toDomain(sourceId = source.id)
                                 },
                                 onFailure = {
                                     android.util.Log.e("RomRepositoryImpl", "Errore getEntry in sorgente ${source.id}", it)
@@ -402,7 +380,7 @@ class RomRepositoryImpl @Inject constructor(
             val firstRom = foundRoms.first()
             
             // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
-            val allCoverUrls = foundRoms
+            var allCoverUrls = foundRoms
                 .flatMap { rom -> 
                     // Combina coverUrl e coverUrls
                     val urls = mutableListOf<String>()
@@ -412,7 +390,10 @@ class RomRepositoryImpl @Inject constructor(
                 }
                 .distinct()
             
-            android.util.Log.d("RomRepositoryImpl", "🖼️ getRomBySlug: unite ${foundRoms.size} ROM, totale immagini: ${allCoverUrls.size} - ${allCoverUrls}")
+            // Se non ci sono immagini, usa le immagini placeholder delle sorgenti
+            if (allCoverUrls.isEmpty()) {
+                allCoverUrls = getPlaceholderImages(foundRoms)
+            }
             
             // Unisci tutti i downloadLinks da tutte le ROM
             val allDownloadLinks = foundRoms
@@ -579,7 +560,6 @@ class RomRepositoryImpl @Inject constructor(
             // Assicura che la directory esista
             file.parentFile?.mkdirs()
             file.writeText(slugs.joinToString("\n"))
-            android.util.Log.d("RomRepositoryImpl", "✅ Favoriti salvati: ${slugs.size} ROM")
         } catch (e: Exception) {
             android.util.Log.e("RomRepositoryImpl", "Errore nel salvataggio favoriti", e)
             throw e
@@ -633,13 +613,28 @@ class RomRepositoryImpl @Inject constructor(
             file.parentFile?.mkdirs()
             val content = entries.joinToString("\n") { "${it.first}\t${it.second}" }
             file.writeText(content)
-            android.util.Log.d("RomRepositoryImpl", "✅ ROM recenti salvate: ${entries.size} ROM")
         } catch (e: Exception) {
             android.util.Log.e("RomRepositoryImpl", "Errore nel salvataggio ROM recenti", e)
             throw e
         }
     }
 
+    /**
+     * Recupera le immagini placeholder per le sorgenti che hanno trovato la ROM
+     * Se una ROM non ha immagini, usa le immagini placeholder delle sorgenti che l'hanno trovata
+     */
+    private suspend fun getPlaceholderImages(roms: List<Rom>): List<String> {
+        val placeholderUrls = mutableListOf<String>()
+        val sourceIds = roms.mapNotNull { it.sourceId }.distinct()
+        
+        for (sourceId in sourceIds) {
+            val metadata = sourceManager.getSourceMetadata(sourceId)
+            metadata?.defaultImage?.let { placeholderUrls.add(it) }
+        }
+        
+        return placeholderUrls.distinct()
+    }
+    
     /**
      * Arricchisce PlatformInfo con i dati locali dal PlatformManager
      * Sostituisce completamente i dati con quelli locali (nome, brand, immagine, descrizione)

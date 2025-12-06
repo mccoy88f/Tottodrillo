@@ -99,7 +99,6 @@ fun TottodrilloNavGraph(
     // Naviga alla ROM se l'app è stata aperta da una notifica
     LaunchedEffect(initialRomSlug) {
         initialRomSlug?.let { slug ->
-            android.util.Log.d("NavGraph", "📱 Navigazione automatica a ROM: $slug")
             navController.navigate(Screen.RomDetail.createRoute(slug)) {
                 // Pulisci lo stack di navigazione fino alla home
                 popUpTo(Screen.Home.route) {
@@ -132,7 +131,6 @@ fun TottodrilloNavGraph(
                     // Usa sempre il valore più alto per assicurarsi che il refresh venga sempre fatto
                     if (homeRefreshKey > localHomeRefreshKey) {
                         localHomeRefreshKey = homeRefreshKey
-                        android.util.Log.d("NavGraph", "🔄 homeRefreshKey cambiato a $homeRefreshKey, aggiorno localHomeRefreshKey a $localHomeRefreshKey")
                     }
                 }
             }
@@ -258,16 +256,12 @@ fun TottodrilloNavGraph(
                 onSourcesChanged = {
                     // Notifica immediatamente quando cambiano le sorgenti
                     // Questo viene chiamato quando si attiva/disattiva una sorgente
-                    android.util.Log.d("NavGraph", "🔄 onSourcesChanged ricevuto, avvio coroutine")
                     scope.launch {
                         // Delay più lungo per assicurarsi che il salvataggio sia completato
                         kotlinx.coroutines.delay(500)
-                        android.util.Log.d("NavGraph", "🔄 onSourcesChanged chiamato, notifico cambio stato")
                         onSourcesStateChanged() // Ricontrolla lo stato delle sorgenti
                         // Forza anche il refresh della home
-                        android.util.Log.d("NavGraph", "🔄 Chiamo onHomeRefresh()")
                         onHomeRefresh() // Incrementa homeRefreshTrigger
-                        android.util.Log.d("NavGraph", "🔄 Sorgenti cambiate, forzo refresh home")
                     }
                 }
             )

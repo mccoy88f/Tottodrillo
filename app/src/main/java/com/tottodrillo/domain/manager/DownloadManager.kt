@@ -195,49 +195,33 @@ class DownloadManager @Inject constructor(
      */
     fun observeExtraction(workId: UUID): Flow<ExtractionStatus> {
         return flow {
-            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Inizio osservazione per workId=$workId")
-            
             // Emetti lo stato iniziale immediatamente
             try {
                 val initialWorkInfo = workManager.getWorkInfoById(workId).get()
                 if (initialWorkInfo != null) {
                     val initialStatus = convertWorkInfoToExtractionStatus(initialWorkInfo)
-                    android.util.Log.i("DownloadManager", "📊 observeExtraction onStart: workId=$workId, state=${initialWorkInfo.state}, status=${initialStatus.javaClass.simpleName}, progress=${if (initialStatus is ExtractionStatus.InProgress) "${initialStatus.progress}%" else "N/A"}")
-                    if (initialStatus is ExtractionStatus.Completed) {
-                        android.util.Log.i("DownloadManager", "✅ observeExtraction onStart: Work già completato! Emettendo ExtractionStatus.Completed immediatamente. Path: ${initialStatus.extractedPath}, Files: ${initialStatus.filesCount}")
-                    }
                     emit(initialStatus)
                     
                     // Se il work è già completato o fallito, non c'è bisogno di osservare ulteriori cambiamenti
                     if (initialWorkInfo.state == WorkInfo.State.SUCCEEDED || 
                         initialWorkInfo.state == WorkInfo.State.FAILED || 
                         initialWorkInfo.state == WorkInfo.State.CANCELLED) {
-                        android.util.Log.d("DownloadManager", "🔄 observeExtraction: Work già terminato (${initialWorkInfo.state}), non serve osservare ulteriori cambiamenti")
                         return@flow
                     }
-                } else {
-                    android.util.Log.w("DownloadManager", "⚠️ observeExtraction: initialWorkInfo è null per workId=$workId")
                 }
             } catch (e: Exception) {
-                android.util.Log.e("DownloadManager", "❌ Errore nel recupero stato iniziale estrazione", e)
+                android.util.Log.e("DownloadManager", "Errore nel recupero stato iniziale estrazione", e)
             }
             
             // Poi osserva i cambiamenti (solo se il work non è già terminato)
-            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Inizio collect su getWorkInfoByIdFlow per workId=$workId")
             workManager.getWorkInfoByIdFlow(workId).collect { workInfo ->
                 if (workInfo != null) {
                     val status = convertWorkInfoToExtractionStatus(workInfo)
-                    android.util.Log.i("DownloadManager", "📊 observeExtraction: workId=$workId, state=${workInfo.state}, status=${status.javaClass.simpleName}, progress=${if (status is ExtractionStatus.InProgress) "${status.progress}%" else "N/A"}")
-                    if (status is ExtractionStatus.Completed) {
-                        android.util.Log.i("DownloadManager", "✅ observeExtraction: Emettendo ExtractionStatus.Completed! Path: ${status.extractedPath}, Files: ${status.filesCount}")
-                    }
                     emit(status)
                 } else {
-                    android.util.Log.w("DownloadManager", "⚠️ observeExtraction: workInfo è null per workId=$workId")
                     emit(ExtractionStatus.Idle)
                 }
             }
-            android.util.Log.d("DownloadManager", "🔄 observeExtraction: Collect completato per workId=$workId")
         }
     }
 

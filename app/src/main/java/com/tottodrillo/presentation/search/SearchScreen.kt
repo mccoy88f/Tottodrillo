@@ -71,7 +71,6 @@ fun SearchScreen(
     // Inizializza con piattaforma se specificata
     LaunchedEffect(initialPlatformCode) {
         initialPlatformCode?.let { platformCode ->
-            android.util.Log.d("SearchScreen", "🔍 Inizializzazione con piattaforma: $platformCode")
             viewModel.initializeWithPlatform(platformCode)
         }
     }
@@ -153,30 +152,44 @@ fun SearchScreen(
             }
 
             // Content
-            when {
-                uiState.isLoading && !uiState.hasSearched -> {
-                    LoadingIndicator()
+            Box(modifier = Modifier.fillMaxSize()) {
+                when {
+                    uiState.isLoading && !uiState.hasSearched -> {
+                        LoadingIndicator()
+                    }
+                    uiState.showEmptyState -> {
+                        EmptyState(
+                            message = if (uiState.query.isEmpty()) {
+                                stringResource(R.string.search_hint)
+                            } else {
+                                stringResource(R.string.search_no_results, uiState.query)
+                            }
+                        )
+                    }
+                    uiState.error != null && uiState.results.isEmpty() -> {
+                        EmptyState(message = uiState.error ?: stringResource(R.string.error_loading))
+                    }
+                    else -> {
+                        SearchResults(
+                            results = uiState.results,
+                            isLoadingMore = uiState.isSearching && uiState.results.isNotEmpty(),
+                            onRomClick = onNavigateToRomDetail,
+                            gridState = gridState,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
                 }
-                uiState.showEmptyState -> {
-                    EmptyState(
-                        message = if (uiState.query.isEmpty()) {
-                            stringResource(R.string.search_hint)
-                        } else {
-                            stringResource(R.string.search_no_results, uiState.query)
-                        }
-                    )
-                }
-                uiState.error != null && uiState.results.isEmpty() -> {
-                    EmptyState(message = uiState.error ?: stringResource(R.string.error_loading))
-                }
-                else -> {
-                    SearchResults(
-                        results = uiState.results,
-                        isLoadingMore = uiState.isSearching && uiState.results.isNotEmpty(),
-                        onRomClick = onNavigateToRomDetail,
-                        gridState = gridState,
-                        modifier = Modifier.fillMaxSize()
-                    )
+                
+                // Mostra indicatore di caricamento quando si sta facendo una ricerca
+                if (uiState.isSearching && uiState.results.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        CircularProgressIndicator()
+                    }
                 }
             }
         }

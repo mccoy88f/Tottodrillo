@@ -106,26 +106,19 @@ fun SourcesListSection(
                         Switch(
                             checked = isEnabled,
                             onCheckedChange = { enabled ->
-                                android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (prima della coroutine)")
                                 scope.launch {
-                                    android.util.Log.d("SourcesListSection", "🔄 Cambio stato sorgente ${source.id} a $enabled (dentro la coroutine)")
                                     manager.setSourceEnabled(source.id, enabled)
-                                    // Aspetta che il salvataggio sia completato (delay più lungo)
+                                    // Aspetta che il salvataggio sia completato
                                     kotlinx.coroutines.delay(500)
-                                    // Ricarica lo stato per verificare che sia stato salvato
+                                    // Ricarica lo stato
                                     val configs = manager.loadInstalledConfigs()
-                                    val savedConfig = configs.find { it.sourceId == source.id }
-                                    android.util.Log.d("SourcesListSection", "🔄 Config salvato: ${savedConfig?.isEnabled}, atteso: $enabled")
                                     sourceConfigs = configs.associate { it.sourceId to it.isEnabled }
-                                    // Notifica che le sorgenti sono cambiate (dopo il salvataggio)
-                                    android.util.Log.d("SourcesListSection", "🔄 Chiamo onSourcesChanged() - callback non null: ${onSourcesChanged != null}")
+                                    // Notifica che le sorgenti sono cambiate
                                     try {
                                         onSourcesChanged()
-                                        android.util.Log.d("SourcesListSection", "🔄 onSourcesChanged() chiamato con successo")
                                     } catch (e: Exception) {
-                                        android.util.Log.e("SourcesListSection", "❌ Errore chiamando onSourcesChanged(): ${e.message}", e)
+                                        android.util.Log.e("SourcesListSection", "Errore chiamando onSourcesChanged(): ${e.message}", e)
                                     }
-                                    android.util.Log.d("SourcesListSection", "🔄 Sorgente ${source.id} ${if (enabled) "attivata" else "disattivata"}, notifico cambio")
                                 }
                             }
                         )

@@ -9,6 +9,7 @@
   "dependencies": ["requirements.txt"],
   "minAppVersion": "1.1.0",
   "baseUrl": "https://vimm.net",
-  "imageRefererPattern": "https://vimm.net/vault/{id}"
+  "imageRefererPattern": "https://vimm.net/vault/{id}",
+  "defaultImage": "https://vimm.net/images/vimm6.png"
 }
 

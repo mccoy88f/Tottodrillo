@@ -111,12 +111,10 @@ class ExploreViewModel @Inject constructor(
             // Se già caricato, non ricaricare
             if (_platformRoms.value.containsKey(platformCode)) return@launch
             
-            android.util.Log.d("ExploreViewModel", "🔄 Caricamento ROM per piattaforma: $platformCode")
             _uiState.update { it.copy(isLoading = true, error = null) }
             
             when (val result = repository.getRomsByPlatform(platformCode, page = 1, limit = 25)) {
                 is NetworkResult.Success -> {
-                    android.util.Log.d("ExploreViewModel", "✅ ROM caricate per $platformCode: ${result.data.size} ROM")
                     _platformRoms.update { map ->
                         map + (platformCode to result.data)
                     }
@@ -130,7 +128,7 @@ class ExploreViewModel @Inject constructor(
                 }
                 is NetworkResult.Error -> {
                     val errorMsg = result.exception.getUserMessage()
-                    android.util.Log.e("ExploreViewModel", "❌ Errore caricamento ROM per $platformCode: $errorMsg", result.exception)
+                    android.util.Log.e("ExploreViewModel", "Errore caricamento ROM per $platformCode: $errorMsg", result.exception)
                     _uiState.update { 
                         it.copy(
                             isLoading = false, 

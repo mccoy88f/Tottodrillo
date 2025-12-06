@@ -7,6 +7,7 @@
   "baseUrl": "https://api.crocdb.net",
   "minAppVersion": "1.1.0",
   "apiPackage": "com.tottodrillo.sources.crocdb",
-  "type": "api"
+  "type": "api",
+  "defaultImage": "https://crocdb.net/static/img/croc_logo.png"
 }
 

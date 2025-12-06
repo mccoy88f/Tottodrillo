@@ -265,7 +265,6 @@ class SearchViewModel @Inject constructor(
      * Pulisce tutti i filtri
      */
     fun clearFilters() {
-        android.util.Log.d("SearchViewModel", "🧹 clearFilters chiamato")
         _uiState.update { 
             it.copy(
                 filters = SearchFilters(),
@@ -275,7 +274,6 @@ class SearchViewModel @Inject constructor(
                 hasSearched = false
             )
         }
-        android.util.Log.d("SearchViewModel", "🧹 Filtri resettati, stato aggiornato")
         // Non eseguire ricerca automatica quando si cancellano i filtri
     }
 
