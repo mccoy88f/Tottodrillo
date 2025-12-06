@@ -77,31 +77,35 @@ def map_mother_code_to_romsfun_slug(mother_code: str, source_dir: str) -> Option
         return None
     
     # Normalizza a minuscolo per il matching (case-insensitive)
-    mother_code_lower = mother_code.lower()
+    mother_code_lower = mother_code.lower().strip()
     
     # Carica il mapping
     mapping = load_platform_mapping(source_dir)
     
-    # Cerca il mother_code (case-insensitive)
+    # PRIMA: Cerca il mother_code come chiave nel mapping (case-insensitive)
     romsfun_slugs = mapping.get(mother_code_lower)
     if romsfun_slugs:
         # Se è una lista, prendi il primo
         if isinstance(romsfun_slugs, list):
-            return romsfun_slugs[0] if romsfun_slugs else None
+            return romsfun_slugs[0].lower() if romsfun_slugs else None
         # Se è una stringa singola
-        return romsfun_slugs
+        return romsfun_slugs.lower()
     
-    # Se non trovato, prova a cercare se il mother_code è già uno slug ROMsFun
-    # Cerca nei valori del mapping (slug ROMsFun)
+    # SECONDA: Se non trovato, prova a cercare se il mother_code è già uno slug ROMsFun
+    # Cerca nei valori del mapping (slug ROMsFun) - questo gestisce il caso in cui
+    # l'app passa 'nintendo-wii' invece di 'wii'
     for mapped_mother_code, mapped_slugs in mapping.items():
         if isinstance(mapped_slugs, list):
-            if mother_code_lower in [s.lower() for s in mapped_slugs]:
-                return mother_code_lower  # È già uno slug ROMsFun valido
+            # Cerca nella lista di slug
+            for slug in mapped_slugs:
+                if slug.lower() == mother_code_lower:
+                    return mother_code_lower  # È già uno slug ROMsFun valido
         else:
+            # Confronta con lo slug singolo
             if mapped_slugs.lower() == mother_code_lower:
                 return mother_code_lower  # È già uno slug ROMsFun valido
     
-    # Se ancora non trovato, potrebbe essere già uno slug ROMsFun non mappato
+    # TERZA: Se ancora non trovato, potrebbe essere già uno slug ROMsFun non mappato
     # In questo caso, restituiscilo così com'è (potrebbe funzionare)
     return mother_code_lower
 
@@ -400,13 +404,13 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     if platforms:
         for platform in platforms:
             # Mappa il mother_code allo slug ROMsFun
+            # La funzione gestisce automaticamente sia mother_code che slug ROMsFun diretti
             platform_slug = map_mother_code_to_romsfun_slug(platform, source_dir)
             
             if not platform_slug:
-                # Se non trovato, potrebbe essere già uno slug ROMsFun diretto
-                # Prova a usarlo direttamente (normalizzato)
-                print(f"⚠️ [search_roms] Piattaforma '{platform}' non mappata, provo a usarla come slug diretto", file=sys.stderr)
-                platform_slug = platform.lower().replace('_', '-')
+                # Questo non dovrebbe mai accadere, ma per sicurezza saltiamo
+                print(f"⚠️ [search_roms] Impossibile determinare slug per piattaforma '{platform}', saltata", file=sys.stderr)
+                continue
             
             # Costruisci l'URL della pagina della piattaforma
             # ROMsFun usa URL tipo: /roms/nintendo-ds?keywords=query&orderby=popular&order=desc
