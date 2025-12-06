@@ -515,34 +515,47 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
         # Usa session per mantenere i cookie tra le richieste
         session = requests.Session()
         
-        # Simula navigazione browser reale:
-        # 1. Prima visita la homepage per ottenere cookie iniziali
+        # Simula navigazione browser reale per bypassare Cloudflare:
+        # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali
+        import time
         try:
             home_headers = get_browser_headers()
-            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=10)
+            print(f"🌐 [get_roms_from_platform_page] Visita homepage per ottenere cookie Cloudflare...", file=sys.stderr)
+            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
+            
+            # Se riceviamo 403 anche sulla homepage, aspetta e riprova
+            if home_response.status_code == 403:
+                print(f"⚠️ [get_roms_from_platform_page] 403 sulla homepage, attendo 3 secondi...", file=sys.stderr)
+                time.sleep(3)
+                home_headers = get_browser_headers()  # Nuovo User-Agent
+                home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
+            
             home_response.raise_for_status()
-            pass  # Cookie ottenuti
+            print(f"✅ [get_roms_from_platform_page] Cookie Cloudflare ottenuti dalla homepage", file=sys.stderr)
+            # Aspetta un po' per simulare comportamento umano
+            time.sleep(1)
         except Exception as e:
-            pass  # Non critico se fallisce
-            # Continua comunque
+            print(f"⚠️ [get_roms_from_platform_page] Errore visita homepage: {e}, continuo comunque...", file=sys.stderr)
+            # Continua comunque, ma aspetta un po'
+            time.sleep(1)
         
         # 2. Poi visita la pagina della piattaforma con Referer dalla homepage
         # Questo simula un click da homepage alla pagina della piattaforma
         headers = get_browser_headers(referer='https://romsfun.com/')
         
         # Aggiungi un piccolo delay per simulare comportamento umano
-        import time
         time.sleep(0.5)
         
-        page = session.get(page_url, headers=headers, timeout=15)
+        print(f"🔗 [get_roms_from_platform_page] Richiesta pagina: {page_url}", file=sys.stderr)
+        page = session.get(page_url, headers=headers, timeout=20)
         
         # Se riceviamo 403, prova a riprovare con un delay più lungo
         if page.status_code == 403:
-            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 2 secondi e riprovo...", file=sys.stderr)
-            time.sleep(2)
-            # Riprova con un nuovo User-Agent
+            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 3 secondi e riprovo...", file=sys.stderr)
+            time.sleep(3)
+            # Riprova con un nuovo User-Agent e stesso Referer
             headers = get_browser_headers(referer='https://romsfun.com/')
-            page = session.get(page_url, headers=headers, timeout=15)
+            page = session.get(page_url, headers=headers, timeout=20)
         
         page.raise_for_status()
         
@@ -777,15 +790,29 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         # Usa session per mantenere i cookie tra le richieste
         session = requests.Session()
         
-        # Simula navigazione browser reale:
-        # 1. Prima visita la homepage per ottenere cookie iniziali
+        # Simula navigazione browser reale per bypassare Cloudflare:
+        # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali
+        import time
         try:
             home_headers = get_browser_headers()
-            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=10)
+            print(f"🌐 [get_rom_entry_by_url] Visita homepage per ottenere cookie Cloudflare...", file=sys.stderr)
+            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
+            
+            # Se riceviamo 403 anche sulla homepage, aspetta e riprova
+            if home_response.status_code == 403:
+                print(f"⚠️ [get_rom_entry_by_url] 403 sulla homepage, attendo 3 secondi...", file=sys.stderr)
+                time.sleep(3)
+                home_headers = get_browser_headers()  # Nuovo User-Agent
+                home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
+            
             home_response.raise_for_status()
+            print(f"✅ [get_rom_entry_by_url] Cookie Cloudflare ottenuti dalla homepage", file=sys.stderr)
+            # Aspetta un po' per simulare comportamento umano
+            time.sleep(1)
         except Exception as e:
-            print(f"⚠️ [get_rom_entry_by_url] Errore visita homepage: {e}", file=sys.stderr)
-            # Continua comunque
+            print(f"⚠️ [get_rom_entry_by_url] Errore visita homepage: {e}, continuo comunque...", file=sys.stderr)
+            # Continua comunque, ma aspetta un po'
+            time.sleep(1)
         
         # 2. Estrai la piattaforma dall'URL per usarla come Referer
         # Es: /roms/nintendo-wii/... -> https://romsfun.com/roms/nintendo-wii/
@@ -798,19 +825,19 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         
         # 3. Visita la pagina ROM con Referer (simula click da lista)
         # Aggiungi un piccolo delay per simulare comportamento umano
-        import time
         time.sleep(0.5)
         
+        print(f"🔗 [get_rom_entry_by_url] Richiesta pagina: {page_url}", file=sys.stderr)
         headers = get_browser_headers(referer=referer_url)
-        page = session.get(page_url, headers=headers, timeout=15)
+        page = session.get(page_url, headers=headers, timeout=20)
         
         # Se riceviamo 403, prova a riprovare con un delay più lungo e nuovo User-Agent
         if page.status_code == 403:
-            print(f"⚠️ [get_rom_entry_by_url] Ricevuto 403 per {page_url}, attendo 2 secondi e riprovo...", file=sys.stderr)
-            time.sleep(2)
+            print(f"⚠️ [get_rom_entry_by_url] Ricevuto 403 per {page_url}, attendo 3 secondi e riprovo...", file=sys.stderr)
+            time.sleep(3)
             # Riprova con un nuovo User-Agent
             headers = get_browser_headers(referer=referer_url)
-            page = session.get(page_url, headers=headers, timeout=15)
+            page = session.get(page_url, headers=headers, timeout=20)
         
         page.raise_for_status()
         soup = BeautifulSoup(page.content, 'html.parser')
