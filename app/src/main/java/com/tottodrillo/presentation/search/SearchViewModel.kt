@@ -85,7 +85,8 @@ class SearchViewModel @Inject constructor(
     }
 
     /**
-     * Carica piattaforme, regioni e sorgenti per i filtri
+     * Carica piattaforme e sorgenti per i filtri
+     * Le regioni vengono estratte dai risultati della ricerca
      */
     private fun loadFiltersData() {
         viewModelScope.launch {
@@ -98,21 +99,6 @@ class SearchViewModel @Inject constructor(
                 }
                 is NetworkResult.Error -> {
                     // Errore silenzioso, i filtri sono opzionali
-                }
-                is NetworkResult.Loading -> {}
-            }
-
-            // Carica regioni
-            when (val regionsResult = repository.getRegions()) {
-                is NetworkResult.Success -> {
-                    _uiState.update { 
-                        it.copy(
-                            availableRegions = regionsResult.data
-                        )
-                    }
-                }
-                is NetworkResult.Error -> {
-                    // Errore silenzioso
                 }
                 is NetworkResult.Loading -> {}
             }
@@ -129,6 +115,36 @@ class SearchViewModel @Inject constructor(
                 )
             }
         }
+    }
+    
+    /**
+     * Estrae le regioni disponibili dai risultati della ricerca
+     */
+    private fun extractRegionsFromResults(roms: List<com.tottodrillo.domain.model.Rom>): List<com.tottodrillo.domain.model.RegionInfo> {
+        // Ottieni tutte le regioni uniche dai risultati
+        val regionsFromResults = roms
+            .flatMap { it.regions }
+            .distinctBy { it.code }
+            .sortedBy { it.displayName }
+        
+        // Se non ci sono regioni nei risultati, usa la lista predefinita
+        if (regionsFromResults.isEmpty()) {
+            return getDefaultRegions()
+        }
+        
+        return regionsFromResults
+    }
+    
+    /**
+     * Restituisce la lista predefinita di regioni
+     */
+    private fun getDefaultRegions(): List<com.tottodrillo.domain.model.RegionInfo> {
+        return listOf(
+            com.tottodrillo.domain.model.RegionInfo.fromCode("US"),
+            com.tottodrillo.domain.model.RegionInfo.fromCode("EU"),
+            com.tottodrillo.domain.model.RegionInfo.fromCode("JP"),
+            com.tottodrillo.domain.model.RegionInfo.fromCode("WW")
+        )
     }
 
     /**
@@ -162,9 +178,13 @@ class SearchViewModel @Inject constructor(
 
             when (val result = repository.searchRoms(filters, page = 1)) {
                 is NetworkResult.Success -> {
+                    // Estrai le regioni disponibili dai risultati
+                    val availableRegions = extractRegionsFromResults(result.data)
+                    
                     _uiState.update { state ->
                         state.copy(
                             results = result.data,
+                            availableRegions = availableRegions,
                             isSearching = false,
                             hasSearched = true,
                             canLoadMore = result.data.size >= 50
@@ -201,8 +221,13 @@ class SearchViewModel @Inject constructor(
             when (val result = repository.searchRoms(filters, page = nextPage)) {
                 is NetworkResult.Success -> {
                     _uiState.update { state ->
+                        val allResults = state.results + result.data
+                        // Aggiorna le regioni disponibili con i nuovi risultati
+                        val availableRegions = extractRegionsFromResults(allResults)
+                        
                         state.copy(
-                            results = state.results + result.data,
+                            results = allResults,
+                            availableRegions = availableRegions,
                             isSearching = false,
                             currentPage = nextPage,
                             canLoadMore = result.data.size >= 50

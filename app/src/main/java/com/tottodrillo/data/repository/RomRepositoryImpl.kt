@@ -227,8 +227,105 @@ class RomRepositoryImpl @Inject constructor(
                 )
             }
             
+            // Se c'è un filtro regioni e non ci sono risultati, continua a cercare nelle pagine successive
+            // fino a trovare almeno un risultato o raggiungere un limite massimo
+            var finalRoms = enrichedRoms
+            if (filters.selectedRegions.isNotEmpty() && finalRoms.isEmpty() && page == 1) {
+                // Continua a cercare nelle pagine successive fino a trovare risultati o raggiungere il limite
+                var currentPage = page + 1
+                val maxPagesToSearch = 10 // Limite massimo di pagine da cercare
+                
+                while (finalRoms.isEmpty() && currentPage <= maxPagesToSearch) {
+                    android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Filtro regioni restituisce risultati vuoti, cercando pagina $currentPage")
+                    
+                    val nextPageRoms = coroutineScope {
+                        enabledSources.map { source ->
+                            async {
+                                try {
+                                    val sourceDir = File(source.installPath ?: return@async emptyList())
+                                    val metadata = sourceManager.getSourceMetadata(source.id)
+                                        ?: return@async emptyList()
+                                    
+                                    val executor = SourceExecutor.create(
+                                        metadata,
+                                        sourceDir,
+                                        okHttpClient,
+                                        gson
+                                    )
+                                    
+                                    val platformsList = filters.selectedPlatforms.takeIf { it.isNotEmpty() }?.map { it.lowercase() } ?: emptyList()
+                                    
+                                    val result = executor.searchRoms(
+                                        searchKey = filters.query.takeIf { it.isNotEmpty() },
+                                        platforms = platformsList,
+                                        regions = filters.selectedRegions,
+                                        maxResults = 50,
+                                        page = currentPage
+                                    )
+                                    
+                                    result.fold(
+                                        onSuccess = { searchResults ->
+                                            searchResults.results.map { entry ->
+                                                entry?.toDomain(sourceId = source.id)
+                                            }
+                                        },
+                                        onFailure = {
+                                            emptyList()
+                                        }
+                                    )
+                                } catch (e: Exception) {
+                                    emptyList()
+                                }
+                            }
+                        }.awaitAll()
+                    }.flatten().filterNotNull()
+                    
+                    if (nextPageRoms.isNotEmpty()) {
+                        // Raggruppa e arricchisci come prima
+                        val nextRomsBySlug = nextPageRoms.groupBy { it.slug }
+                        finalRoms = nextRomsBySlug.map { (slug, roms) ->
+                            val firstRom = roms.first()
+                            val allCoverUrls = roms.flatMap { it.coverUrls }.distinct()
+                            val hasBoxImage = roms.any { it.coverUrl != null }
+                            
+                            val finalCoverUrls = if (!hasBoxImage) {
+                                val placeholderImages = getPlaceholderImages(roms)
+                                placeholderImages + allCoverUrls
+                            } else {
+                                val placeholderImages = getPlaceholderImages(roms)
+                                var urls = allCoverUrls.toMutableList()
+                                placeholderImages.forEach { placeholder ->
+                                    if (placeholder !in urls) {
+                                        urls.add(placeholder)
+                                    }
+                                }
+                                urls
+                            }
+                            
+                            val allDownloadLinks = roms.flatMap { it.downloadLinks }.distinctBy { it.url }
+                            val allRegions = roms.flatMap { it.regions }.distinctBy { it.code }
+                            val enrichedPlatform = enrichPlatformInfo(firstRom.platform, firstRom.sourceId)
+                            
+                            firstRom.copy(
+                                platform = enrichedPlatform,
+                                coverUrl = finalCoverUrls.firstOrNull(),
+                                coverUrls = finalCoverUrls,
+                                downloadLinks = allDownloadLinks,
+                                regions = allRegions,
+                                isFavorite = isFavorite(slug),
+                                sourceId = firstRom.sourceId
+                            )
+                        }
+                        android.util.Log.d("RomRepositoryImpl", "✅ [searchRoms] Trovati ${finalRoms.size} risultati alla pagina $currentPage")
+                        break
+                    }
+                    
+                    currentPage++
+                }
+            }
+            
             // Ordina alfabeticamente per nome (ignorando maiuscole/minuscole)
-            val sortedRoms = enrichedRoms.sortedBy { it.title.lowercase() }
+            val sortedRoms = finalRoms.sortedBy { it.title.lowercase() }
             
             NetworkResult.Success(sortedRoms)
         } catch (e: Exception) {
