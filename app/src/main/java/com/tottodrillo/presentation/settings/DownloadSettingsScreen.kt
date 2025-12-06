@@ -67,6 +67,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.tottodrillo.R
 import com.tottodrillo.presentation.downloads.DownloadsViewModel
 import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
+import com.tottodrillo.presentation.settings.RomRepositoryEntryPoint
 import dagger.hilt.android.EntryPointAccessors
 import dagger.hilt.android.components.ActivityComponent
 
@@ -88,7 +89,7 @@ fun DownloadSettingsScreen(
     val showClearHistoryDialog by viewModel.showClearHistoryDialog.collectAsState()
     val context = LocalContext.current
     
-    // Ottieni SourceManager tramite EntryPoint
+    // Ottieni SourceManager e RomRepository tramite EntryPoint
     val sourceManager = remember {
         try {
             val activity = context as? androidx.activity.ComponentActivity
@@ -97,6 +98,22 @@ fun DownloadSettingsScreen(
                     activity,
                     SourceManagerEntryPoint::class.java
                 ).sourceManager()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    val romRepository = remember {
+        try {
+            val activity = context as? androidx.activity.ComponentActivity
+            if (activity != null) {
+                EntryPointAccessors.fromActivity(
+                    activity,
+                    RomRepositoryEntryPoint::class.java
+                ).romRepository()
             } else {
                 null
             }
@@ -535,6 +552,9 @@ fun DownloadSettingsScreen(
                     onSourcesChanged = {
                         // Notifica che le sorgenti sono cambiate
                         android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged ricevuto da SourcesListSection")
+                        // Invalida la cache delle piattaforme e regioni
+                        romRepository?.clearCache()
+                        android.util.Log.d("DownloadSettingsScreen", "🗑️ Cache invalidata")
                         refreshTrigger++
                         // Notifica anche MainActivity che le sorgenti sono cambiate
                         android.util.Log.d("DownloadSettingsScreen", "🔄 Chiamo onSourcesChanged() callback")
@@ -543,7 +563,9 @@ fun DownloadSettingsScreen(
                     },
                     onUninstallSource = { sourceId ->
                         // La disinstallazione è già gestita in SourcesListSection
-                        // Qui possiamo mostrare un messaggio di successo se necessario
+                        // Invalida la cache delle piattaforme e regioni
+                        romRepository?.clearCache()
+                        android.util.Log.d("DownloadSettingsScreen", "🗑️ Cache invalidata dopo disinstallazione")
                         refreshTrigger++
                         onSourcesChanged()
                     },

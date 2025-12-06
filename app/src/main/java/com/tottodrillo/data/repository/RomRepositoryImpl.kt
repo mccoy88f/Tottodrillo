@@ -220,12 +220,19 @@ class RomRepositoryImpl @Inject constructor(
 
         // Carica le piattaforme da tutte le sorgenti abilitate
         return try {
-            val installedSources = sourceManager.getInstalledSources()
+            val enabledSources = sourceManager.getEnabledSources()
+            if (enabledSources.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "Nessuna sorgente abilitata"
+                    )
+                )
+            }
+            
             val allPlatforms = mutableMapOf<String, PlatformInfo>() // Usa mother_code come chiave per evitare duplicati
             
-            // Carica le piattaforme da ogni sorgente installata (anche se disabilitata, per avere tutte le opzioni)
-            // Le piattaforme vengono mostrate se almeno una sorgente che le supporta è abilitata
-            for (source in installedSources) {
+            // Carica le piattaforme solo dalle sorgenti abilitate
+            for (source in enabledSources) {
                 try {
                     val platforms = platformManager.loadPlatforms(source.id)
                     // Unisci le piattaforme, evitando duplicati per mother_code

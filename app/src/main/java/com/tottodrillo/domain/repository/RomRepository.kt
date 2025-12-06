@@ -74,4 +74,10 @@ interface RomRepository {
      * Stream di ROM recenti (ultime 25 aperte)
      */
     fun getRecentRoms(): Flow<List<Rom>>
+    
+    /**
+     * Pulisce la cache delle piattaforme e regioni
+     * Utile quando cambiano le sorgenti abilitate
+     */
+    fun clearCache()
 }

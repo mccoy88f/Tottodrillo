@@ -33,10 +33,25 @@ class SearchViewModel @Inject constructor(
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
 
     private val _searchQuery = MutableStateFlow("")
+    private var lastRefreshKey: Int = 0
 
     init {
         loadFiltersData()
         observeSearchQuery()
+    }
+    
+    /**
+     * Forza il refresh quando cambia il refreshKey
+     */
+    fun refreshIfNeeded(refreshKey: Int) {
+        if (refreshKey != lastRefreshKey) {
+            lastRefreshKey = refreshKey
+            loadFiltersData()
+            // Se c'è una ricerca attiva, ricarica anche i risultati
+            if (_searchQuery.value.isNotEmpty() || _uiState.value.filters.selectedPlatforms.isNotEmpty()) {
+                performSearch()
+            }
+        }
     }
     
     /**

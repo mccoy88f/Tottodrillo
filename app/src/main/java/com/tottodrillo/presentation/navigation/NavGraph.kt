@@ -164,7 +164,8 @@ fun TottodrilloNavGraph(
                     navController.navigate(Screen.RomDetail.createRoute(romSlug))
                 },
                 onShowFilters = { showFilters = true },
-                initialPlatformCode = null
+                initialPlatformCode = null,
+                refreshKey = homeRefreshKey
             )
 
             if (showFilters) {
@@ -188,7 +189,8 @@ fun TottodrilloNavGraph(
                     navController.navigate(Screen.RomDetail.createRoute(romSlug))
                 },
                 onShowFilters = { showFilters = true },
-                initialPlatformCode = platformCode
+                initialPlatformCode = platformCode,
+                refreshKey = homeRefreshKey
             )
 
             if (showFilters) {
@@ -203,7 +205,8 @@ fun TottodrilloNavGraph(
                 onNavigateBack = { navController.safePopBackStack() },
                 onNavigateToPlatform = { platformCode ->
                     navController.navigate(Screen.Search.createRoute(platformCode))
-                }
+                },
+                refreshKey = homeRefreshKey
             )
         }
 

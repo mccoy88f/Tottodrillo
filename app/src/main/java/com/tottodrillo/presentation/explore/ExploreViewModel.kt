@@ -46,8 +46,20 @@ class ExploreViewModel @Inject constructor(
     private val _expandedCategories = MutableStateFlow<Set<String>>(emptySet())
     val expandedCategories: StateFlow<Set<String>> = _expandedCategories.asStateFlow()
 
+    private var lastRefreshKey: Int = 0
+    
     init {
         loadExploreData()
+    }
+    
+    /**
+     * Forza il refresh quando cambia il refreshKey
+     */
+    fun refreshIfNeeded(refreshKey: Int) {
+        if (refreshKey != lastRefreshKey) {
+            lastRefreshKey = refreshKey
+            loadExploreData()
+        }
     }
 
     /**

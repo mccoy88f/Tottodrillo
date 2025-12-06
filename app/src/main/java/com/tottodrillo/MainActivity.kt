@@ -46,6 +46,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.File
@@ -541,14 +542,14 @@ class MainActivity : ComponentActivity() {
     /**
      * Scarica e installa le sorgenti predefinite
      */
-    private suspend fun installDefaultSources() {
+    private suspend fun installDefaultSources() = withContext(Dispatchers.IO) {
         val defaultSources = listOf(
             "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/crocdb/crocdb-source.zip" to "crocdb",
             "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/vimms/vimms-source.zip" to "vimms"
         )
         
         val installer = com.tottodrillo.domain.manager.SourceInstaller(
-            this,
+            this@MainActivity,
             sourceManager
         )
         
@@ -568,7 +569,7 @@ class MainActivity : ComponentActivity() {
                 }
                 
                 // Salva in un file temporaneo
-                val tempFile = File(cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
+                val tempFile = File(this@MainActivity.cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
                 response.body?.byteStream()?.use { input ->
                     tempFile.outputStream().use { output ->
                         input.copyTo(output)

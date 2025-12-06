@@ -39,7 +39,6 @@
     <string name="search_platforms">プラットフォーム</string>
     <string name="search_regions">地域</string>
     <string name="search_sources">ソース</string>
-    <string name="search_regions">地域</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM詳細</string>

@@ -39,7 +39,6 @@
     <string name="search_platforms">平台</string>
     <string name="search_regions">地区</string>
     <string name="search_sources">来源</string>
-    <string name="search_regions">地区</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM详情</string>

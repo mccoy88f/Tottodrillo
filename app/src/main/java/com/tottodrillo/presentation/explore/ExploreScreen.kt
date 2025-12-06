@@ -60,10 +60,18 @@ import com.tottodrillo.presentation.components.LoadingIndicator
 fun ExploreScreen(
     onNavigateBack: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
+    refreshKey: Int = 0,
     viewModel: ExploreViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val categories = viewModel.getPlatformCategories()
+    
+    // Forza il refresh quando cambia refreshKey
+    LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) {
+            viewModel.refreshIfNeeded(refreshKey)
+        }
+    }
 
     Scaffold(
         topBar = {

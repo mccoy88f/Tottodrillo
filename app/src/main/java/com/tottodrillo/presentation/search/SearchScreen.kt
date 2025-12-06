@@ -62,6 +62,7 @@ fun SearchScreen(
     onNavigateToRomDetail: (String) -> Unit,
     onShowFilters: () -> Unit,
     initialPlatformCode: String? = null,
+    refreshKey: Int = 0,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
@@ -72,6 +73,13 @@ fun SearchScreen(
         initialPlatformCode?.let { platformCode ->
             android.util.Log.d("SearchScreen", "🔍 Inizializzazione con piattaforma: $platformCode")
             viewModel.initializeWithPlatform(platformCode)
+        }
+    }
+    
+    // Forza il refresh quando cambia refreshKey
+    LaunchedEffect(refreshKey) {
+        if (refreshKey > 0) {
+            viewModel.refreshIfNeeded(refreshKey)
         }
     }
 
