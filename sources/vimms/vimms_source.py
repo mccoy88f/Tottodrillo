@@ -1025,6 +1025,8 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     
     # Filtra per regioni se specificate
     if regions:
+        print(f"🔍 [search_roms] Applicando filtro regioni: {regions} (pagina {page})", file=sys.stderr)
+        print(f"🔍 [search_roms] ROM prima del filtro: {len(all_roms)}", file=sys.stderr)
         filtered_roms = []
         # Mapping completo: codici -> nomi possibili
         region_mapping = {
@@ -1051,7 +1053,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
         for rom in all_roms:
             rom_regions = rom.get('regions', [])
             if not rom_regions:
-                # Se la ROM non ha regioni, la includiamo solo se non ci sono filtri (ma questo non dovrebbe succedere qui)
+                # Se la ROM non ha regioni, la escludiamo quando c'è un filtro regioni attivo
                 continue
             
             # Normalizza le regioni della ROM per il confronto
@@ -1089,6 +1091,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
             if matches:
                 filtered_roms.append(rom)
         
+        print(f"🔍 [search_roms] ROM dopo il filtro: {len(filtered_roms)}", file=sys.stderr)
         all_roms = filtered_roms
     
     # Per il totale, dobbiamo stimare basandoci sui risultati ottenuti

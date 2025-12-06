@@ -324,8 +324,44 @@ class RomRepositoryImpl @Inject constructor(
                 }
             }
             
+            // Filtra ulteriormente per regioni se specificato (doppio controllo)
+            // Questo assicura che anche se la sorgente non filtra correttamente, le ROM vengano filtrate
+            val finalFilteredRoms = if (filters.selectedRegions.isNotEmpty()) {
+                finalRoms.filter { rom ->
+                    // Verifica se almeno una regione della ROM corrisponde a una regione richiesta
+                    rom.regions.any { romRegion ->
+                        filters.selectedRegions.any { selectedRegion ->
+                            // Confronto case-insensitive
+                            romRegion.code.equals(selectedRegion, ignoreCase = true) ||
+                            // Mapping regioni comuni
+                            (selectedRegion.equals("EU", ignoreCase = true) && 
+                             (romRegion.code.equals("EU", ignoreCase = true) || 
+                              romRegion.displayName.contains("Europe", ignoreCase = true) ||
+                              romRegion.displayName.contains("European", ignoreCase = true))) ||
+                            (selectedRegion.equals("US", ignoreCase = true) && 
+                             (romRegion.code.equals("US", ignoreCase = true) || 
+                              romRegion.displayName.contains("United States", ignoreCase = true) ||
+                              romRegion.displayName.contains("USA", ignoreCase = true) ||
+                              romRegion.displayName.contains("America", ignoreCase = true))) ||
+                            (selectedRegion.equals("JP", ignoreCase = true) && 
+                             (romRegion.code.equals("JP", ignoreCase = true) || 
+                              romRegion.displayName.contains("Japan", ignoreCase = true) ||
+                              romRegion.displayName.contains("Japanese", ignoreCase = true))) ||
+                            (selectedRegion.equals("WW", ignoreCase = true) && 
+                             (romRegion.code.equals("WW", ignoreCase = true) || 
+                              romRegion.displayName.contains("Worldwide", ignoreCase = true) ||
+                              romRegion.displayName.contains("World", ignoreCase = true)))
+                        }
+                    }
+                }
+            } else {
+                finalRoms
+            }
+            
+            android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Filtro regioni: ${filters.selectedRegions}, ROM prima filtro: ${finalRoms.size}, ROM dopo filtro: ${finalFilteredRoms.size}")
+            
             // Ordina alfabeticamente per nome (ignorando maiuscole/minuscole)
-            val sortedRoms = finalRoms.sortedBy { it.title.lowercase() }
+            val sortedRoms = finalFilteredRoms.sortedBy { it.title.lowercase() }
             
             NetworkResult.Success(sortedRoms)
         } catch (e: Exception) {
