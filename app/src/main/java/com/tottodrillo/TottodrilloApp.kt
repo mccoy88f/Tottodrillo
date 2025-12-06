@@ -182,6 +182,7 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
                 add(SvgDecoder.Factory())
             }
             .okHttpClient(okHttpClient)
+            .allowHardware(false) // Disabilita hardware bitmap per evitare problemi con alcuni formati
             .build()
     }
 }

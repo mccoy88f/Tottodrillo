@@ -349,7 +349,11 @@ class RomRepositoryImpl @Inject constructor(
                             result.fold(
                                 onSuccess = { entryResponse ->
                                     // Verifica che entry non sia null prima di chiamare toDomain()
-                                    entryResponse.entry?.toDomain(sourceId = source.id)
+                                    val rom = entryResponse.entry?.toDomain(sourceId = source.id)
+                                    if (rom != null) {
+                                        android.util.Log.d("RomRepositoryImpl", "🖼️ getEntry per ${rom.title}: ${rom.coverUrls.size} immagini - ${rom.coverUrls}")
+                                    }
+                                    rom
                                 },
                                 onFailure = {
                                     android.util.Log.e("RomRepositoryImpl", "Errore getEntry in sorgente ${source.id}", it)

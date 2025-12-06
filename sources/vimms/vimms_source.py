@@ -625,20 +625,33 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
                 # Fallback a box solo se cart non disponibile
                 boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
         
-        # Costruisci l'URL dell'immagine screen (se abbiamo l'ID)
+        # Se ancora non trovata e abbiamo rom_id, costruisci direttamente l'URL
+        if not boxart_url and rom_id:
+            boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
+            print(f"⚠️ [get_rom_entry_by_uri] boxart_url non trovato nella pagina, uso URL costruito: {boxart_url}", file=sys.stderr)
+        
+        # Costruisci l'URL dell'immagine screen (sempre se abbiamo l'ID)
+        # Anche se potrebbe non esistere, lo aggiungiamo comunque e l'app gestirà l'errore
         if rom_id:
             screen_url = f'https://dl.vimm.net/image.php?type=screen&id={rom_id}'
+        else:
+            print(f"⚠️ [get_rom_entry_by_uri] rom_id è None, non posso costruire screen_url", file=sys.stderr)
         
         # Crea lista di immagini per il carosello (box art prima, poi screen)
         cover_urls = []
         if boxart_url:
             cover_urls.append(boxart_url)
             print(f"✅ [get_rom_entry_by_uri] Aggiunta box art: {boxart_url}", file=sys.stderr)
+        else:
+            print(f"⚠️ [get_rom_entry_by_uri] boxart_url è None per ROM {title}", file=sys.stderr)
+        
         if screen_url:
             cover_urls.append(screen_url)
             print(f"✅ [get_rom_entry_by_uri] Aggiunta screen: {screen_url}", file=sys.stderr)
+        else:
+            print(f"⚠️ [get_rom_entry_by_uri] screen_url è None per ROM {title} (rom_id: {rom_id})", file=sys.stderr)
         
-        print(f"📊 [get_rom_entry_by_uri] Totale immagini per carosello: {len(cover_urls)}", file=sys.stderr)
+        print(f"📊 [get_rom_entry_by_uri] Totale immagini per carosello: {len(cover_urls)} - URLs: {cover_urls}", file=sys.stderr)
         
         # Estrai il dominio di download dalla tabella dl-row (può essere dl2 o dl3)
         # Ogni ROM può usare un dominio diverso, quindi lo estraiamo dalla tabella
