@@ -145,7 +145,9 @@ fun SearchScreen(
                 ActiveFiltersBar(
                     platformCount = uiState.filters.selectedPlatforms.size,
                     regionCount = uiState.filters.selectedRegions.size,
+                    sourceCount = uiState.filters.selectedSources.size,
                     resultsCount = uiState.results.size,
+                    canLoadMore = uiState.canLoadMore,
                     onClearAll = viewModel::clearFilters,
                     modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
                 )
@@ -181,7 +183,8 @@ fun SearchScreen(
                 }
                 
                 // Mostra indicatore di caricamento quando si sta facendo una ricerca
-                if (uiState.isSearching && uiState.results.isEmpty()) {
+                // Mostra anche quando si applica un filtro e ci sono già risultati (sostituisce i risultati)
+                if (uiState.isSearching && (uiState.results.isEmpty() || uiState.currentPage == 1)) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
@@ -244,10 +247,14 @@ private fun SearchBar(
 private fun ActiveFiltersBar(
     platformCount: Int,
     regionCount: Int,
+    sourceCount: Int,
     resultsCount: Int,
+    canLoadMore: Boolean,
     onClearAll: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val totalFilters = platformCount + regionCount + sourceCount
+    
     Row(
         modifier = modifier
             .fillMaxWidth()
@@ -260,32 +267,21 @@ private fun ActiveFiltersBar(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "Filtri attivi:",
+                text = "$totalFilters filtro${if (totalFilters == 1) "" else "i"} attivo${if (totalFilters == 1) "" else "i"}",
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.primary
             )
-
-            if (platformCount > 0) {
-                Text(
-                    text = "$platformCount piattaform${if (platformCount == 1) "a" else "e"}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
-
-            if (regionCount > 0) {
-                Text(
-                    text = "$regionCount region${if (regionCount == 1) "e" else "i"}",
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.primary
-                )
-            }
         }
 
         Text(
-            text = if (resultsCount == 1) "$resultsCount ROM" else "$resultsCount ROMs",
+            text = if (canLoadMore && resultsCount >= 50) {
+                "$resultsCount ROMs+"
+            } else if (resultsCount == 1) {
+                "$resultsCount ROM"
+            } else {
+                "$resultsCount ROMs"
+            },
             style = MaterialTheme.typography.labelMedium,
             fontWeight = FontWeight.SemiBold,
             color = MaterialTheme.colorScheme.primary

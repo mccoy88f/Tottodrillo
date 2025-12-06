@@ -156,20 +156,22 @@ class RomRepositoryImpl @Inject constructor(
                 // Prendi la prima ROM come base (nome, immagine principale, sourceId)
                 val firstRom = roms.first()
                 
-                // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
+                // Raccogli tutte le immagini da tutte le ROM
+                // coverUrl è la box image (obbligatoria), coverUrls contiene box + screen
                 var allCoverUrls = roms
                     .flatMap { rom -> 
-                        // Combina coverUrl e coverUrls
-                        val urls = mutableListOf<String>()
-                        rom.coverUrl?.let { urls.add(it) }
-                        urls.addAll(rom.coverUrls)
-                        urls
+                        // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
+                        rom.coverUrls
                     }
                     .distinct()
                 
-                // Se non ci sono immagini, usa le immagini placeholder delle sorgenti
-                if (allCoverUrls.isEmpty()) {
-                    allCoverUrls = getPlaceholderImages(roms)
+                // Se non c'è box image (coverUrl è null), aggiungi il placeholder come prima immagine
+                // Il placeholder va prima delle screen images
+                val hasBoxImage = roms.any { it.coverUrl != null }
+                if (!hasBoxImage) {
+                    val placeholderImages = getPlaceholderImages(roms)
+                    // Aggiungi placeholder all'inizio (prima delle screen images se presenti)
+                    allCoverUrls = placeholderImages + allCoverUrls
                 }
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
@@ -187,8 +189,8 @@ class RomRepositoryImpl @Inject constructor(
                 
                 firstRom.copy(
                     platform = enrichedPlatform,
-                    coverUrl = allCoverUrls.firstOrNull(), // Prima immagine come principale
-                    coverUrls = allCoverUrls, // Tutte le immagini per il carosello
+                    coverUrl = allCoverUrls.firstOrNull(), // Prima immagine (box o placeholder)
+                    coverUrls = allCoverUrls, // Box/placeholder prima, poi screen
                     downloadLinks = allDownloadLinks,
                     regions = allRegions,
                     isFavorite = isFavorite(slug),
@@ -196,7 +198,10 @@ class RomRepositoryImpl @Inject constructor(
                 )
             }
             
-            NetworkResult.Success(enrichedRoms)
+            // Ordina alfabeticamente per nome (ignorando maiuscole/minuscole)
+            val sortedRoms = enrichedRoms.sortedBy { it.title.lowercase() }
+            
+            NetworkResult.Success(sortedRoms)
         } catch (e: Exception) {
             android.util.Log.e("RomRepositoryImpl", "Errore nella ricerca ROM", e)
             NetworkResult.Error(
@@ -379,20 +384,22 @@ class RomRepositoryImpl @Inject constructor(
             // Se ci sono più ROM (da più sorgenti), uniscile
             val firstRom = foundRoms.first()
             
-            // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
+            // Raccogli tutte le immagini da tutte le ROM
+            // coverUrl è la box image (obbligatoria), coverUrls contiene box + screen
             var allCoverUrls = foundRoms
                 .flatMap { rom -> 
-                    // Combina coverUrl e coverUrls
-                    val urls = mutableListOf<String>()
-                    rom.coverUrl?.let { urls.add(it) }
-                    urls.addAll(rom.coverUrls)
-                    urls
+                    // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
+                    rom.coverUrls
                 }
                 .distinct()
             
-            // Se non ci sono immagini, usa le immagini placeholder delle sorgenti
-            if (allCoverUrls.isEmpty()) {
-                allCoverUrls = getPlaceholderImages(foundRoms)
+            // Se non c'è box image (coverUrl è null), aggiungi il placeholder come prima immagine
+            // Il placeholder va prima delle screen images
+            val hasBoxImage = foundRoms.any { it.coverUrl != null }
+            if (!hasBoxImage) {
+                val placeholderImages = getPlaceholderImages(foundRoms)
+                // Aggiungi placeholder all'inizio (prima delle screen images se presenti)
+                allCoverUrls = placeholderImages + allCoverUrls
             }
             
             // Unisci tutti i downloadLinks da tutte le ROM
@@ -409,8 +416,8 @@ class RomRepositoryImpl @Inject constructor(
             val enrichedPlatform = enrichPlatformInfo(firstRom.platform, firstRom.sourceId)
             val enrichedRom = firstRom.copy(
                 platform = enrichedPlatform,
-                coverUrl = allCoverUrls.firstOrNull(), // Prima immagine come principale
-                coverUrls = allCoverUrls, // Tutte le immagini per il carosello
+                coverUrl = allCoverUrls.firstOrNull(), // Prima immagine (box o placeholder)
+                coverUrls = allCoverUrls, // Box/placeholder prima, poi screen
                 downloadLinks = allDownloadLinks,
                 regions = allRegions,
                 isFavorite = isFavorite(firstRom.slug),

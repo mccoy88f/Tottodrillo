@@ -364,7 +364,10 @@ Le ROM devono essere mappate al formato standard di Tottodrillo:
   "rom_id": "optional-id",
   "title": "ROM Title",
   "platform": "platform-code",
-  "boxart_url": "https://...",
+  "box_image": "https://...",           // Box art (obbligatoria, null se non disponibile)
+  "screen_image": "https://...",        // Screen shot (facoltativa, null se non disponibile)
+  "boxart_url": "https://...",          // DEPRECATO: Usa box_image invece
+  "boxart_urls": ["https://..."],       // DEPRECATO: Usa box_image e screen_image invece
   "regions": ["US", "EU"],
   "links": [
     {
@@ -377,6 +380,21 @@ Le ROM devono essere mappate al formato standard di Tottodrillo:
   ]
 }
 ```
+
+### Gestione Immagini
+
+**Nuovo formato (consigliato):**
+- `box_image`: URL dell'immagine box art (obbligatoria). Se `null`, l'app userà automaticamente il placeholder della sorgente.
+- `screen_image`: URL dell'immagine screen shot (facoltativa). Se presente, verrà mostrata dopo la box art nel carosello.
+
+**Vecchio formato (deprecato, ma ancora supportato per compatibilità):**
+- `boxart_url`: URL singolo dell'immagine box art
+- `boxart_urls`: Lista di URL immagini (box + screen)
+
+**Nota importante:**
+- Se `box_image` è `null`, l'app aggiungerà automaticamente il placeholder definito in `source.json` (`defaultImage`)
+- Lo `screen_image` è facoltativo e viene mostrato solo se presente e valido
+- L'ordine nel carosello è sempre: box art (o placeholder) → screen shot
 
 ## Testing
 
@@ -485,7 +503,10 @@ public class MyJavaSource {
         entry.slug = "example-rom";
         entry.title = "Example ROM";
         entry.platform = platforms.isEmpty() ? "nes" : platforms.get(0);
-        entry.boxartUrl = "https://example.com/boxart.png";
+        entry.boxImage = "https://example.com/boxart.png";  // Box art (obbligatoria)
+        entry.screenImage = "https://example.com/screen.png"; // Screen shot (facoltativa)
+        // Per compatibilità, puoi anche usare:
+        // entry.boxartUrl = "https://example.com/boxart.png"; // DEPRECATO
         entry.regions = regions.isEmpty() ? Arrays.asList("US") : regions;
         
         // Aggiungi link download
@@ -515,7 +536,10 @@ public class MyJavaSource {
         entry.slug = slug;
         entry.title = "Example ROM";
         entry.platform = "nes";
-        entry.boxartUrl = "https://example.com/boxart.png";
+        entry.boxImage = "https://example.com/boxart.png";  // Box art (obbligatoria)
+        entry.screenImage = "https://example.com/screen.png"; // Screen shot (facoltativa)
+        // Per compatibilità, puoi anche usare:
+        // entry.boxartUrl = "https://example.com/boxart.png"; // DEPRECATO
         entry.regions = Arrays.asList("US", "EU");
         
         // Aggiungi link download
@@ -697,7 +721,10 @@ def search_roms(params: Dict[str, Any]) -> str:
         "slug": "example-rom",
         "title": "Example ROM",
         "platform": platforms[0] if platforms else "nes",
-        "boxart_url": "https://example.com/boxart.png",
+        "box_image": "https://example.com/boxart.png",  # Box art (obbligatoria, None se non disponibile)
+        "screen_image": "https://example.com/screen.png",  # Screen shot (facoltativa, None se non disponibile)
+        # Per compatibilità, puoi anche usare:
+        # "boxart_url": "https://example.com/boxart.png",  # DEPRECATO
         "regions": regions if regions else ["US"],
         "links": [
             {
@@ -738,7 +765,10 @@ def get_entry(params: Dict[str, Any]) -> str:
         "slug": slug,
         "title": "Example ROM",
         "platform": "nes",
-        "boxart_url": "https://example.com/boxart.png",
+        "box_image": "https://example.com/boxart.png",  # Box art (obbligatoria, None se non disponibile)
+        "screen_image": "https://example.com/screen.png",  # Screen shot (facoltativa, None se non disponibile)
+        # Per compatibilità, puoi anche usare:
+        # "boxart_url": "https://example.com/boxart.png",  # DEPRECATO
         "regions": ["US", "EU"],
         "links": [
             {
@@ -821,11 +851,18 @@ def search_roms(params: Dict[str, Any]) -> str:
     # Parsing HTML e estrazione dati
     results = []
     for item in soup.find_all('div', class_='rom-item'):
+        # Estrai box art e screen shot separatamente
+        box_img = item.find('img', class_='boxart')
+        screen_img = item.find('img', class_='screen')
+        
         rom = {
             "slug": item.get('data-slug'),
             "title": item.find('h2').text,
             "platform": item.get('data-platform'),
-            "boxart_url": item.find('img').get('src'),
+            "box_image": box_img.get('src') if box_img else None,  # Box art (obbligatoria)
+            "screen_image": screen_img.get('src') if screen_img else None,  # Screen shot (facoltativa)
+            # Per compatibilità, puoi anche usare:
+            # "boxart_url": box_img.get('src') if box_img else None,  # DEPRECATO
             "links": [{
                 "name": "Download",
                 "type": "direct",

@@ -348,8 +348,10 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1, sour
                     'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
                     'title': name,
                     'platform': map_system_to_mother_code(system, source_dir) if source_dir else 'unknown',
-                    'boxart_url': boxart_url,  # URL costruito dall'ID, l'app lo caricherà solo se visibile
-                    'boxart_urls': [boxart_url] if boxart_url else [],  # Lista con box art (screen verrà aggiunto in getEntry)
+                    'boxart_url': boxart_url,  # Mantieni per compatibilità (deprecato)
+                    'boxart_urls': [boxart_url] if boxart_url else [],  # Mantieni per compatibilità (deprecato)
+                    'box_image': boxart_url,  # Box art (obbligatoria, null se non presente)
+                    'screen_image': None,  # Screen non disponibile nella ricerca (solo in getEntry)
                     'regions': regions,
                     'links': []
                 }
@@ -493,8 +495,10 @@ def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str 
                     'rom_id': uri,  # Salviamo l'URI come rom_id per poterlo recuperare
                     'title': name,
                     'platform': platform,
-                    'boxart_url': boxart_url,  # URL costruito dall'ID, l'app lo caricherà solo se visibile
-                    'boxart_urls': [boxart_url] if boxart_url else [],  # Lista con box art (screen verrà aggiunto in getEntry)
+                    'boxart_url': boxart_url,  # Mantieni per compatibilità (deprecato)
+                    'boxart_urls': [boxart_url] if boxart_url else [],  # Mantieni per compatibilità (deprecato)
+                    'box_image': boxart_url,  # Box art (obbligatoria, null se non presente)
+                    'screen_image': None,  # Screen non disponibile nella ricerca (solo in getEntry)
                     'regions': regions,
                     'links': []
                 }
@@ -621,37 +625,70 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
                     boxart_url = cart_src
                 else:
                     boxart_url = 'https://vimm.net/' + cart_src
-            else:
-                # Fallback a box solo se cart non disponibile
-                boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
         
-        # Se ancora non trovata e abbiamo rom_id, costruisci direttamente l'URL
-        if not boxart_url and rom_id:
-            boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
-            print(f"⚠️ [get_rom_entry_by_uri] boxart_url non trovato nella pagina, uso URL costruito: {boxart_url}", file=sys.stderr)
+        # NON costruiamo l'URL direttamente se non trovato nella pagina
+        # Se non trovato, useremo il placeholder quando cover_urls è vuoto
+        if not boxart_url:
+            print(f"⚠️ [get_rom_entry_by_uri] boxart_url non trovato nella pagina per ROM {title} (rom_id: {rom_id})", file=sys.stderr)
         
-        # Costruisci l'URL dell'immagine screen (sempre se abbiamo l'ID)
-        # Anche se potrebbe non esistere, lo aggiungiamo comunque e l'app gestirà l'errore
-        if rom_id:
-            screen_url = f'https://dl.vimm.net/image.php?type=screen&id={rom_id}'
-        else:
-            print(f"⚠️ [get_rom_entry_by_uri] rom_id è None, non posso costruire screen_url", file=sys.stderr)
+        # Costruisci l'URL dell'immagine screen solo se trovata nella pagina
+        # Cerca l'immagine screen nella pagina
+        screen_url = None
+        screen_img = soup.find('img', alt='Screen') or soup.find('img', src=lambda x: x and 'type=screen' in (x or ''))
+        if screen_img:
+            screen_src = screen_img.get('src', '')
+            if screen_src:
+                if screen_src.startswith('//'):
+                    screen_url = 'https:' + screen_src
+                elif screen_src.startswith('/'):
+                    screen_url = 'https://vimm.net' + screen_src
+                elif screen_src.startswith('http'):
+                    screen_url = screen_src
+                else:
+                    screen_url = 'https://vimm.net/' + screen_src
         
-        # Crea lista di immagini per il carosello (box art prima, poi screen)
-        cover_urls = []
-        if boxart_url:
-            cover_urls.append(boxart_url)
-            print(f"✅ [get_rom_entry_by_uri] Aggiunta box art: {boxart_url}", file=sys.stderr)
-        else:
-            print(f"⚠️ [get_rom_entry_by_uri] boxart_url è None per ROM {title}", file=sys.stderr)
+        if not screen_url and rom_id:
+            print(f"⚠️ [get_rom_entry_by_uri] screen_url non trovato nella pagina per ROM {title} (rom_id: {rom_id})", file=sys.stderr)
         
+        # Verifica se lo screen è un placeholder di errore
+        # Vimm's Lair restituisce sempre un'immagine screen anche quando non esiste
+        # (con scritto "no screen found"). Dobbiamo verificare se l'immagine è valida.
+        valid_screen_url = None
         if screen_url:
-            cover_urls.append(screen_url)
-            print(f"✅ [get_rom_entry_by_uri] Aggiunta screen: {screen_url}", file=sys.stderr)
-        else:
-            print(f"⚠️ [get_rom_entry_by_uri] screen_url è None per ROM {title} (rom_id: {rom_id})", file=sys.stderr)
+            # Verifica se l'immagine screen esiste realmente
+            # Facciamo una richiesta HEAD per verificare se l'immagine esiste
+            # Se la risposta è 200 e il content-type è image, è valida
+            try:
+                headers = {'User-Agent': get_random_ua()}
+                response = requests.head(screen_url, headers=headers, timeout=5, verify=False, allow_redirects=True)
+                content_type = response.headers.get('Content-Type', '').lower()
+                
+                # Se è un'immagine valida (non un placeholder di errore)
+                if response.status_code == 200 and 'image' in content_type:
+                    # Verifica anche la dimensione: i placeholder di errore sono spesso molto piccoli
+                    content_length = response.headers.get('Content-Length')
+                    if content_length:
+                        size = int(content_length)
+                        # Se l'immagine è più grande di 1KB, probabilmente è valida
+                        # I placeholder di errore sono spesso molto piccoli (< 1KB)
+                        if size > 1024:
+                            valid_screen_url = screen_url
+                            print(f"✅ [get_rom_entry_by_uri] Screen valido trovato: {screen_url} (size: {size} bytes)", file=sys.stderr)
+                        else:
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen troppo piccolo, probabilmente placeholder di errore: {screen_url} (size: {size} bytes)", file=sys.stderr)
+                    else:
+                        # Se non abbiamo Content-Length, assumiamo che sia valido
+                        valid_screen_url = screen_url
+                        print(f"✅ [get_rom_entry_by_uri] Screen trovato (dimensione sconosciuta): {screen_url}", file=sys.stderr)
+                else:
+                    print(f"⚠️ [get_rom_entry_by_uri] Screen non valido (status: {response.status_code}, type: {content_type}): {screen_url}", file=sys.stderr)
+            except Exception as e:
+                # In caso di errore, non includiamo lo screen
+                print(f"⚠️ [get_rom_entry_by_uri] Errore verifica screen: {e}", file=sys.stderr)
         
-        print(f"📊 [get_rom_entry_by_uri] Totale immagini per carosello: {len(cover_urls)} - URLs: {cover_urls}", file=sys.stderr)
+        # box_image è obbligatoria (se non presente, l'app userà il placeholder)
+        # screen_image è facoltativa (solo se valida)
+        print(f"📊 [get_rom_entry_by_uri] Box art: {boxart_url}, Screen: {valid_screen_url}", file=sys.stderr)
         
         # Estrai il dominio di download dalla tabella dl-row (può essere dl2 o dl3)
         # Ogni ROM può usare un dominio diverso, quindi lo estraiamo dalla tabella
@@ -869,8 +906,10 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
             'rom_id': uri,
             'title': final_title,
             'platform': map_system_to_mother_code(system, source_dir) if system else 'unknown',
-            'boxart_url': boxart_url,  # Mantieni per compatibilità
-            'boxart_urls': cover_urls,  # Lista di tutte le immagini per il carosello
+            'boxart_url': boxart_url,  # Mantieni per compatibilità (deprecato)
+            'boxart_urls': [boxart_url] if boxart_url else [],  # Mantieni per compatibilità (deprecato)
+            'box_image': boxart_url,  # Box art (obbligatoria, null se non presente)
+            'screen_image': valid_screen_url,  # Screen (facoltativa, null se non presente)
             'regions': regions,  # Regioni estratte dalla pagina ROM
             'links': links
         }

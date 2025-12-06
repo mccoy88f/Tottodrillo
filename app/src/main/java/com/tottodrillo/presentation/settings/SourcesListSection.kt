@@ -1,5 +1,6 @@
 package com.tottodrillo.presentation.settings
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -9,10 +10,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.tottodrillo.domain.manager.SourceManager
 import com.tottodrillo.domain.model.Source
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import androidx.compose.ui.res.stringResource
 import com.tottodrillo.R
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Update
 
@@ -25,6 +28,7 @@ fun SourcesListSection(
     onSourcesChanged: () -> Unit = {},
     onUninstallSource: (String) -> Unit = {},
     onUpdateSource: () -> Unit = {},
+    onInstallDefaultSources: () -> Unit = {},
     externalRefreshTrigger: Int = 0
 ) {
     val manager = sourceManager
@@ -42,23 +46,97 @@ fun SourcesListSection(
     }
     
     if (sources.isEmpty()) {
-        Card(
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(
-                containerColor = MaterialTheme.colorScheme.surfaceVariant
-            )
+        Column(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Column(
+            Card(
+                modifier = Modifier.fillMaxWidth(),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.sources_list_empty),
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Pulsante per installare sorgenti predefinite
+            var isInstalling by remember { mutableStateOf(false) }
+            
+            // Reset dello stato quando le sorgenti vengono ricaricate o dopo un timeout
+            LaunchedEffect(externalRefreshTrigger, isInstalling) {
+                if (isInstalling) {
+                    // Se ci sono sorgenti dopo l'installazione, resetta subito
+                    if (sources.isNotEmpty()) {
+                        isInstalling = false
+                    } else {
+                        // Altrimenti aspetta un po' e resetta (in caso di errore o timeout)
+                        delay(5000) // 5 secondi di timeout
+                        isInstalling = false
+                    }
+                }
+            }
+            
+            Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(R.string.sources_list_empty),
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    .clickable(
+                        enabled = !isInstalling,
+                        onClick = {
+                            isInstalling = true
+                            onInstallDefaultSources()
+                        }
+                    ),
+                colors = CardDefaults.cardColors(
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    if (isInstalling) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.sources_installing_default),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    } else {
+                        Icon(
+                            imageVector = Icons.Default.CloudDownload,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.sources_install_default),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
             }
         }
     } else {

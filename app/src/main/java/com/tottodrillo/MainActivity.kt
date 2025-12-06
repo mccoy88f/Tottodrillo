@@ -276,6 +276,16 @@ class MainActivity : ComponentActivity() {
                                 onInstallSource = {
                                     installSourceLauncher.launch("application/zip")
                                 },
+                                onInstallDefaultSources = {
+                                    activityScope.launch {
+                                        try {
+                                            installDefaultSources()
+                                            refreshTrigger++
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("MainActivity", "❌ Errore installazione sorgenti predefinite", e)
+                                        }
+                                    }
+                                },
                                 onSourcesChanged = {
                                     // Quando cambiano le sorgenti, ricontrolla lo stato
                                     refreshTrigger++
@@ -286,6 +296,16 @@ class MainActivity : ComponentActivity() {
                             com.tottodrillo.presentation.sources.NoEnabledSourcesScreen(
                                 onNavigateToSettings = {
                                     showSettings = true
+                                },
+                                onInstallDefaultSources = {
+                                    activityScope.launch {
+                                        try {
+                                            installDefaultSources()
+                                            refreshTrigger++
+                                        } catch (e: Exception) {
+                                            android.util.Log.e("MainActivity", "❌ Errore installazione sorgenti predefinite", e)
+                                        }
+                                    }
                                 }
                             )
                         }

@@ -2,10 +2,15 @@ package com.tottodrillo.presentation.sources
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudDownload
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -18,8 +23,10 @@ import com.tottodrillo.R
  */
 @Composable
 fun NoEnabledSourcesScreen(
-    onNavigateToSettings: () -> Unit
+    onNavigateToSettings: () -> Unit,
+    onInstallDefaultSources: () -> Unit = {}
 ) {
+    var isInstalling by remember { mutableStateOf(false) }
     Surface(
         modifier = Modifier.fillMaxSize()
     ) {
@@ -73,9 +80,40 @@ fun NoEnabledSourcesScreen(
             
             Spacer(modifier = Modifier.height(32.dp))
             
+            // Pulsante per installare sorgenti predefinite
             Button(
+                onClick = {
+                    isInstalling = true
+                    onInstallDefaultSources()
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isInstalling
+            ) {
+                if (isInstalling) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        color = MaterialTheme.colorScheme.onPrimary,
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.sources_installing_default))
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.CloudDownload,
+                        contentDescription = null
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(stringResource(R.string.sources_install_default))
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(16.dp))
+            
+            // Pulsante per andare alle impostazioni
+            OutlinedButton(
                 onClick = onNavigateToSettings,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isInstalling
             ) {
                 Icon(
                     imageVector = Icons.Default.Settings,

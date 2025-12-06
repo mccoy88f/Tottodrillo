@@ -53,7 +53,11 @@ data class RomEntry(
     @SerializedName("boxart_url")
     val boxartUrl: String?,
     @SerializedName("boxart_urls")
-    val boxartUrls: List<String>? = null, // Lista di tutte le immagini (box + screen)
+    val boxartUrls: List<String>? = null, // Lista di tutte le immagini (box + screen) - DEPRECATO
+    @SerializedName("box_image")
+    val boxImage: String? = null, // Immagine box art (obbligatoria)
+    @SerializedName("screen_image")
+    val screenImage: String? = null, // Immagine screen (facoltativa)
     @SerializedName("regions")
     val regions: List<String>,
     @SerializedName("links")

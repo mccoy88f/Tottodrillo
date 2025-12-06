@@ -11,10 +11,31 @@ import com.tottodrillo.domain.model.Rom
  * Mapper per convertire RomEntry (API) in Rom (Domain)
  */
 fun RomEntry.toDomain(sourceId: String? = null): Rom {
-    // Usa boxart_urls se disponibile, altrimenti usa boxartUrl come lista
-    val coverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
-        ?: this.boxartUrl?.let { listOf(it) } 
-        ?: emptyList()
+    // Gestisci box_image e screen_image separati (nuovo formato)
+    // box_image è obbligatoria, screen_image è facoltativa
+    val boxImage = this.boxImage
+    val screenImage = this.screenImage
+    
+    // Costruisci la lista coverUrls: prima box (se presente), poi screen (se presente)
+    val coverUrls = mutableListOf<String>()
+    if (boxImage != null) {
+        coverUrls.add(boxImage)
+    }
+    if (screenImage != null) {
+        coverUrls.add(screenImage)
+    }
+    
+    // Fallback al vecchio formato per compatibilità
+    if (coverUrls.isEmpty()) {
+        val oldCoverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
+            ?: this.boxartUrl?.let { listOf(it) } 
+            ?: emptyList()
+        coverUrls.addAll(oldCoverUrls)
+    }
+    
+    // coverUrl principale è la box image (o la prima immagine se non c'è box)
+    // Se non c'è box, coverUrl sarà null e il repository aggiungerà il placeholder
+    val coverUrl = boxImage ?: coverUrls.firstOrNull()
     
     return Rom(
         slug = this.slug,
@@ -24,8 +45,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
             code = this.platform,
             displayName = getPlatformDisplayName(this.platform)
         ),
-        coverUrl = coverUrls.firstOrNull(), // Prima immagine come principale
-        coverUrls = coverUrls, // Tutte le immagini per il carosello
+        coverUrl = coverUrl, // Box image come principale (null se non presente, il repository aggiungerà placeholder)
+        coverUrls = coverUrls, // Box prima, poi screen
         regions = this.regions.map { regionName -> 
             // Converti il nome della regione in codice standardizzato
             val regionCode = normalizeRegionNameToCode(regionName, sourceId)

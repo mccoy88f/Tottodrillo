@@ -82,6 +82,7 @@ fun DownloadSettingsScreen(
     onSelectEsDeFolder: () -> Unit = {},
     onRequestStoragePermission: () -> Unit = {},
     onInstallSource: () -> Unit = {},
+    onInstallDefaultSources: () -> Unit = {},
     onSourcesChanged: () -> Unit = {},
     viewModel: DownloadsViewModel = hiltViewModel()
 ) {
@@ -566,6 +567,12 @@ fun DownloadSettingsScreen(
                     onUpdateSource = {
                         // Apri il file picker per selezionare il nuovo ZIP
                         onInstallSource()
+                    },
+                    onInstallDefaultSources = {
+                        onInstallDefaultSources()
+                        // Ricarica dopo l'installazione
+                        refreshTrigger++
+                        onSourcesChanged()
                     }
                 )
             } ?: run {
