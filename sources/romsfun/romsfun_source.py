@@ -8,11 +8,11 @@ import sys
 import os
 import urllib.parse
 from typing import Dict, Any, List, Optional
+import requests  # Sempre importato per le eccezioni
 try:
     import cloudscraper
     CLOUDSCRAPER_AVAILABLE = True
 except ImportError:
-    import requests
     CLOUDSCRAPER_AVAILABLE = False
 from bs4 import BeautifulSoup
 
