@@ -337,7 +337,15 @@ def get_final_download_url(sub_link_url: str, session, referer: str) -> Optional
         body = final_soup2.find('body')
         if body:
             # Cerca attributi data-* che potrebbero contenere l'URL
-            for element in body.find_all(attrs=lambda x: x and any(k.startswith('data-') for k in x.keys())):
+            for element in body.find_all(True):  # Trova tutti gli elementi
+                if not hasattr(element, 'attrs') or not isinstance(element.attrs, dict):
+                    continue
+                    
+                # Verifica se ha attributi data-*
+                has_data_attrs = any(k.startswith('data-') for k in element.attrs.keys())
+                if not has_data_attrs:
+                    continue
+                    
                 for attr_name, attr_value in element.attrs.items():
                     if isinstance(attr_value, str) and 'sto.romsfast.com' in attr_value and 'token=' in attr_value:
                         url_match = re.search(r'https://sto\.romsfast\.com/[^\s"\'>]+', attr_value)
@@ -483,7 +491,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
             # Senza query e senza piattaforma, non possiamo fare una ricerca significativa
             print(f"⚠️ [search_roms] Nessuna piattaforma o query specificata", file=sys.stderr)
             return json.dumps({
-                "results": [],
+                "roms": [],
                 "total_results": 0,
                 "current_results": 0,
                 "current_page": page,
@@ -506,7 +514,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
         total_results = page * max_results + 1
     
     response = {
-        "results": all_roms,
+        "roms": all_roms,  # Cambiato da "results" a "roms"
         "total_results": total_results,
         "current_results": len(all_roms),
         "current_page": page,
@@ -560,26 +568,19 @@ def get_roms_from_platform_page(page_url: str, platform_slug: Optional[str], sou
         # Questo simula un click da homepage alla pagina della piattaforma
         headers = get_browser_headers(referer='https://romsfun.com/')
         
-        # Aggiungi un delay più lungo per simulare comportamento umano
-        time.sleep(3)
+        # Aggiungi un piccolo delay per simulare comportamento umano
+        time.sleep(0.5)
         
         print(f"🔗 [get_roms_from_platform_page] Richiesta pagina: {page_url}", file=sys.stderr)
-        page = session.get(page_url, headers=headers, timeout=30)
+        page = session.get(page_url, headers=headers, timeout=20)
         
-        # Se riceviamo 403, prova a riprovare con un delay ancora più lungo
+        # Se riceviamo 403, prova a riprovare con un delay più lungo
         if page.status_code == 403:
-            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 5 secondi e riprovo...", file=sys.stderr)
-            time.sleep(5)
+            print(f"⚠️ [get_roms_from_platform_page] Ricevuto 403, attendo 3 secondi e riprovo...", file=sys.stderr)
+            time.sleep(3)
             # Riprova con un nuovo User-Agent e stesso Referer
             headers = get_browser_headers(referer='https://romsfun.com/')
-            page = session.get(page_url, headers=headers, timeout=30)
-            
-            # Se ancora 403, prova un'ultima volta dopo un delay ancora più lungo
-            if page.status_code == 403:
-                print(f"⚠️ [get_roms_from_platform_page] Ancora 403, attendo 10 secondi e riprovo un'ultima volta...", file=sys.stderr)
-                time.sleep(10)
-                headers = get_browser_headers(referer='https://romsfun.com/')
-                page = session.get(page_url, headers=headers, timeout=30)
+            page = session.get(page_url, headers=headers, timeout=20)
         
         page.raise_for_status()
         
@@ -1161,17 +1162,7 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         return entry
         
     except Exception as e:
-        # Gestisce sia requests.exceptions che altre eccezioni
-        if 'requests' in sys.modules:
-            import requests as _requests
-            if isinstance(e, _requests.exceptions.RequestException):
-                print(f"❌ [get_rom_entry_by_url] Errore richiesta: {e}", file=sys.stderr)
-            else:
-                print(f"❌ [get_rom_entry_by_url] Errore: {e}", file=sys.stderr)
-        else:
-            print(f"❌ [get_rom_entry_by_url] Errore: {e}", file=sys.stderr)
-        return None
-    except Exception as e:
+        # Gestisce tutte le eccezioni con traceback completo
         import traceback
         print(f"❌ [get_rom_entry_by_url] Errore: {e}\n{traceback.format_exc()}", file=sys.stderr)
         return None

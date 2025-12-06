@@ -455,30 +455,30 @@ class RomDetailViewModel @Inject constructor(
                     }
                 } else {
                     // Avvia direttamente il download
-                    viewModelScope.launch {
-                        try {
-                            _uiState.update {
-                                it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
-                            }
+                viewModelScope.launch {
+                    try {
+                        _uiState.update {
+                            it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                        }
 
-                            val workId = downloadManager.startDownload(
-                                romSlug = currentRom.slug,
-                                romTitle = currentRom.title,
-                                downloadLink = link
+                        val workId = downloadManager.startDownload(
+                            romSlug = currentRom.slug,
+                            romTitle = currentRom.title,
+                            downloadLink = link
+                        )
+                        currentWorkId = workId
+
+                        // Usa la funzione helper per osservare il download
+                        observeDownloadForLink(link, workId)
+                    } catch (e: Exception) {
+                        _uiState.update {
+                            it.copy(
+                                error = e.message ?: "Errore nell'avvio del download"
                             )
-                            currentWorkId = workId
-
-                            // Usa la funzione helper per osservare il download
-                            observeDownloadForLink(link, workId)
-                        } catch (e: Exception) {
-                            _uiState.update {
-                                it.copy(
-                                    error = e.message ?: "Errore nell'avvio del download"
-                                )
-                            }
                         }
                     }
                 }
+            }
             }
         }
     }
