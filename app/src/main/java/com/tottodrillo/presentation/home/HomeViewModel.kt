@@ -73,11 +73,12 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Carica ROM in evidenza (ad esempio, giochi popolari)
+     * Usa una query vuota per mostrare ROM casuali/popolari invece di una ricerca specifica
      */
     private fun loadFeaturedRoms() {
         viewModelScope.launch {
-            // Cerca alcuni giochi popolari come esempio
-            val filters = SearchFilters(query = "mario")
+            // Cerca ROM senza query specifica per mostrare risultati generali/popolari
+            val filters = SearchFilters(query = "")
             
             when (val result = repository.searchRoms(filters, page = 1)) {
                 is NetworkResult.Success -> {
