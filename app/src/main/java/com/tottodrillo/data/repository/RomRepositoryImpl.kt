@@ -342,11 +342,13 @@ class RomRepositoryImpl @Inject constructor(
                     result.fold(
                         onSuccess = { regionsResponse ->
                             // Aggiungi le regioni, evitando duplicati
+                            // Normalizza i codici (uppercase, trim) per evitare duplicati da sorgenti diverse
                             regionsResponse.regions.forEach { (code, name) ->
-                                if (!allRegions.containsKey(code)) {
-                                    // Crea RegionInfo dal codice (usa fromCode per gestire i codici standard)
-                                    val regionInfo = RegionInfo.fromCode(code)
-                                    allRegions[code] = regionInfo
+                                val normalizedCode = code.trim().uppercase()
+                                if (!allRegions.containsKey(normalizedCode)) {
+                                    // Crea RegionInfo dal codice normalizzato (usa fromCode per gestire i codici standard)
+                                    val regionInfo = RegionInfo.fromCode(normalizedCode)
+                                    allRegions[normalizedCode] = regionInfo
                                 }
                             }
                         },
