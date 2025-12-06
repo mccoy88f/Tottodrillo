@@ -68,11 +68,19 @@ fun RomCard(
             ) {
                 // Usa coverUrl se disponibile, altrimenti usa il primo elemento di coverUrls (placeholder)
                 val imageUrl = rom.coverUrl ?: rom.coverUrls.firstOrNull()
+                // Se l'immagine fallisce, prova con il prossimo elemento di coverUrls (placeholder)
+                val fallbackUrl = if (rom.coverUrl != null && rom.coverUrls.size > 1) {
+                    // Se coverUrl è presente ma fallisce, usa il prossimo elemento (placeholder)
+                    rom.coverUrls.firstOrNull { it != rom.coverUrl }
+                } else {
+                    null
+                }
                 
                 android.util.Log.d("RomCard", "🎴 [RomCard] ROM: ${rom.title}")
                 android.util.Log.d("RomCard", "   coverUrl: ${rom.coverUrl}")
                 android.util.Log.d("RomCard", "   coverUrls: ${rom.coverUrls}")
                 android.util.Log.d("RomCard", "   imageUrl selezionato: $imageUrl")
+                android.util.Log.d("RomCard", "   fallbackUrl: $fallbackUrl")
                 android.util.Log.d("RomCard", "   shouldLoadImage: $shouldLoadImage")
                 
                 if (shouldLoadImage && imageUrl != null) {
@@ -91,18 +99,52 @@ fun RomCard(
                             }
                         },
                         error = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.BrokenImage,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            // Se c'è un fallback (placeholder), provalo, altrimenti mostra icona errore
+                            if (fallbackUrl != null) {
+                                android.util.Log.d("RomCard", "   ⚠️ Immagine fallita, provo fallback: $fallbackUrl")
+                                SubcomposeAsyncImage(
+                                    model = fallbackUrl,
+                                    contentDescription = rom.title,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Fit,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(modifier = Modifier.size(32.dp))
+                                        }
+                                    },
+                                    error = {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxSize()
+                                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Default.BrokenImage,
+                                                contentDescription = null,
+                                                modifier = Modifier.size(48.dp),
+                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                    }
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(MaterialTheme.colorScheme.surfaceVariant),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.BrokenImage,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(48.dp),
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
                             }
                         }
                     )

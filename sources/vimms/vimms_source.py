@@ -326,10 +326,14 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1, sour
                         if region:
                             regions = [region]
                 
-                # Nella ricerca, NON costruiamo l'URL dell'immagine perché non sappiamo se esiste
-                # L'immagine verrà caricata solo quando l'utente apre il dettaglio ROM (getEntry)
-                # Se non c'è immagine, l'app userà il placeholder
+                # Costruisci l'URL dell'immagine box art dall'URI
+                # L'app proverà a caricarlo, e se fallisce userà il placeholder
                 boxart_url = None
+                rom_id = None
+                match = re.search(r'/vault/(\d+)', uri)
+                if match:
+                    rom_id = match.group(1)
+                    boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
                 
                 rom = {
                     'slug': slug,
@@ -337,8 +341,8 @@ def get_system_search_roms(search_key: str, system: str, page_num: int = 1, sour
                     'title': name,
                     'platform': map_system_to_mother_code(system, source_dir) if source_dir else 'unknown',
                     'boxart_url': boxart_url,  # Mantieni per compatibilità (deprecato)
-                    'boxart_urls': [],  # Mantieni per compatibilità (deprecato)
-                    'box_image': None,  # Box art (null nella ricerca, verrà caricata in getEntry)
+                    'boxart_urls': [boxart_url] if boxart_url else [],  # Mantieni per compatibilità (deprecato)
+                    'box_image': boxart_url,  # Box art (costruita dall'ID, se fallisce l'app userà placeholder)
                     'screen_image': None,  # Screen non disponibile nella ricerca (solo in getEntry)
                     'regions': regions,
                     'links': []
@@ -458,10 +462,14 @@ def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str 
                 if system and source_dir:
                     platform = map_system_to_mother_code(system, source_dir)
                 
-                # Nella ricerca, NON costruiamo l'URL dell'immagine perché non sappiamo se esiste
-                # L'immagine verrà caricata solo quando l'utente apre il dettaglio ROM (getEntry)
-                # Se non c'è immagine, l'app userà il placeholder
+                # Costruisci l'URL dell'immagine box art dall'URI
+                # L'app proverà a caricarlo, e se fallisce userà il placeholder
                 boxart_url = None
+                rom_id = None
+                match = re.search(r'/vault/(\d+)', uri)
+                if match:
+                    rom_id = match.group(1)
+                    boxart_url = f'https://dl.vimm.net/image.php?type=box&id={rom_id}'
                 
                 rom = {
                     'slug': slug,
@@ -469,8 +477,8 @@ def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str 
                     'title': name,
                     'platform': platform,
                     'boxart_url': boxart_url,  # Mantieni per compatibilità (deprecato)
-                    'boxart_urls': [],  # Mantieni per compatibilità (deprecato)
-                    'box_image': None,  # Box art (null nella ricerca, verrà caricata in getEntry)
+                    'boxart_urls': [boxart_url] if boxart_url else [],  # Mantieni per compatibilità (deprecato)
+                    'box_image': boxart_url,  # Box art (costruita dall'ID, se fallisce l'app userà placeholder)
                     'screen_image': None,  # Screen non disponibile nella ricerca (solo in getEntry)
                     'regions': regions,
                     'links': []

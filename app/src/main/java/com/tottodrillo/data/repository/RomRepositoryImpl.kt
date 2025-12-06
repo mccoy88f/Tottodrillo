@@ -189,7 +189,15 @@ class RomRepositoryImpl @Inject constructor(
                     allCoverUrls = placeholderImages + allCoverUrls
                     android.util.Log.d("RomRepositoryImpl", "   ✅ allCoverUrls finale: $allCoverUrls")
                 } else {
-                    android.util.Log.d("RomRepositoryImpl", "   ✅ Box image presente, mantengo allCoverUrls: $allCoverUrls")
+                    // Anche se c'è box image, aggiungiamo il placeholder come fallback in caso di errore di caricamento
+                    val placeholderImages = getPlaceholderImages(roms)
+                    // Aggiungi placeholder alla fine come fallback (solo se non è già presente)
+                    placeholderImages.forEach { placeholder ->
+                        if (placeholder !in allCoverUrls) {
+                            allCoverUrls = allCoverUrls + placeholder
+                        }
+                    }
+                    android.util.Log.d("RomRepositoryImpl", "   ✅ Box image presente, aggiunto placeholder come fallback: $allCoverUrls")
                 }
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
@@ -425,6 +433,15 @@ class RomRepositoryImpl @Inject constructor(
                 // Aggiungi placeholder all'inizio
                 allCoverUrls = placeholderImages + allCoverUrls
                 android.util.Log.d("RomRepositoryImpl", "📱 Aggiunto placeholder per ROM ${firstRom.title} (box image mancante)")
+            } else {
+                // Anche se c'è box image, aggiungiamo il placeholder come fallback in caso di errore di caricamento
+                val placeholderImages = getPlaceholderImages(foundRoms)
+                // Aggiungi placeholder alla fine come fallback (solo se non è già presente)
+                placeholderImages.forEach { placeholder ->
+                    if (placeholder !in allCoverUrls) {
+                        allCoverUrls = allCoverUrls + placeholder
+                    }
+                }
             }
             
             // Unisci tutti i downloadLinks da tutte le ROM
