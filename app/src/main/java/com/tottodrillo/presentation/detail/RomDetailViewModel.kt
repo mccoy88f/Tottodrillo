@@ -505,7 +505,7 @@ class RomDetailViewModel @Inject constructor(
                     it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
                 }
 
-                // Crea un nuovo link con l'URL finale
+                // Crea un nuovo link con l'URL finale e il nome del file aggiornato (se modificato dal WebView)
                 val finalLink = link.copy(url = finalUrl, requiresWebView = false)
                 
                 val workId = downloadManager.startDownload(

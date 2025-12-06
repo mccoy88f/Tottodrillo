@@ -102,13 +102,49 @@ fun WebViewDownloadDialog(
 
                                 // Intercetta il download quando parte
                                 setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                    // Estrai il nome del file da contentDisposition se disponibile
+                                    var extractedFileName: String? = null
+                                    if (contentDisposition != null) {
+                                        // Pattern: attachment; filename="nomefile.nsp" o attachment; filename*=UTF-8''nomefile.nsp
+                                        val filenameMatch = Regex("filename[*]?=['\"]?([^'\"\\s;]+)['\"]?", RegexOption.IGNORE_CASE).find(contentDisposition)
+                                        if (filenameMatch != null) {
+                                            extractedFileName = filenameMatch.groupValues[1]
+                                            // Decodifica URL encoding se presente
+                                            try {
+                                                extractedFileName = java.net.URLDecoder.decode(extractedFileName, "UTF-8")
+                                            } catch (e: Exception) {
+                                                // Ignora errori di decodifica
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Se non trovato in contentDisposition, prova a estrarre dall'URL
+                                    if (extractedFileName == null) {
+                                        try {
+                                            val urlPath = java.net.URL(url).path
+                                            val lastSegment = urlPath.substringAfterLast('/')
+                                            if (lastSegment.isNotEmpty() && lastSegment.contains('.')) {
+                                                extractedFileName = lastSegment
+                                            }
+                                        } catch (e: Exception) {
+                                            // Ignora errori
+                                        }
+                                    }
+                                    
+                                    // Crea un nuovo link con il nome del file estratto se disponibile
+                                    val updatedLink = if (extractedFileName != null) {
+                                        link.copy(name = extractedFileName)
+                                    } else {
+                                        link
+                                    }
+                                    
                                     // Estrai l'URL finale del download
-                                    if (url.contains("sto.romsfast.com") || url.contains("?token=")) {
+                                    if (url.contains("sto.romsfast.com") || url.contains("?token=") || url.endsWith(".nsp") || url.endsWith(".xci") || url.endsWith(".zip") || url.endsWith(".7z")) {
                                         // URL finale trovato, chiudi il dialog e avvia il download
-                                        onDownloadUrlExtracted(url, link)
+                                        onDownloadUrlExtracted(url, updatedLink)
                                     } else {
                                         // Se l'URL non è quello finale, prova comunque
-                                        onDownloadUrlExtracted(url, link)
+                                        onDownloadUrlExtracted(url, updatedLink)
                                     }
                                 }
 

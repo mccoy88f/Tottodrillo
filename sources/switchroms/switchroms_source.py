@@ -345,7 +345,8 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                         # Nome del link
                         link_name = link_text if link_text else f"{format_type or 'ROM'} Download"
                         
-                        # Prova a estrarre l'URL finale direttamente dalla pagina di download
+                        # Estrai l'URL finale "click here" dalla pagina di download
+                        # Il WebView aprirà direttamente questo URL invece della pagina intermedia
                         final_url = None
                         try:
                             link_response = session.get(link_url, headers=get_browser_headers(referer=download_url), timeout=10, allow_redirects=True)
@@ -370,18 +371,17 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                         except Exception as e:
                             print(f"⚠️ [get_entry] Impossibile estrarre URL finale per {link_url}: {e}", file=sys.stderr)
                         
-                        # Per SwitchRoms, SEMPRE apriamo il WebView per permettere all'utente di cliccare manualmente
-                        # sul link "click here" e quando il download parte, Tottodrillo lo intercetta
-                        # Usiamo sempre l'URL intermedio (link_url) perché il WebView deve aprire la pagina
-                        # che contiene il link "click here"
+                        # Per SwitchRoms, apriamo il WebView direttamente sul link "click here" se disponibile
+                        # Se non disponibile, apriamo la pagina intermedia
+                        # Il WebView intercetterà il download quando parte
                         download_links.append({
                             "name": link_name,
                             "type": "ROM",
                             "format": format_type or "unknown",
-                            "url": link_url,  # Sempre l'URL intermedio per aprire la pagina nel WebView
+                            "url": final_url if final_url else link_url,  # Usa URL finale se disponibile, altrimenti intermedio
                             "size": None,
                             "size_str": size_str,
-                            "requires_webview": True  # Sempre true per SwitchRoms: apri WebView per click manuale
+                            "requires_webview": True  # Sempre true per SwitchRoms: apri WebView per intercettare download
                         })
                     except Exception as e:
                         print(f"⚠️ [get_entry] Errore parsing link download: {e}", file=sys.stderr)
