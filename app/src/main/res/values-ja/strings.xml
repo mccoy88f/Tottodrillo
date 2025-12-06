@@ -38,6 +38,8 @@
     <string name="search_clear_filters">フィルターをクリア</string>
     <string name="search_platforms">プラットフォーム</string>
     <string name="search_regions">地域</string>
+    <string name="search_sources">ソース</string>
+    <string name="search_regions">地域</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM詳細</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">この許可により:\n• 任意のフォルダにROMをダウンロード\n• 外部SDカードにROMをインストール\n• カスタムフォルダでファイルを管理\n\nこの許可はAndroid 11以降でのみ必要です。</string>
     <string name="permission_dialog_confirm">許可を与える</string>
     <string name="permission_dialog_later">後で</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">有効なソースがありません</string>
+    <string name="no_enabled_sources_body">ソースがインストールされていますが、すべて無効になっています。設定に移動し、アプリを使用するために少なくとも1つのソースを有効にしてください。</string>
+    <string name="no_enabled_sources_cta">設定に移動</string>
+    <string name="sources_list_empty">ソースがインストールされていません</string>
+    <string name="sources_list_error">ソースを読み込めません</string>
+    <string name="sources_version_label">バージョン: %1$s</string>
+    <string name="sources_install_new">新しいソースをインストール</string>
+    <string name="sources_update">更新</string>
+    <string name="sources_uninstall">アンインストール</string>
+    <string name="sources_update_available">更新が利用可能</string>
+    <string name="sources_update_success">ソースが正常に更新されました</string>
+    <string name="sources_uninstall_success">ソースが正常にアンインストールされました</string>
+    <string name="sources_uninstall_error">アンインストール中にエラーが発生しました</string>
+    <string name="sources_install_default">デフォルトソースをインストール</string>
+    <string name="sources_install_custom">カスタムソースをインストール</string>
+    <string name="sources_installing_default">インストール中…</string>
+    <string name="sources_install_info">プロジェクトのWebサイトから公式ソースをダウンロードできます</string>
+    <string name="sources_no_sources_info">アプリを使用するには、少なくとも1つのソースをインストールする必要があります。ソースは、ROMデータベースにアクセスするための設定を含むZIPパッケージです。</string>
 </resources>
 

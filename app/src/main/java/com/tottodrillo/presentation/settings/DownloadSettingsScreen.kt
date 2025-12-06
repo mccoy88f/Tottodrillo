@@ -518,8 +518,20 @@ fun DownloadSettingsScreen(
             sourceManager?.let {
                 var refreshTrigger by remember { mutableStateOf(0) }
                 
+                // Ricarica quando la schermata diventa visibile (es. quando si torna dalle impostazioni)
+                LaunchedEffect(Unit) {
+                    refreshTrigger++
+                }
+                
+                // Ricarica anche quando viene chiamato onSourcesChanged (es. dopo l'installazione di una nuova sorgente)
+                LaunchedEffect(onSourcesChanged) {
+                    // Incrementa il trigger per forzare il refresh quando cambiano le sorgenti
+                    refreshTrigger++
+                }
+                
                 SourcesListSection(
                     sourceManager = it,
+                    externalRefreshTrigger = refreshTrigger,
                     onSourcesChanged = {
                         // Notifica che le sorgenti sono cambiate
                         android.util.Log.d("DownloadSettingsScreen", "🔄 onSourcesChanged ricevuto da SourcesListSection")
@@ -540,14 +552,6 @@ fun DownloadSettingsScreen(
                         onInstallSource()
                     }
                 )
-                
-                // Ricarica la lista quando cambiano le sorgenti
-                LaunchedEffect(refreshTrigger) {
-                    if (refreshTrigger > 0) {
-                        // Le sorgenti sono cambiate, ricarica la lista
-                        kotlinx.coroutines.delay(100) // Piccolo delay per assicurarsi che il cambio sia stato salvato
-                    }
-                }
             } ?: run {
                 Text(
                     text = stringResource(R.string.sources_list_error),

@@ -81,13 +81,25 @@ class RomRepositoryImpl @Inject constructor(
         
         return try {
             // Ottieni tutte le sorgenti abilitate
-            val enabledSources = sourceManager.getEnabledSources()
+            var enabledSources = sourceManager.getEnabledSources()
             if (enabledSources.isEmpty()) {
                 return NetworkResult.Error(
                     com.tottodrillo.data.remote.NetworkException.UnknownError(
                         "Nessuna sorgente abilitata"
                     )
                 )
+            }
+            
+            // Filtra le sorgenti in base al filtro selectedSources se presente
+            if (filters.selectedSources.isNotEmpty()) {
+                enabledSources = enabledSources.filter { it.id in filters.selectedSources }
+                if (enabledSources.isEmpty()) {
+                    return NetworkResult.Error(
+                        com.tottodrillo.data.remote.NetworkException.UnknownError(
+                            "Nessuna sorgente selezionata disponibile"
+                        )
+                    )
+                }
             }
             
             // Cerca in tutte le sorgenti in parallelo

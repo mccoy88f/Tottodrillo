@@ -49,6 +49,7 @@ data class SearchUiState(
     val filters: SearchFilters = SearchFilters(),
     val availablePlatforms: List<PlatformInfo> = emptyList(),
     val availableRegions: List<RegionInfo> = emptyList(),
+    val availableSources: List<Pair<String, String>> = emptyList(), // sourceId -> sourceName
     val isLoading: Boolean = false,
     val isSearching: Boolean = false,
     val error: String? = null,
@@ -60,7 +61,7 @@ data class SearchUiState(
         get() = hasSearched && results.isEmpty() && !isLoading
     
     val showFilters: Boolean
-        get() = availablePlatforms.isNotEmpty() || availableRegions.isNotEmpty()
+        get() = availablePlatforms.isNotEmpty() || availableRegions.isNotEmpty() || availableSources.isNotEmpty()
 }
 
 /**

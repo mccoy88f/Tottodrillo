@@ -38,6 +38,8 @@
     <string name="search_clear_filters">Limpar filtros</string>
     <string name="search_platforms">Plataformas</string>
     <string name="search_regions">Regiões</string>
+    <string name="search_sources">Fontes</string>
+    <string name="search_regions">Regiões</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">Detalhes da ROM</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">Esta permissão permite:\n• Baixar ROMs para qualquer pasta\n• Instalar ROMs no cartão SD externo\n• Gerenciar arquivos em pastas personalizadas\n\nEsta permissão só é necessária no Android 11 e posteriores.</string>
     <string name="permission_dialog_confirm">Conceder permissão</string>
     <string name="permission_dialog_later">Mais tarde</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">Nenhuma fonte habilitada</string>
+    <string name="no_enabled_sources_body">Você tem fontes instaladas, mas todas estão desabilitadas. Vá para Configurações e habilite pelo menos uma fonte para usar o aplicativo.</string>
+    <string name="no_enabled_sources_cta">Ir para Configurações</string>
+    <string name="sources_list_empty">Nenhuma fonte instalada</string>
+    <string name="sources_list_error">Não foi possível carregar as fontes</string>
+    <string name="sources_version_label">Versão: %1$s</string>
+    <string name="sources_install_new">Instalar nova fonte</string>
+    <string name="sources_update">Atualizar</string>
+    <string name="sources_uninstall">Desinstalar</string>
+    <string name="sources_update_available">Atualização disponível</string>
+    <string name="sources_update_success">Fonte atualizada com sucesso</string>
+    <string name="sources_uninstall_success">Fonte desinstalada com sucesso</string>
+    <string name="sources_uninstall_error">Erro durante a desinstalação</string>
+    <string name="sources_install_default">Instalar fontes padrão</string>
+    <string name="sources_install_custom">Instalar fonte personalizada</string>
+    <string name="sources_installing_default">Instalando…</string>
+    <string name="sources_install_info">Você pode baixar fontes oficiais do site do projeto</string>
+    <string name="sources_no_sources_info">Para usar o aplicativo, você precisa instalar pelo menos uma fonte. As fontes são pacotes ZIP que contêm a configuração para acessar bancos de dados de ROM.</string>
 </resources>
 

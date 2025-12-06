@@ -93,16 +93,19 @@ data class SearchFilters(
     val query: String = "",
     val selectedPlatforms: List<String> = emptyList(),
     val selectedRegions: List<String> = emptyList(),
-    val selectedFormats: List<String> = emptyList()
+    val selectedFormats: List<String> = emptyList(),
+    val selectedSources: List<String> = emptyList()
 ) {
     fun isEmpty(): Boolean = query.isEmpty() && 
                             selectedPlatforms.isEmpty() && 
                             selectedRegions.isEmpty() &&
-                            selectedFormats.isEmpty()
+                            selectedFormats.isEmpty() &&
+                            selectedSources.isEmpty()
     
     fun hasActiveFilters(): Boolean = selectedPlatforms.isNotEmpty() || 
                                      selectedRegions.isNotEmpty() ||
-                                     selectedFormats.isNotEmpty()
+                                     selectedFormats.isNotEmpty() ||
+                                     selectedSources.isNotEmpty()
 }
 
 /**

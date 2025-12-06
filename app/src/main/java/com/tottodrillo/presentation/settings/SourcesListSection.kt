@@ -24,7 +24,8 @@ fun SourcesListSection(
     sourceManager: SourceManager,
     onSourcesChanged: () -> Unit = {},
     onUninstallSource: (String) -> Unit = {},
-    onUpdateSource: () -> Unit = {}
+    onUpdateSource: () -> Unit = {},
+    externalRefreshTrigger: Int = 0
 ) {
     val manager = sourceManager
     
@@ -32,7 +33,8 @@ fun SourcesListSection(
     var sourceConfigs by remember { mutableStateOf<Map<String, Boolean>>(emptyMap()) }
     val scope = rememberCoroutineScope()
     
-    LaunchedEffect(Unit) {
+    // Ricarica le sorgenti quando cambia externalRefreshTrigger o quando viene montato il composable
+    LaunchedEffect(externalRefreshTrigger) {
         sources = manager.getInstalledSources()
         // Carica lo stato abilitato/disabilitato
         val configs = manager.loadInstalledConfigs()

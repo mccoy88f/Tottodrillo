@@ -38,6 +38,8 @@
     <string name="search_clear_filters">Limpiar filtros</string>
     <string name="search_platforms">Plataformas</string>
     <string name="search_regions">Regiones</string>
+    <string name="search_sources">Fuentes</string>
+    <string name="search_regions">Regiones</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">Detalles de ROM</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">Este permiso permite:\n• Descargar ROMs en cualquier carpeta\n• Instalar ROMs en tarjeta SD externa\n• Gestionar archivos en carpetas personalizadas\n\nEste permiso solo es necesario en Android 11 y posteriores.</string>
     <string name="permission_dialog_confirm">Conceder permiso</string>
     <string name="permission_dialog_later">Más tarde</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">No hay fuentes habilitadas</string>
+    <string name="no_enabled_sources_body">Tienes fuentes instaladas pero todas están deshabilitadas. Ve a Configuración y habilita al menos una fuente para usar la aplicación.</string>
+    <string name="no_enabled_sources_cta">Ir a Configuración</string>
+    <string name="sources_list_empty">No hay fuentes instaladas</string>
+    <string name="sources_list_error">No se pueden cargar las fuentes</string>
+    <string name="sources_version_label">Versión: %1$s</string>
+    <string name="sources_install_new">Instalar nueva fuente</string>
+    <string name="sources_update">Actualizar</string>
+    <string name="sources_uninstall">Desinstalar</string>
+    <string name="sources_update_available">Actualización disponible</string>
+    <string name="sources_update_success">Fuente actualizada correctamente</string>
+    <string name="sources_uninstall_success">Fuente desinstalada correctamente</string>
+    <string name="sources_uninstall_error">Error durante la desinstalación</string>
+    <string name="sources_install_default">Instalar fuentes predeterminadas</string>
+    <string name="sources_install_custom">Instalar fuente personalizada</string>
+    <string name="sources_installing_default">Instalando…</string>
+    <string name="sources_install_info">Puedes descargar fuentes oficiales desde el sitio web del proyecto</string>
+    <string name="sources_no_sources_info">Para usar la aplicación, necesitas instalar al menos una fuente. Las fuentes son paquetes ZIP que contienen la configuración para acceder a bases de datos de ROM.</string>
 </resources>
 

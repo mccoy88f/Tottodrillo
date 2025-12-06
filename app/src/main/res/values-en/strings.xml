@@ -38,6 +38,7 @@
     <string name="search_clear_filters">Clear filters</string>
     <string name="search_platforms">Platforms</string>
     <string name="search_regions">Regions</string>
+    <string name="search_sources">Sources</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM Details</string>
@@ -153,5 +154,25 @@
     <string name="permission_dialog_reason">This permission allows:\n• Download ROMs to any folder\n• Install ROMs on external SD card\n• Manage files in custom folders\n\nThis permission is only required on Android 11 and later.</string>
     <string name="permission_dialog_confirm">Grant permission</string>
     <string name="permission_dialog_later">Later</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">No enabled sources</string>
+    <string name="no_enabled_sources_body">You have installed sources but all are disabled. Go to Settings and enable at least one source to use the app.</string>
+    <string name="no_enabled_sources_cta">Go to Settings</string>
+    <string name="sources_list_empty">No sources installed</string>
+    <string name="sources_list_error">Unable to load sources</string>
+    <string name="sources_version_label">Version: %1$s</string>
+    <string name="sources_install_new">Install new source</string>
+    <string name="sources_update">Update</string>
+    <string name="sources_uninstall">Uninstall</string>
+    <string name="sources_update_available">Update available</string>
+    <string name="sources_update_success">Source updated successfully</string>
+    <string name="sources_uninstall_success">Source uninstalled successfully</string>
+    <string name="sources_uninstall_error">Error during uninstallation</string>
+    <string name="sources_install_default">Install default sources</string>
+    <string name="sources_install_custom">Install custom source</string>
+    <string name="sources_installing_default">Installing…</string>
+    <string name="sources_install_info">You can download official sources from the project website</string>
+    <string name="sources_no_sources_info">To use the app, you need to install at least one source. Sources are ZIP packages that contain the configuration to access ROM databases.</string>
 </resources>
 

@@ -38,6 +38,7 @@
     <string name="search_clear_filters">Cancella filtri</string>
     <string name="search_platforms">Piattaforme</string>
     <string name="search_regions">Regioni</string>
+    <string name="search_sources">Sorgenti</string>
     
     <!-- Downloads -->
     <string name="downloads_title">Downloads</string>
@@ -153,6 +154,11 @@
     <string name="sources_update_success">Sorgente aggiornata con successo</string>
     <string name="sources_uninstall_success">Sorgente disinstallata con successo</string>
     <string name="sources_uninstall_error">Errore durante la disinstallazione</string>
+    <string name="sources_install_default">Installa sorgenti predefinite</string>
+    <string name="sources_install_custom">Installa sorgente personalizzata</string>
+    <string name="sources_installing_default">Installazione in corso…</string>
+    <string name="sources_install_info">Puoi scaricare sorgenti ufficiali dal sito del progetto</string>
+    <string name="sources_no_sources_info">Per utilizzare l\'app, devi installare almeno una sorgente. Le sorgenti sono pacchetti ZIP che contengono la configurazione per accedere a database di ROM.</string>
     
     <!-- ROM detail -->
     <string name="rom_detail_image_item">%1$s - Immagine %2$d</string>

@@ -50,11 +50,15 @@ fun SearchFiltersBottomSheet(
     var selectedRegions by remember(uiState.filters.selectedRegions) {
         mutableStateOf(uiState.filters.selectedRegions)
     }
+    var selectedSources by remember(uiState.filters.selectedSources) {
+        mutableStateOf(uiState.filters.selectedSources)
+    }
     
     // Aggiorna lo stato locale quando cambia lo stato del ViewModel (es. quando si chiama clearFilters)
-    androidx.compose.runtime.LaunchedEffect(uiState.filters.selectedPlatforms, uiState.filters.selectedRegions) {
+    androidx.compose.runtime.LaunchedEffect(uiState.filters.selectedPlatforms, uiState.filters.selectedRegions, uiState.filters.selectedSources) {
         selectedPlatforms = uiState.filters.selectedPlatforms
         selectedRegions = uiState.filters.selectedRegions
+        selectedSources = uiState.filters.selectedSources
     }
 
     ModalBottomSheet(
@@ -64,8 +68,10 @@ fun SearchFiltersBottomSheet(
         FiltersContent(
             availablePlatforms = uiState.availablePlatforms.map { it.code to it.displayName },
             availableRegions = uiState.availableRegions.map { it.code to it.displayName },
+            availableSources = uiState.availableSources,
             selectedPlatforms = selectedPlatforms,
             selectedRegions = selectedRegions,
+            selectedSources = selectedSources,
             onPlatformToggle = { platform ->
                 selectedPlatforms = if (platform in selectedPlatforms) {
                     selectedPlatforms - platform
@@ -80,13 +86,22 @@ fun SearchFiltersBottomSheet(
                     selectedRegions + region
                 }
             },
+            onSourceToggle = { source ->
+                selectedSources = if (source in selectedSources) {
+                    selectedSources - source
+                } else {
+                    selectedSources + source
+                }
+            },
             onClearAll = {
                 selectedPlatforms = emptyList()
                 selectedRegions = emptyList()
+                selectedSources = emptyList()
             },
             onApply = {
                 viewModel.updatePlatformFilter(selectedPlatforms)
                 viewModel.updateRegionFilter(selectedRegions)
+                viewModel.updateSourceFilter(selectedSources)
                 onDismiss()
             }
         )
@@ -98,10 +113,13 @@ fun SearchFiltersBottomSheet(
 private fun FiltersContent(
     availablePlatforms: List<Pair<String, String>>,
     availableRegions: List<Pair<String, String>>,
+    availableSources: List<Pair<String, String>>,
     selectedPlatforms: List<String>,
     selectedRegions: List<String>,
+    selectedSources: List<String>,
     onPlatformToggle: (String) -> Unit,
     onRegionToggle: (String) -> Unit,
+    onSourceToggle: (String) -> Unit,
     onClearAll: () -> Unit,
     onApply: () -> Unit,
     modifier: Modifier = Modifier
@@ -126,7 +144,7 @@ private fun FiltersContent(
 
             OutlinedButton(
                 onClick = onClearAll,
-                enabled = selectedPlatforms.isNotEmpty() || selectedRegions.isNotEmpty()
+                enabled = selectedPlatforms.isNotEmpty() || selectedRegions.isNotEmpty() || selectedSources.isNotEmpty()
             ) {
                 Text("Cancella tutto")
             }
@@ -137,7 +155,7 @@ private fun FiltersContent(
         // Piattaforme section
         if (availablePlatforms.isNotEmpty()) {
             FilterSection(
-                title = "Piattaforme",
+                title = androidx.compose.ui.res.stringResource(com.tottodrillo.R.string.search_platforms),
                 items = availablePlatforms,
                 selectedItems = selectedPlatforms,
                 onItemToggle = onPlatformToggle
@@ -149,10 +167,22 @@ private fun FiltersContent(
         // Regioni section
         if (availableRegions.isNotEmpty()) {
             FilterSection(
-                title = "Regioni",
+                title = androidx.compose.ui.res.stringResource(com.tottodrillo.R.string.search_regions),
                 items = availableRegions,
                 selectedItems = selectedRegions,
                 onItemToggle = onRegionToggle
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+        }
+
+        // Sorgenti section
+        if (availableSources.isNotEmpty()) {
+            FilterSection(
+                title = androidx.compose.ui.res.stringResource(com.tottodrillo.R.string.search_sources),
+                items = availableSources,
+                selectedItems = selectedSources,
+                onItemToggle = onSourceToggle
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -171,7 +201,7 @@ private fun FiltersContent(
                 onClick = onApply,
                 modifier = Modifier.weight(1f)
             ) {
-                val count = selectedPlatforms.size + selectedRegions.size
+                val count = selectedPlatforms.size + selectedRegions.size + selectedSources.size
                 Text(
                     text = if (count > 0) {
                         "Applica ($count)"

@@ -46,6 +46,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
 import java.io.File
 import javax.inject.Inject
 
@@ -66,6 +68,9 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var sourceManager: com.tottodrillo.domain.manager.SourceManager
+    
+    @Inject
+    lateinit var okHttpClient: OkHttpClient
     
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
 
@@ -236,7 +241,34 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 
+                // Controlla se ci sono sorgenti installate
+                var hasInstalledSources by remember { mutableStateOf<Boolean?>(null) }
+                
+                LaunchedEffect(refreshTrigger) {
+                    hasInstalledSources = sourceManager.hasInstalledSources()
+                }
+                
                 when {
+                    // Nessuna sorgente installata
+                    hasInstalledSources == false -> {
+                        com.tottodrillo.presentation.sources.NoSourcesScreen(
+                            onInstallSource = {
+                                installSourceLauncher.launch("application/zip")
+                            },
+                            onInstallDefaultSources = {
+                                activityScope.launch {
+                                    try {
+                                        android.util.Log.d("MainActivity", "📦 Installazione sorgenti predefinite...")
+                                        installDefaultSources()
+                                        android.util.Log.d("MainActivity", "✅ Sorgenti predefinite installate")
+                                        refreshTrigger++
+                                    } catch (e: Exception) {
+                                        android.util.Log.e("MainActivity", "❌ Errore installazione sorgenti predefinite", e)
+                                    }
+                                }
+                            }
+                        )
+                    }
                     hasEnabledSources == false -> {
                         // Stato per mostrare le impostazioni quando necessario
                         var showSettings by remember { mutableStateOf(false) }
@@ -506,6 +538,66 @@ class MainActivity : ComponentActivity() {
     /**
      * Prova a ottenere il percorso file da un URI usando vari metodi
      */
+    /**
+     * Scarica e installa le sorgenti predefinite
+     */
+    private suspend fun installDefaultSources() {
+        val defaultSources = listOf(
+            "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/crocdb/crocdb-source.zip" to "crocdb",
+            "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/vimms/vimms-source.zip" to "vimms"
+        )
+        
+        val installer = com.tottodrillo.domain.manager.SourceInstaller(
+            this,
+            sourceManager
+        )
+        
+        for ((url, sourceName) in defaultSources) {
+            try {
+                android.util.Log.d("MainActivity", "📥 Scaricamento sorgente $sourceName da $url")
+                
+                // Scarica il file
+                val request = Request.Builder()
+                    .url(url)
+                    .build()
+                
+                val response = okHttpClient.newCall(request).execute()
+                if (!response.isSuccessful) {
+                    android.util.Log.e("MainActivity", "❌ Errore download sorgente $sourceName: ${response.code}")
+                    continue
+                }
+                
+                // Salva in un file temporaneo
+                val tempFile = File(cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
+                response.body?.byteStream()?.use { input ->
+                    tempFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                android.util.Log.d("MainActivity", "✅ File scaricato: ${tempFile.absolutePath}")
+                
+                // Installa la sorgente
+                val result = installer.installFromZip(tempFile)
+                result.fold(
+                    onSuccess = { metadata ->
+                        android.util.Log.d("MainActivity", "✅ Sorgente $sourceName installata: ${metadata.name} v${metadata.version}")
+                        // Abilita la sorgente di default
+                        sourceManager.setSourceEnabled(metadata.id, true)
+                    },
+                    onFailure = { error ->
+                        android.util.Log.e("MainActivity", "❌ Errore installazione sorgente $sourceName", error)
+                    }
+                )
+                
+                // Pulisci file temporaneo
+                tempFile.delete()
+            } catch (e: Exception) {
+                android.util.Log.e("MainActivity", "❌ Errore durante installazione sorgente $sourceName", e)
+            }
+        }
+    }
+    
     private fun getPathFromUri(uri: Uri): String? {
         return try {
             // Metodo 1: Prova con DocumentsContract

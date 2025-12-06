@@ -38,6 +38,8 @@
     <string name="search_clear_filters">Filter löschen</string>
     <string name="search_platforms">Plattformen</string>
     <string name="search_regions">Regionen</string>
+    <string name="search_sources">Quellen</string>
+    <string name="search_regions">Regionen</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM-Details</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">Diese Berechtigung ermöglicht:\n• ROMs in jeden Ordner herunterzuladen\n• ROMs auf externer SD-Karte zu installieren\n• Dateien in benutzerdefinierten Ordnern zu verwalten\n\nDiese Berechtigung ist nur unter Android 11 und höher erforderlich.</string>
     <string name="permission_dialog_confirm">Berechtigung erteilen</string>
     <string name="permission_dialog_later">Später</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">Keine aktivierten Quellen</string>
+    <string name="no_enabled_sources_body">Sie haben installierte Quellen, aber alle sind deaktiviert. Gehen Sie zu Einstellungen und aktivieren Sie mindestens eine Quelle, um die App zu verwenden.</string>
+    <string name="no_enabled_sources_cta">Zu Einstellungen gehen</string>
+    <string name="sources_list_empty">Keine Quellen installiert</string>
+    <string name="sources_list_error">Quellen können nicht geladen werden</string>
+    <string name="sources_version_label">Version: %1$s</string>
+    <string name="sources_install_new">Neue Quelle installieren</string>
+    <string name="sources_update">Aktualisieren</string>
+    <string name="sources_uninstall">Deinstallieren</string>
+    <string name="sources_update_available">Update verfügbar</string>
+    <string name="sources_update_success">Quelle erfolgreich aktualisiert</string>
+    <string name="sources_uninstall_success">Quelle erfolgreich deinstalliert</string>
+    <string name="sources_uninstall_error">Fehler bei der Deinstallation</string>
+    <string name="sources_install_default">Standardquellen installieren</string>
+    <string name="sources_install_custom">Benutzerdefinierte Quelle installieren</string>
+    <string name="sources_installing_default">Installation läuft…</string>
+    <string name="sources_install_info">Sie können offizielle Quellen von der Projektwebsite herunterladen</string>
+    <string name="sources_no_sources_info">Um die App zu verwenden, müssen Sie mindestens eine Quelle installieren. Quellen sind ZIP-Pakete, die die Konfiguration zum Zugriff auf ROM-Datenbanken enthalten.</string>
 </resources>
 

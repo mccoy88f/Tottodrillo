@@ -38,6 +38,8 @@
     <string name="search_clear_filters">Effacer les filtres</string>
     <string name="search_platforms">Plateformes</string>
     <string name="search_regions">Régions</string>
+    <string name="search_sources">Sources</string>
+    <string name="search_regions">Régions</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">Détails de la ROM</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">Cette autorisation permet de:\n• Télécharger des ROMs dans n\'importe quel dossier\n• Installer des ROMs sur carte SD externe\n• Gérer les fichiers dans des dossiers personnalisés\n\nCette autorisation n\'est requise que sur Android 11 et versions ultérieures.</string>
     <string name="permission_dialog_confirm">Accorder l\'autorisation</string>
     <string name="permission_dialog_later">Plus tard</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">Aucune source activée</string>
+    <string name="no_enabled_sources_body">Vous avez des sources installées mais toutes sont désactivées. Allez dans Paramètres et activez au moins une source pour utiliser l\'application.</string>
+    <string name="no_enabled_sources_cta">Aller aux paramètres</string>
+    <string name="sources_list_empty">Aucune source installée</string>
+    <string name="sources_list_error">Impossible de charger les sources</string>
+    <string name="sources_version_label">Version: %1$s</string>
+    <string name="sources_install_new">Installer une nouvelle source</string>
+    <string name="sources_update">Mettre à jour</string>
+    <string name="sources_uninstall">Désinstaller</string>
+    <string name="sources_update_available">Mise à jour disponible</string>
+    <string name="sources_update_success">Source mise à jour avec succès</string>
+    <string name="sources_uninstall_success">Source désinstallée avec succès</string>
+    <string name="sources_uninstall_error">Erreur lors de la désinstallation</string>
+    <string name="sources_install_default">Installer les sources par défaut</string>
+    <string name="sources_install_custom">Installer une source personnalisée</string>
+    <string name="sources_installing_default">Installation en cours…</string>
+    <string name="sources_install_info">Vous pouvez télécharger des sources officielles depuis le site web du projet</string>
+    <string name="sources_no_sources_info">Pour utiliser l\'application, vous devez installer au moins une source. Les sources sont des packages ZIP qui contiennent la configuration pour accéder aux bases de données de ROM.</string>
 </resources>
 

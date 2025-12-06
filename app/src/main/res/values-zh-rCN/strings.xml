@@ -38,6 +38,8 @@
     <string name="search_clear_filters">清除筛选</string>
     <string name="search_platforms">平台</string>
     <string name="search_regions">地区</string>
+    <string name="search_sources">来源</string>
+    <string name="search_regions">地区</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM详情</string>
@@ -154,5 +156,25 @@
     <string name="permission_dialog_reason">此权限允许:\n• 下载ROM到任何文件夹\n• 在外部SD卡上安装ROM\n• 管理自定义文件夹中的文件\n\n此权限仅在Android 11及更高版本上需要。</string>
     <string name="permission_dialog_confirm">授予权限</string>
     <string name="permission_dialog_later">稍后</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">没有启用的来源</string>
+    <string name="no_enabled_sources_body">您已安装来源，但全部已禁用。请前往设置并启用至少一个来源以使用应用。</string>
+    <string name="no_enabled_sources_cta">前往设置</string>
+    <string name="sources_list_empty">未安装来源</string>
+    <string name="sources_list_error">无法加载来源</string>
+    <string name="sources_version_label">版本: %1$s</string>
+    <string name="sources_install_new">安装新来源</string>
+    <string name="sources_update">更新</string>
+    <string name="sources_uninstall">卸载</string>
+    <string name="sources_update_available">有可用更新</string>
+    <string name="sources_update_success">来源更新成功</string>
+    <string name="sources_uninstall_success">来源卸载成功</string>
+    <string name="sources_uninstall_error">卸载时出错</string>
+    <string name="sources_install_default">安装默认来源</string>
+    <string name="sources_install_custom">安装自定义来源</string>
+    <string name="sources_installing_default">正在安装…</string>
+    <string name="sources_install_info">您可以从项目网站下载官方来源</string>
+    <string name="sources_no_sources_info">要使用应用，您需要安装至少一个来源。来源是包含用于访问ROM数据库配置的ZIP包。</string>
 </resources>
 

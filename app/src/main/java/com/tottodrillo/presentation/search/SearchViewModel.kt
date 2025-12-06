@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tottodrillo.data.remote.NetworkResult
 import com.tottodrillo.data.remote.getUserMessage
+import com.tottodrillo.domain.manager.SourceManager
 import com.tottodrillo.domain.model.SearchFilters
 import com.tottodrillo.domain.repository.RomRepository
 import com.tottodrillo.presentation.common.SearchUiState
@@ -24,7 +25,8 @@ import javax.inject.Inject
  */
 @HiltViewModel
 class SearchViewModel @Inject constructor(
-    private val repository: RomRepository
+    private val repository: RomRepository,
+    private val sourceManager: SourceManager
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
@@ -68,7 +70,7 @@ class SearchViewModel @Inject constructor(
     }
 
     /**
-     * Carica piattaforme e regioni per i filtri
+     * Carica piattaforme, regioni e sorgenti per i filtri
      */
     private fun loadFiltersData() {
         viewModelScope.launch {
@@ -90,15 +92,26 @@ class SearchViewModel @Inject constructor(
                 is NetworkResult.Success -> {
                     _uiState.update { 
                         it.copy(
-                            availableRegions = regionsResult.data,
-                            isLoading = false
+                            availableRegions = regionsResult.data
                         )
                     }
                 }
                 is NetworkResult.Error -> {
-                    _uiState.update { it.copy(isLoading = false) }
+                    // Errore silenzioso
                 }
                 is NetworkResult.Loading -> {}
+            }
+            
+            // Carica sorgenti abilitate
+            val enabledSources = sourceManager.getEnabledSources()
+            val availableSources = enabledSources.map { source ->
+                source.id to source.name
+            }
+            _uiState.update { 
+                it.copy(
+                    availableSources = availableSources,
+                    isLoading = false
+                )
             }
         }
     }
@@ -214,6 +227,19 @@ class SearchViewModel @Inject constructor(
         _uiState.update { state ->
             state.copy(
                 filters = state.filters.copy(selectedRegions = regions),
+                currentPage = 1
+            )
+        }
+        performSearch()
+    }
+
+    /**
+     * Aggiorna i filtri di sorgente
+     */
+    fun updateSourceFilter(sources: List<String>) {
+        _uiState.update { state ->
+            state.copy(
+                filters = state.filters.copy(selectedSources = sources),
                 currentPage = 1
             )
         }
