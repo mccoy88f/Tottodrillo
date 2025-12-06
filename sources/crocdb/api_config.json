@@ -154,7 +154,7 @@
       "fields": {
         "entry": {
           "type": "RomEntry",
-          "nullable": false
+          "nullable": true
         }
       }
     },

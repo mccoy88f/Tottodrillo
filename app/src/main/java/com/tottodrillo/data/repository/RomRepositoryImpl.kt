@@ -382,10 +382,18 @@ class RomRepositoryImpl @Inject constructor(
             // Se ci sono più ROM (da più sorgenti), uniscile
             val firstRom = foundRoms.first()
             
-            // Raccogli tutte le immagini (coverUrl) da tutte le ROM
+            // Raccogli tutte le immagini (coverUrl e coverUrls) da tutte le ROM
             val allCoverUrls = foundRoms
-                .mapNotNull { it.coverUrl }
+                .flatMap { rom -> 
+                    // Combina coverUrl e coverUrls
+                    val urls = mutableListOf<String>()
+                    rom.coverUrl?.let { urls.add(it) }
+                    urls.addAll(rom.coverUrls)
+                    urls
+                }
                 .distinct()
+            
+            android.util.Log.d("RomRepositoryImpl", "🖼️ getRomBySlug: unite ${foundRoms.size} ROM, totale immagini: ${allCoverUrls.size} - ${allCoverUrls}")
             
             // Unisci tutti i downloadLinks da tutte le ROM
             val allDownloadLinks = foundRoms

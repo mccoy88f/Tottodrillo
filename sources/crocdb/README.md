@@ -17,6 +17,7 @@ Sorgente ufficiale per Tottodrillo che si connette all'API pubblica di CrocDB.
 crocdb-source.zip
 ├── source.json          # Metadata della sorgente
 ├── api_config.json      # Configurazione degli endpoint API
+├── platform_mapping.json  # Mapping piattaforme (mother_code -> codici CrocDB)
 └── README.md            # Questo file
 ```
 
