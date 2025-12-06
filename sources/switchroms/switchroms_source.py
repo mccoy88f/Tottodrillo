@@ -44,28 +44,29 @@ def get_browser_headers(referer: Optional[str] = None) -> Dict[str, str]:
 def search_roms(params: Dict[str, Any], source_dir: str) -> str:
     """
     Cerca ROM su SwitchRoms.io
-    Formato URL: https://switchroms.io/?s=query
+    - Se search_key è vuoto: usa la pagina categoria https://switchroms.io/nintendo-switch-games/
+    - Se search_key è presente: usa la ricerca https://switchroms.io/?s=query
     """
     try:
         search_key = params.get("search_key", "").strip()
         max_results = params.get("max_results", 50)
         page = params.get("page", 1)
         
+        # Costruisci URL
         if not search_key:
-            return json.dumps({
-                "roms": [],
-                "total_results": 0,
-                "current_results": 0,
-                "current_page": page,
-                "total_pages": 1
-            })
-        
-        # Costruisci URL di ricerca
-        search_url = f"https://switchroms.io/?s={urllib.parse.quote(search_key)}"
-        if page > 1:
-            search_url += f"&paged={page}"
-        
-        print(f"🔍 [search_roms] Cercando: {search_key} su {search_url}", file=sys.stderr)
+            # Nessuna query: usa la pagina categoria
+            if page == 1:
+                search_url = "https://switchroms.io/nintendo-switch-games/"
+            else:
+                search_url = f"https://switchroms.io/nintendo-switch-games/page/{page}/"
+            print(f"🔍 [search_roms] Caricamento pagina categoria (pagina {page}): {search_url}", file=sys.stderr)
+        else:
+            # Query presente: usa la ricerca
+            if page == 1:
+                search_url = f"https://switchroms.io/?s={urllib.parse.quote(search_key)}"
+            else:
+                search_url = f"https://switchroms.io/page/{page}/?s={urllib.parse.quote(search_key)}"
+            print(f"🔍 [search_roms] Cercando: {search_key} su {search_url}", file=sys.stderr)
         
         # Fai la richiesta
         session = requests.Session()
@@ -147,12 +148,47 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
         
         print(f"✅ [search_roms] Trovate {len(roms)} ROM", file=sys.stderr)
         
+        # Estrai informazioni sulla paginazione
+        total_pages = 1
+        try:
+            # Cerca il blocco di paginazione
+            nav_links = soup.find('div', class_='nav-links')
+            if nav_links:
+                # Trova tutti i link di pagina
+                page_links = nav_links.find_all('a', class_='page-numbers')
+                page_numbers = []
+                for link in page_links:
+                    href = link.get('href', '')
+                    # Estrai il numero di pagina dall'URL (es: /page/24/ o /nintendo-switch-games/page/24/)
+                    match = re.search(r'/page/(\d+)/', href)
+                    if match:
+                        page_numbers.append(int(match.group(1)))
+                
+                # Trova anche il numero nella pagina corrente
+                current_page_elem = nav_links.find('span', class_='page-numbers current')
+                if current_page_elem:
+                    current_text = current_page_elem.get_text(strip=True)
+                    try:
+                        current_num = int(current_text)
+                        page_numbers.append(current_num)
+                    except:
+                        pass
+                
+                if page_numbers:
+                    total_pages = max(page_numbers)
+                    print(f"📄 [search_roms] Paginazione: pagina {page} di {total_pages}", file=sys.stderr)
+                else:
+                    # Se non ci sono link di pagina, probabilmente c'è solo una pagina
+                    total_pages = 1
+        except Exception as e:
+            print(f"⚠️ [search_roms] Errore estrazione paginazione: {e}", file=sys.stderr)
+        
         return json.dumps({
             "roms": roms,
-            "total_results": len(roms),
+            "total_results": len(roms) * total_pages if total_pages > 1 else len(roms),  # Stima
             "current_results": len(roms),
             "current_page": page,
-            "total_pages": 1  # Non possiamo sapere il totale senza fare altre richieste
+            "total_pages": total_pages
         })
         
     except Exception as e:
