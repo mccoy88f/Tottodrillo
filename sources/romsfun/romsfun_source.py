@@ -814,10 +814,22 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
     try:
         # Usa cloudscraper se disponibile (bypass Cloudflare), altrimenti requests.Session
         if CLOUDSCRAPER_AVAILABLE:
-            session = cloudscraper.create_scraper()
-            print(f"✅ [get_rom_entry_by_url] Usando cloudscraper per bypassare Cloudflare", file=sys.stderr)
-            # Con cloudscraper, possiamo saltare la visita alla homepage
-            skip_homepage = True
+            # Configura cloudscraper con opzioni più aggressive per bypassare Cloudflare
+            try:
+                session = cloudscraper.create_scraper(
+                    browser={
+                        'browser': 'chrome',
+                        'platform': 'windows',
+                        'desktop': True
+                    },
+                    delay=10  # Delay tra richieste per sembrare più umano
+                )
+                print(f"✅ [get_rom_entry_by_url] Usando cloudscraper per bypassare Cloudflare", file=sys.stderr)
+                skip_homepage = True
+            except Exception as e:
+                print(f"⚠️ [get_rom_entry_by_url] Errore creazione cloudscraper: {e}, uso versione base", file=sys.stderr)
+                session = cloudscraper.create_scraper()
+                skip_homepage = True
         else:
             session = requests.Session()
             print(f"⚠️ [get_rom_entry_by_url] cloudscraper non disponibile, usando requests.Session", file=sys.stderr)
