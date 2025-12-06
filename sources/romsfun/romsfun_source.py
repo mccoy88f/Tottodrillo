@@ -403,9 +403,10 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
             platform_slug = map_mother_code_to_romsfun_slug(platform, source_dir)
             
             if not platform_slug:
-                print(f"⚠️ [search_roms] Piattaforma '{platform}' non mappata in platform_mapping.json, saltata", file=sys.stderr)
-                print(f"   Verifica che '{platform}' sia presente nel mapping con lo slug ROMsFun corretto", file=sys.stderr)
-                continue
+                # Se non trovato, potrebbe essere già uno slug ROMsFun diretto
+                # Prova a usarlo direttamente (normalizzato)
+                print(f"⚠️ [search_roms] Piattaforma '{platform}' non mappata, provo a usarla come slug diretto", file=sys.stderr)
+                platform_slug = platform.lower().replace('_', '-')
             
             # Costruisci l'URL della pagina della piattaforma
             # ROMsFun usa URL tipo: /roms/nintendo-ds?keywords=query&orderby=popular&order=desc
