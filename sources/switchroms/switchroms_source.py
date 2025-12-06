@@ -334,14 +334,18 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                         except Exception as e:
                             print(f"⚠️ [get_entry] Impossibile estrarre URL finale per {link_url}: {e}", file=sys.stderr)
                         
+                        # Per SwitchRoms, SEMPRE apriamo il WebView per permettere all'utente di cliccare manualmente
+                        # sul link "click here" e quando il download parte, Tottodrillo lo intercetta
+                        # Usiamo sempre l'URL intermedio (link_url) perché il WebView deve aprire la pagina
+                        # che contiene il link "click here"
                         download_links.append({
                             "name": link_name,
                             "type": "ROM",
                             "format": format_type or "unknown",
-                            "url": final_url if final_url else link_url,  # Usa URL finale se disponibile, altrimenti intermedio
+                            "url": link_url,  # Sempre l'URL intermedio per aprire la pagina nel WebView
                             "size": None,
                             "size_str": size_str,
-                            "requires_webview": not final_url  # WebView solo se non abbiamo l'URL finale
+                            "requires_webview": True  # Sempre true per SwitchRoms: apri WebView per click manuale
                         })
                     except Exception as e:
                         print(f"⚠️ [get_entry] Errore parsing link download: {e}", file=sys.stderr)
