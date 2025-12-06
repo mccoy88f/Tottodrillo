@@ -633,8 +633,12 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
         cover_urls = []
         if boxart_url:
             cover_urls.append(boxart_url)
+            print(f"✅ [get_rom_entry_by_uri] Aggiunta box art: {boxart_url}", file=sys.stderr)
         if screen_url:
             cover_urls.append(screen_url)
+            print(f"✅ [get_rom_entry_by_uri] Aggiunta screen: {screen_url}", file=sys.stderr)
+        
+        print(f"📊 [get_rom_entry_by_uri] Totale immagini per carosello: {len(cover_urls)}", file=sys.stderr)
         
         # Estrai il dominio di download dalla tabella dl-row (può essere dl2 o dl3)
         # Ogni ROM può usare un dominio diverso, quindi lo estraiamo dalla tabella

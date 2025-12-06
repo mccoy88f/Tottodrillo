@@ -326,6 +326,7 @@ fun RomDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Cover image carosello (se ci sono più immagini)
+            android.util.Log.d("RomDetailScreen", "🖼️ Immagini ROM: ${rom.coverUrls.size}, URLs: ${rom.coverUrls}")
             if (rom.coverUrls.size > 1) {
                 // Carosello con più immagini
                 ImageCarousel(
@@ -749,6 +750,7 @@ private fun ImageCarousel(
     title: String,
     modifier: Modifier = Modifier
 ) {
+    android.util.Log.d("RomDetailScreen", "🎠 ImageCarousel: ${images.size} immagini")
     val pagerState = rememberPagerState(pageCount = { images.size })
     val scope = rememberCoroutineScope()
     
@@ -757,8 +759,13 @@ private fun ImageCarousel(
             state = pagerState,
             modifier = Modifier.fillMaxSize()
         ) { page ->
+            val imageUrl = images.getOrNull(page)
+            android.util.Log.d("RomDetailScreen", "🎠 Caricamento pagina $page/${images.size}: $imageUrl")
+            if (imageUrl == null) {
+                android.util.Log.w("RomDetailScreen", "⚠️ Immagine null per pagina $page")
+            }
             SubcomposeAsyncImage(
-                model = images[page],
+                model = imageUrl,
                 contentDescription = stringResource(
                     R.string.rom_detail_image_item,
                     title,
@@ -775,6 +782,7 @@ private fun ImageCarousel(
                     }
                 },
                 error = {
+                    android.util.Log.e("RomDetailScreen", "❌ Errore caricamento immagine pagina $page: $imageUrl")
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
