@@ -130,18 +130,25 @@ def get_browser_headers(referer: Optional[str] = None) -> Dict[str, str]:
     """
     Genera header HTTP per simulare un browser reale
     Include User-Agent, Accept, Accept-Language, Referer, ecc.
+    Ottimizzato per bypassare Cloudflare quando cloudscraper non è disponibile
     """
+    # User-Agent moderno e comune
+    ua = get_random_ua()
+    
     headers = {
-        'User-Agent': get_random_ua(),
+        'User-Agent': ua,
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.7',
-        'Accept-Language': 'en-US,en;q=0.9',
+        'Accept-Language': 'en-US,en;q=0.9,it;q=0.8',
         'Accept-Encoding': 'gzip, deflate',  # Rimuoviamo 'br' (Brotli) perché requests non lo decomprime automaticamente
         'Connection': 'keep-alive',
         'Upgrade-Insecure-Requests': '1',
         'Sec-Fetch-Dest': 'document',
         'Sec-Fetch-Mode': 'navigate',
         'Sec-Fetch-Site': 'none' if not referer else 'same-origin',
-        'Cache-Control': 'max-age=0'
+        'Sec-Fetch-User': '?1',  # Indica che è una richiesta utente
+        'Cache-Control': 'max-age=0',
+        'DNT': '1',  # Do Not Track
+        'Pragma': 'no-cache'
     }
     
     # Aggiungi Referer se fornito (simula navigazione da un'altra pagina del sito)
@@ -801,33 +808,44 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
         if CLOUDSCRAPER_AVAILABLE:
             session = cloudscraper.create_scraper()
             print(f"✅ [get_rom_entry_by_url] Usando cloudscraper per bypassare Cloudflare", file=sys.stderr)
+            # Con cloudscraper, possiamo saltare la visita alla homepage
+            skip_homepage = True
         else:
             session = requests.Session()
             print(f"⚠️ [get_rom_entry_by_url] cloudscraper non disponibile, usando requests.Session", file=sys.stderr)
+            skip_homepage = False
         
         # Simula navigazione browser reale per bypassare Cloudflare:
-        # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali
+        # 1. Prima visita la homepage per ottenere cookie Cloudflare iniziali (solo se non usiamo cloudscraper)
         import time
-        try:
-            home_headers = get_browser_headers()
-            print(f"🌐 [get_rom_entry_by_url] Visita homepage per ottenere cookie Cloudflare...", file=sys.stderr)
-            home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
-            
-            # Se riceviamo 403 anche sulla homepage, aspetta e riprova
-            if home_response.status_code == 403:
-                print(f"⚠️ [get_rom_entry_by_url] 403 sulla homepage, attendo 3 secondi...", file=sys.stderr)
-                time.sleep(3)
-                home_headers = get_browser_headers()  # Nuovo User-Agent
+        if not skip_homepage:
+            try:
+                home_headers = get_browser_headers()
+                print(f"🌐 [get_rom_entry_by_url] Visita homepage per ottenere cookie Cloudflare...", file=sys.stderr)
                 home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
-            
-            home_response.raise_for_status()
-            print(f"✅ [get_rom_entry_by_url] Cookie Cloudflare ottenuti dalla homepage", file=sys.stderr)
-            # Aspetta un po' per simulare comportamento umano
-            time.sleep(1)
-        except Exception as e:
-            print(f"⚠️ [get_rom_entry_by_url] Errore visita homepage: {e}, continuo comunque...", file=sys.stderr)
-            # Continua comunque, ma aspetta un po'
-            time.sleep(1)
+                
+                # Se riceviamo 403 anche sulla homepage, aspetta e riprova più volte
+                retry_count = 0
+                while home_response.status_code == 403 and retry_count < 3:
+                    wait_time = 2 + retry_count  # 2, 3, 4 secondi
+                    print(f"⚠️ [get_rom_entry_by_url] 403 sulla homepage (tentativo {retry_count + 1}/3), attendo {wait_time} secondi...", file=sys.stderr)
+                    time.sleep(wait_time)
+                    home_headers = get_browser_headers()  # Nuovo User-Agent
+                    home_response = session.get('https://romsfun.com/', headers=home_headers, timeout=15)
+                    retry_count += 1
+                
+                if home_response.status_code == 200:
+                    home_response.raise_for_status()
+                    print(f"✅ [get_rom_entry_by_url] Cookie Cloudflare ottenuti dalla homepage", file=sys.stderr)
+                    # Aspetta un po' per simulare comportamento umano
+                    time.sleep(1.5)
+                else:
+                    print(f"⚠️ [get_rom_entry_by_url] Impossibile ottenere cookie dalla homepage (status: {home_response.status_code}), continuo comunque...", file=sys.stderr)
+                    time.sleep(1)
+            except Exception as e:
+                print(f"⚠️ [get_rom_entry_by_url] Errore visita homepage: {e}, continuo comunque...", file=sys.stderr)
+                # Continua comunque, ma aspetta un po'
+                time.sleep(1)
         
         # 2. Estrai la piattaforma dall'URL per usarla come Referer
         # Es: /roms/nintendo-wii/... -> https://romsfun.com/roms/nintendo-wii/
