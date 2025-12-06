@@ -24,10 +24,13 @@ data class ApiInfo(
 
 /**
  * Risultati della ricerca ROM
+ * Supporta sia "results" (compatibilità con sorgenti esistenti) che "roms" (nuova sorgente ROMsFun)
  */
 data class SearchResults(
     @SerializedName("results")
-    val results: List<RomEntry>,
+    private val _results: List<RomEntry>? = null,
+    @SerializedName("roms")
+    private val _roms: List<RomEntry>? = null,
     @SerializedName("current_results")
     val currentResults: Int? = null,
     @SerializedName("total_results")
@@ -36,7 +39,13 @@ data class SearchResults(
     val currentPage: Int? = null,
     @SerializedName("total_pages")
     val totalPages: Int? = null
-)
+) {
+    /**
+     * Lista delle ROM, supporta sia "results" che "roms"
+     */
+    val results: List<RomEntry>
+        get() = _results ?: _roms ?: emptyList()
+}
 
 /**
  * Entry di una ROM
