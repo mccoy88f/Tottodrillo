@@ -288,8 +288,11 @@ class SourceInstaller @Inject constructor(
                     val sysModule = python.getModule("sys")
                     val originalArgv = sysModule["argv"]
                     
-                    // Imposta sys.argv per pip
-                    val argvList = python.builtins.callAttr("list", listOf("pip", "install", requirement))
+                    // Imposta sys.argv per pip - crea una lista Python correttamente
+                    val argvList = python.builtins.callAttr("list")
+                    argvList.callAttr("append", "pip")
+                    argvList.callAttr("append", "install")
+                    argvList.callAttr("append", requirement)
                     sysModule["argv"] = argvList
                     
                     // Prova a chiamare pip._internal.main
