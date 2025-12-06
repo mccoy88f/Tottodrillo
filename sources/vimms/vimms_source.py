@@ -652,34 +652,56 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
         
         # Verifica se lo screen è un placeholder di errore
         # Vimm's Lair restituisce sempre un'immagine screen anche quando non esiste
-        # (con scritto "no screen found"). Dobbiamo verificare se l'immagine è valida.
+        # (con scritto "Error: image not found"). Dobbiamo verificare se l'immagine è valida.
         valid_screen_url = None
         if screen_url:
-            # Verifica se l'immagine screen esiste realmente
-            # Facciamo una richiesta HEAD per verificare se l'immagine esiste
-            # Se la risposta è 200 e il content-type è image, è valida
+            # Verifica se l'immagine screen esiste realmente e non è un placeholder di errore
             try:
                 headers = {'User-Agent': get_random_ua()}
-                response = requests.head(screen_url, headers=headers, timeout=5, verify=False, allow_redirects=True)
+                # Facciamo una richiesta GET per verificare il contenuto dell'immagine
+                response = requests.get(screen_url, headers=headers, timeout=5, verify=False, allow_redirects=True)
                 content_type = response.headers.get('Content-Type', '').lower()
                 
                 # Se è un'immagine valida (non un placeholder di errore)
                 if response.status_code == 200 and 'image' in content_type:
-                    # Verifica anche la dimensione: i placeholder di errore sono spesso molto piccoli
-                    content_length = response.headers.get('Content-Length')
-                    if content_length:
-                        size = int(content_length)
-                        # Se l'immagine è più grande di 1KB, probabilmente è valida
-                        # I placeholder di errore sono spesso molto piccoli (< 1KB)
-                        if size > 1024:
+                    # Verifica le dimensioni dell'immagine: le immagini di errore sono spesso 400x100 o simili
+                    # Le immagini screen reali sono generalmente più grandi (almeno 200x200)
+                    try:
+                        from PIL import Image
+                        from io import BytesIO
+                        img = Image.open(BytesIO(response.content))
+                        width, height = img.size
+                        
+                        # Le immagini di errore sono spesso piccole e rettangolari (es. 400x100)
+                        # Le immagini screen reali sono generalmente più grandi e quadrate/rettangolari grandi
+                        if width < 200 or height < 200:
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen troppo piccolo ({width}x{height}), probabilmente placeholder di errore: {screen_url}", file=sys.stderr)
+                        elif width == 400 and height == 100:
+                            # Dimensione tipica per immagini di errore Vimm's Lair
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen ha dimensioni tipiche di errore ({width}x{height}): {screen_url}", file=sys.stderr)
+                        else:
+                            valid_screen_url = screen_url
+                            print(f"✅ [get_rom_entry_by_uri] Screen valido trovato: {screen_url} (size: {width}x{height})", file=sys.stderr)
+                    except ImportError:
+                        # PIL non disponibile, usa controllo dimensione file come fallback
+                        size = len(response.content)
+                        # Le immagini di errore sono spesso tra 5KB e 15KB
+                        # Le immagini screen reali sono generalmente più grandi (> 20KB)
+                        if 5000 < size < 20000:
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen ha dimensione sospetta ({size} bytes), potrebbe essere placeholder di errore: {screen_url}", file=sys.stderr)
+                        elif size > 20000:
                             valid_screen_url = screen_url
                             print(f"✅ [get_rom_entry_by_uri] Screen valido trovato: {screen_url} (size: {size} bytes)", file=sys.stderr)
                         else:
-                            print(f"⚠️ [get_rom_entry_by_uri] Screen troppo piccolo, probabilmente placeholder di errore: {screen_url} (size: {size} bytes)", file=sys.stderr)
-                    else:
-                        # Se non abbiamo Content-Length, assumiamo che sia valido
-                        valid_screen_url = screen_url
-                        print(f"✅ [get_rom_entry_by_uri] Screen trovato (dimensione sconosciuta): {screen_url}", file=sys.stderr)
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen troppo piccolo ({size} bytes): {screen_url}", file=sys.stderr)
+                    except Exception as img_error:
+                        # Errore nel processare l'immagine, usa dimensione file
+                        size = len(response.content)
+                        if size > 20000:
+                            valid_screen_url = screen_url
+                            print(f"✅ [get_rom_entry_by_uri] Screen trovato (size: {size} bytes, errore analisi immagine): {screen_url}", file=sys.stderr)
+                        else:
+                            print(f"⚠️ [get_rom_entry_by_uri] Screen sospetto (size: {size} bytes, errore analisi): {screen_url}", file=sys.stderr)
                 else:
                     print(f"⚠️ [get_rom_entry_by_uri] Screen non valido (status: {response.status_code}, type: {content_type}): {screen_url}", file=sys.stderr)
             except Exception as e:

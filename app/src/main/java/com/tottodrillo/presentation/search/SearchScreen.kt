@@ -268,10 +268,10 @@ private fun ActiveFiltersBar(
         ) {
             Text(
                 text = "$totalFilters filtro${if (totalFilters == 1) "" else "i"} attivo${if (totalFilters == 1) "" else "i"}",
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.primary
-            )
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.primary
+                )
         }
 
         Text(

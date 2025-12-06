@@ -28,8 +28,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     // Fallback al vecchio formato per compatibilità
     if (coverUrls.isEmpty()) {
         val oldCoverUrls = this.boxartUrls?.takeIf { it.isNotEmpty() } 
-            ?: this.boxartUrl?.let { listOf(it) } 
-            ?: emptyList()
+        ?: this.boxartUrl?.let { listOf(it) } 
+        ?: emptyList()
         coverUrls.addAll(oldCoverUrls)
     }
     

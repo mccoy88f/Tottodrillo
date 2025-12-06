@@ -629,6 +629,7 @@ class RomRepositoryImpl @Inject constructor(
     /**
      * Recupera le immagini placeholder per le sorgenti che hanno trovato la ROM
      * Se una ROM non ha immagini, usa le immagini placeholder delle sorgenti che l'hanno trovata
+     * Se non ci sono placeholder dalle sorgenti, usa il logo dell'app come ultima spiaggia
      */
     private suspend fun getPlaceholderImages(roms: List<Rom>): List<String> {
         val placeholderUrls = mutableListOf<String>()
@@ -637,6 +638,13 @@ class RomRepositoryImpl @Inject constructor(
         for (sourceId in sourceIds) {
             val metadata = sourceManager.getSourceMetadata(sourceId)
             metadata?.defaultImage?.let { placeholderUrls.add(it) }
+        }
+        
+        // Se non ci sono placeholder dalle sorgenti, usa il logo dell'app come ultima spiaggia
+        if (placeholderUrls.isEmpty()) {
+            val appLogoUri = "android.resource://${context.packageName}/mipmap/ic_launcher_foreground"
+            placeholderUrls.add(appLogoUri)
+            android.util.Log.d("RomRepositoryImpl", "📱 Usando logo app come placeholder (nessun placeholder dalle sorgenti)")
         }
         
         return placeholderUrls.distinct()
