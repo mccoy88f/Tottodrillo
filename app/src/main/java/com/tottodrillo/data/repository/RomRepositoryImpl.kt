@@ -701,7 +701,7 @@ class RomRepositoryImpl @Inject constructor(
     /**
      * Pulisce la cache (utile per refresh)
      */
-    fun clearCache() {
+    override fun clearCache() {
         platformsCache = null
         regionsCache = null
     }

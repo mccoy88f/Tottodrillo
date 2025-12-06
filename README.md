@@ -4,8 +4,9 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)
 
-**Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from [CrocDB](https://crocdb.net), the public retro gaming database.
+**Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from multiple sources. The app supports dynamic source installation via ZIP packages, allowing you to add new ROM sources without updating the app.
 
 ## 🌍 Other Languages / Altri Linguaggi
 
@@ -23,13 +24,24 @@ This README is also available in other languages:
 
 ## ✨ Key Features
 
+### 🔌 Multi-Source System (NEW in v2.0)
+- **Dynamic Source Installation**: Install new ROM sources via ZIP packages without updating the app
+- **Multiple Source Types**: Support for API, Java/Kotlin, and Python sources
+- **Source Management**: Enable/disable, install, uninstall, and update sources from settings
+- **Default Sources**: Automatic installation of CrocDB and Vimm's Lair on first launch
+- **Source Filtering**: Filter search results by selected sources
+- **Automatic Refresh**: UI updates automatically when sources are enabled/disabled
+- **Platform Mapping**: Each source includes its own platform mapping for seamless integration
+
 ### 🔍 Exploration & Search
 - **Home Screen** with featured ROMs, popular platforms, favorites, and recent ROMs
 - **Platform Exploration** organized by brand (Nintendo, PlayStation, Sega, Xbox, etc.) with collapsible/expandable sections
 - **Advanced Search** with automatic debounce (500ms) to optimize queries
-- **Multiple Filters** for platforms and regions with interactive chips
+- **Multiple Filters** for platforms, regions, and sources with interactive chips
 - **Infinite Pagination** with automatic lazy loading
 - **ROM Display** with centered and proportioned cover art
+- **Image Carousel**: Multiple images per ROM (box art, screenshots) with swipeable carousel
+- **Lazy Image Loading**: Images load only when visible on screen for better performance
 
 ### 📥 Download & Installation
 - **Background Downloads** with WorkManager for reliability
@@ -52,11 +64,14 @@ This README is also available in other languages:
   - WiFi-only downloads to save mobile data
   - Available space verification before download
   - Configurable notifications
+- **Session Management**: Automatic cookie handling for sources that require it (e.g., Vimm's Lair)
 
 ### 💾 ROM Management
 - **Favorites** with file-based persistence
 - **Recent ROMs** (last 25 opened) with file-based persistence
 - **Download/Installation Status** for each link with automatic updates
+- **Multiple Download Links**: Support for multiple versions and formats per ROM
+- **Source Identification**: Each download link shows its source
 - **Status Icons**:
   - Download in progress with progress indicator
   - Installation in progress with percentage
@@ -70,10 +85,18 @@ This README is also available in other languages:
 - **Smooth Animations** with Jetpack Compose
 - **Cover Art** with lazy loading (Coil) and automatic centering
 - **Platform Logos** SVG loaded from assets with fallback
-- **Region Badges** with emoji flags
+- **Region Badges** with emoji flags (automatically mapped from source region names)
 - **ROM Cards** with uniform maximum width (180dp)
+- **Image Carousel**: Swipeable carousel for multiple ROM images
 
 ### ⚙️ Settings
+- **Source Management**:
+  - View all installed sources
+  - Enable/disable sources
+  - Install new sources from ZIP files
+  - Update existing sources
+  - Uninstall sources
+  - Install default sources (CrocDB and Vimm's Lair)
 - **Download Configuration**:
   - Custom download folder selection
   - Available space display
@@ -102,12 +125,12 @@ app/
 ├── data/
 │   ├── mapper/              # API → Domain conversion
 │   ├── model/               # Data models (API, Platform)
-│   ├── remote/               # Retrofit, API service
+│   ├── remote/               # Retrofit, API service, Source executors
 │   ├── repository/           # Repository implementations
 │   ├── receiver/             # BroadcastReceiver for notifications
 │   └── worker/               # WorkManager workers (Download, Extraction)
 ├── domain/
-│   ├── manager/              # Business logic managers (Download, Platform)
+│   ├── manager/              # Business logic managers (Download, Platform, Source)
 │   ├── model/                # Domain models (UI)
 │   └── repository/           # Repository interfaces
 └── presentation/
@@ -121,6 +144,7 @@ app/
     ├── platform/              # ROMs by platform screen
     ├── search/                # Search screen
     ├── settings/              # Settings screen
+    ├── sources/               # Source management screens
     └── theme/                 # Theme system
 ```
 
@@ -139,7 +163,7 @@ app/
 
 ### Networking
 - **Retrofit** - HTTP client
-- **OkHttp** - Network layer
+- **OkHttp** - Network layer with cookie management
 - **Gson** - JSON parsing
 - **Coil** - Image loading with SVG support
 
@@ -156,6 +180,13 @@ app/
 - **DownloadWorker** - File download in background with foreground service
 - **ExtractionWorker** - File extraction/copy in background
 - **Foreground Notifications** - Interactive notifications with actions
+
+### Source System
+- **SourceExecutor Interface** - Common interface for all source types
+- **SourceApiAdapter** - API source executor
+- **JavaSourceExecutor** - Java/Kotlin source executor with dynamic class loading
+- **PythonSourceExecutor** - Python source executor using Chaquopy
+- **Chaquopy** - Python SDK for Android (Python 3.11)
 
 ## 🚀 Setup
 
@@ -185,9 +216,9 @@ cd Tottodrillo
 
 ### Configuration
 
-No API key is required. The app uses public CrocDB APIs:
-- Base URL: `https://api.crocdb.net/`
-- Documentation: [CrocDB API Docs](https://github.com/cavv-dev/crocdb-api)
+No API key is required. The app uses public APIs from installed sources:
+- **CrocDB**: Base URL: `https://api.crocdb.net/`
+- **Vimm's Lair**: Web scraping via Python (included as default source)
 
 ## 📦 Build
 
@@ -205,6 +236,16 @@ The APK will be generated in: `app/build/outputs/apk/`
 
 ## 🎯 Detailed Features
 
+### Source System
+- **Installation**: Install sources from ZIP files via file picker
+- **Validation**: Automatic validation of source structure and metadata
+- **Version Management**: Update sources with newer versions (preserves enabled state)
+- **Enable/Disable**: Toggle sources on/off without uninstalling
+- **Uninstallation**: Remove sources completely
+- **Default Sources**: Automatic installation of CrocDB and Vimm's Lair on first launch
+- **Cache Management**: Automatic cache invalidation when sources change
+- **Platform Mapping**: Each source defines its own platform code mapping
+
 ### Download Manager
 - Multiple simultaneous downloads
 - Progress tracking for each download
@@ -212,6 +253,7 @@ The APK will be generated in: `app/build/outputs/apk/`
 - Error handling with automatic retry
 - Available space verification
 - External SD card support
+- Session cookie management for sources that require it
 
 ### Installation
 - ZIP archive extraction
@@ -220,6 +262,7 @@ The APK will be generated in: `app/build/outputs/apk/`
 - Error handling with red clickable icon for retry
 - Automatic UI update after installation
 - Open installation folder
+- Multiple download links per ROM (versions, formats)
 
 ### ES-DE Compatibility
 - Enable/disable compatibility
@@ -232,14 +275,35 @@ The APK will be generated in: `app/build/outputs/apk/`
 - Multi-line format to support multiple downloads of the same file
 - Clear history with user confirmation
 
+## 📚 Source Development
+
+Tottodrillo supports three types of sources:
+
+1. **API Sources**: HTTP REST API endpoints (like CrocDB)
+2. **Java/Kotlin Sources**: Local Java/Kotlin code execution
+3. **Python Sources**: Local Python script execution (using Chaquopy)
+
+For detailed documentation on creating sources, see:
+- [🇮🇹 Italian Guide](SOURCE_DEVELOPMENT.md)
+- [🇬🇧 English Guide](SOURCE_DEVELOPMENT_EN.md)
+
+### Quick Start
+
+1. Create a ZIP package with:
+   - `source.json` - Source metadata (required)
+   - `platform_mapping.json` - Platform code mapping (required)
+   - `api_config.json` - API configuration (for API sources)
+   - Python script or JAR file (for Python/Java sources)
+
+2. Install the source via Settings → Sources → Install Source
+
+3. Enable the source and start using it!
+
+See the documentation files for complete examples and API details.
+
 ## 🎯 Roadmap / To Do
 
 Features planned for future versions:
-
-- [ ] **Multi-source structure implementation**
-  - Support for multiple ROM sources beyond CrocDB
-  - Source configuration and selection in settings
-  - Unified results from different sources
 
 - [ ] **ScreenScraper.fr support**
   - Integration with ScreenScraper API to enrich ROM data
@@ -252,6 +316,11 @@ Features planned for future versions:
   - Save and manage multiple lists
   - Bulk download of all ROMs in a list
   - Priority and queue management for multiple downloads
+
+- [ ] **Source marketplace**
+  - Browse and install sources from a central repository
+  - Source ratings and reviews
+  - Automatic source updates
 
 ## 🌐 Localization
 
@@ -293,10 +362,14 @@ This project is released under the MIT License. See the [LICENSE](LICENSE) file 
 ### APIs & Database
 - [CrocDB](https://crocdb.net) for public APIs and ROM database
 - [cavv-dev](https://github.com/cavv-dev) for the ROM database and API
+- [Vimm's Lair](https://vimm.net) for ROM preservation
 
 ### Platform Logos
 Platform SVG logos are provided by:
 - [alekfull-nx-es-de](https://github.com/anthonycaccese/alekfull-nx-es-de) - ES-DE logo repository
+
+### Libraries
+- [Chaquopy](https://chaquo.com/chaquopy/) - Python SDK for Android
 
 ### Community
 - Retro gaming community for support and feedback
