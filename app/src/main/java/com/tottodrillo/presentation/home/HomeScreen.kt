@@ -210,6 +210,8 @@ private fun HomeContent(
         }
 
         // ROM in evidenza
+        // TEMPORANEAMENTE DISATTIVATO
+        /*
         if (uiState.featuredRoms.isNotEmpty()) {
             SectionHeader(title = stringResource(R.string.home_featured))
 
@@ -233,6 +235,7 @@ private fun HomeContent(
 
             Spacer(modifier = Modifier.height(24.dp))
         }
+        */
 
         // ROM recenti
         if (uiState.recentRoms.isNotEmpty()) {

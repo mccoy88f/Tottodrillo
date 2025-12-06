@@ -50,7 +50,8 @@ class HomeViewModel @Inject constructor(
                     }
                     
                     // Carica alcuni ROM in evidenza
-                    loadFeaturedRoms()
+                    // TEMPORANEAMENTE DISATTIVATO
+                    // loadFeaturedRoms()
                     // Carica preferiti
                     loadFavoriteRoms()
                     // Carica ROM recenti
