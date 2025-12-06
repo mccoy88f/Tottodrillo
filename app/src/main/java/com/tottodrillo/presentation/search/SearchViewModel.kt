@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.isActive
 import javax.inject.Inject
 
 /**
@@ -34,6 +36,10 @@ class SearchViewModel @Inject constructor(
 
     private val _searchQuery = MutableStateFlow("")
     private var lastRefreshKey: Int = 0
+    
+    // Traccia i job attivi per poterli cancellare
+    private var currentSearchJob: Job? = null
+    private var currentLoadMoreJob: Job? = null
 
     init {
         loadFiltersData()
@@ -164,10 +170,14 @@ class SearchViewModel @Inject constructor(
      * Esegue la ricerca
      */
     fun performSearch() {
+        // Cancella la ricerca precedente se è ancora in corso
+        currentSearchJob?.cancel()
+        currentLoadMoreJob?.cancel()
+        
         val currentState = _uiState.value
         val filters = currentState.filters.copy(query = currentState.query)
 
-        viewModelScope.launch {
+        currentSearchJob = viewModelScope.launch {
             _uiState.update { 
                 it.copy(
                     isSearching = true, 
@@ -176,8 +186,14 @@ class SearchViewModel @Inject constructor(
                 )
             }
 
+            // Verifica se il job è stato cancellato prima di procedere
+            if (!isActive) return@launch
+            
             when (val result = repository.searchRoms(filters, page = 1)) {
                 is NetworkResult.Success -> {
+                    // Verifica di nuovo se il job è ancora attivo prima di aggiornare lo stato
+                    if (!isActive) return@launch
+                    
                     // Estrai le regioni disponibili dai risultati
                     val availableRegions = extractRegionsFromResults(result.data)
                     
@@ -192,6 +208,9 @@ class SearchViewModel @Inject constructor(
                     }
                 }
                 is NetworkResult.Error -> {
+                    // Verifica se il job è ancora attivo prima di aggiornare lo stato
+                    if (!isActive) return@launch
+                    
                     _uiState.update { 
                         it.copy(
                             isSearching = false,
@@ -212,14 +231,23 @@ class SearchViewModel @Inject constructor(
         val currentState = _uiState.value
         if (currentState.isSearching || !currentState.canLoadMore) return
 
+        // Cancella il loadMore precedente se è ancora in corso
+        currentLoadMoreJob?.cancel()
+
         val nextPage = currentState.currentPage + 1
         val filters = currentState.filters.copy(query = currentState.query)
 
-        viewModelScope.launch {
+        currentLoadMoreJob = viewModelScope.launch {
+            // Verifica se il job è stato cancellato prima di procedere
+            if (!isActive) return@launch
+            
             _uiState.update { it.copy(isSearching = true) }
 
             when (val result = repository.searchRoms(filters, page = nextPage)) {
                 is NetworkResult.Success -> {
+                    // Verifica di nuovo se il job è ancora attivo prima di aggiornare lo stato
+                    if (!isActive) return@launch
+                    
                     _uiState.update { state ->
                         val allResults = state.results + result.data
                         // Aggiorna le regioni disponibili con i nuovi risultati
@@ -235,6 +263,9 @@ class SearchViewModel @Inject constructor(
                     }
                 }
                 is NetworkResult.Error -> {
+                    // Verifica se il job è ancora attivo prima di aggiornare lo stato
+                    if (!isActive) return@launch
+                    
                     _uiState.update { 
                         it.copy(
                             isSearching = false,
