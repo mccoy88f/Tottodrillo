@@ -164,11 +164,17 @@ class RomRepositoryImpl @Inject constructor(
                     android.util.Log.d("RomRepositoryImpl", "   ROM[$index]: coverUrl=${rom.coverUrl}, coverUrls=${rom.coverUrls}")
                 }
                 
+                // Se tutte le ROM provengono da SwitchRoms, usa solo la box image (SwitchRoms non ha screen_image)
+                val isSwitchRomsOnly = roms.all { it.sourceId == "switchroms" }
+                
                 var allCoverUrls = roms
                     .flatMap { rom -> 
-                        // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
-                        // Filtra null e stringhe vuote
-                        rom.coverUrls.filter { it.isNotBlank() }
+                        // Se è SwitchRoms, usa solo la prima immagine (box), altrimenti usa tutte
+                        if (rom.sourceId == "switchroms") {
+                            rom.coverUrls.take(1).filter { it.isNotBlank() } // Solo box image
+                        } else {
+                            rom.coverUrls.filter { it.isNotBlank() }
+                        }
                     }
                     .distinct()
                     .filter { it.isNotBlank() } // Doppio filtro per sicurezza
