@@ -51,6 +51,10 @@ fun WebViewDownloadDialog(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
+                // Riferimento al WebView per navigazione indietro
+                var webViewRef by remember { mutableStateOf<WebView?>(null) }
+                var canGoBack by remember { mutableStateOf(false) }
+                
                 // Header con titolo, pulsante indietro e pulsante chiudi
                 Row(
                     modifier = Modifier
@@ -60,12 +64,11 @@ fun WebViewDownloadDialog(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     // Pulsante indietro (a sinistra)
-                    var webViewRef by remember { mutableStateOf<WebView?>(null) }
                     IconButton(
                         onClick = {
                             webViewRef?.goBack()
                         },
-                        enabled = webViewRef?.canGoBack() == true
+                        enabled = canGoBack
                     ) {
                         Icon(
                             imageVector = Icons.Default.ArrowBack,
@@ -97,6 +100,7 @@ fun WebViewDownloadDialog(
                         factory = { ctx ->
                             WebView(ctx).apply {
                                 webViewRef = this
+                                canGoBack = this.canGoBack()
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
                                 settings.loadWithOverviewMode = true
@@ -107,6 +111,12 @@ fun WebViewDownloadDialog(
                                         super.onPageFinished(view, url)
                                         isLoading = false
                                         error = null
+                                        canGoBack = view?.canGoBack() ?: false
+                                    }
+                                    
+                                    override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
+                                        super.onPageStarted(view, url, favicon)
+                                        canGoBack = view?.canGoBack() ?: false
                                     }
 
                                     override fun onReceivedError(
