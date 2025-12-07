@@ -1,7 +1,7 @@
 {
   "id": "crocdb",
   "name": "CrocDB",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Sorgente ufficiale CrocDB - Database pubblico di ROM per retro gaming",
   "author": "Tottodrillo Team",
   "baseUrl": "https://api.crocdb.net",
