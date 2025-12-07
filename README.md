@@ -8,6 +8,8 @@
 
 **Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from multiple sources. The app supports dynamic source installation via ZIP packages, allowing you to add new ROM sources without updating the app.
 
+**Sources Repository**: [Tottodrillo-Source](https://github.com/mccoy88f/Tottodrillo-Source) - Contains all source definitions and development guides.
+
 ## 🌍 Other Languages / Altri Linguaggi
 
 This README is also available in other languages:
@@ -283,9 +285,9 @@ Tottodrillo supports three types of sources:
 2. **Java/Kotlin Sources**: Local Java/Kotlin code execution
 3. **Python Sources**: Local Python script execution (using Chaquopy)
 
-For detailed documentation on creating sources, see:
-- [🇮🇹 Italian Guide](SOURCE_DEVELOPMENT.md)
-- [🇬🇧 English Guide](SOURCE_DEVELOPMENT_EN.md)
+For detailed documentation on creating sources, see the [Tottodrillo-Source repository](https://github.com/mccoy88f/Tottodrillo-Source):
+- [🇮🇹 Italian Guide](https://github.com/mccoy88f/Tottodrillo-Source/blob/main/SOURCE_DEVELOPMENT.md)
+- [🇬🇧 English Guide](https://github.com/mccoy88f/Tottodrillo-Source/blob/main/SOURCE_DEVELOPMENT_EN.md)
 
 ### Quick Start
 

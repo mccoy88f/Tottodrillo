@@ -7,6 +7,8 @@
 
 **Tottodrillo** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da [CrocDB](https://crocdb.net), il database pubblico di giochi retro.
 
+**Repository Sorgenti**: [Tottodrillo-Source](https://github.com/mccoy88f/Tottodrillo-Source) - Contiene tutte le definizioni delle sorgenti e le guide di sviluppo.
+
 ## 🌍 Altre Lingue / Other Languages
 
 Questo README è disponibile anche in altre lingue:
