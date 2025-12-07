@@ -622,8 +622,6 @@ def get_rom_entry_by_uri(uri: str, source_dir: str, include_download_links: bool
                     screen_url = 'https://vimm.net' + screen_src
                 elif screen_src.startswith('http'):
                     screen_url = screen_src
-        else:
-                    screen_url = 'https://vimm.net/' + screen_src
         
         if not screen_url and rom_id:
             print(f"⚠️ [get_rom_entry_by_uri] screen_url non trovato nella pagina per ROM {title} (rom_id: {rom_id})", file=sys.stderr)
