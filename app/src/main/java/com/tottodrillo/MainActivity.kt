@@ -357,15 +357,36 @@ class MainActivity : ComponentActivity() {
                                     
                                     if (config.enableEsDeCompatibility && !config.esDeRomsPath.isNullOrBlank()) {
                                         // Usa automaticamente la cartella ES-DE
-                                        val motherCode = platformManager.getMotherCodeFromSourceCode(platformCode, "crocdb")
-                                        android.util.Log.d("MainActivity", "🔍 Platform code: $platformCode -> Mother code: $motherCode")
+                                        // Cerca il motherCode in tutte le sorgenti disponibili
+                                        var motherCode: String? = null
+                                        val availableSources = platformManager.getAvailableSources()
+                                        android.util.Log.d("MainActivity", "🔍 Cercando mother code per platformCode: $platformCode in sorgenti: $availableSources")
                                         
-                                        if (motherCode != null) {
-                                            val esDePath = "${config.esDeRomsPath}/$motherCode"
+                                        // Prova prima a cercare in tutte le sorgenti
+                                        for (sourceName in availableSources) {
+                                            val found = platformManager.getMotherCodeFromSourceCode(platformCode, sourceName)
+                                            if (found != null) {
+                                                motherCode = found
+                                                android.util.Log.d("MainActivity", "✅ Mother code trovato in sorgente $sourceName: $motherCode")
+                                                break
+                                            }
+                                        }
+                                        
+                                        // Se non trovato, usa il platformCode direttamente come motherCode
+                                        // (ES-DE usa i motherCode come nomi delle cartelle, quindi potrebbe già essere corretto)
+                                        if (motherCode == null) {
+                                            motherCode = platformCode
+                                            android.util.Log.d("MainActivity", "ℹ️ Mother code non trovato, uso platformCode direttamente: $motherCode")
+                                        }
+                                        
+                                        // Verifica che il path ES-DE sia valido
+                                        val esDeBasePath = config.esDeRomsPath
+                                        if (esDeBasePath != null && configRepository.isPathValid(esDeBasePath)) {
+                                            val esDePath = "$esDeBasePath/$motherCode"
                                             android.util.Log.d("MainActivity", "✅ ES-DE abilitato: installazione in $esDePath")
                                             downloadsViewModel.startExtraction(archivePath, esDePath, romTitle, romSlug)
                                         } else {
-                                            android.util.Log.w("MainActivity", "⚠️ Mother code non trovato per $platformCode, uso picker manuale")
+                                            android.util.Log.w("MainActivity", "⚠️ Path ES-DE non valido: $esDeBasePath, uso picker manuale")
                                             pendingExtraction = Triple(archivePath, romTitle, romSlug)
                                             openExtractionFolderLauncher.launch(null)
                                         }
