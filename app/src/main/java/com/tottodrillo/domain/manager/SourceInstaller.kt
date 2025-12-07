@@ -40,16 +40,41 @@ class SourceInstaller @Inject constructor(
             try {
                 extractZip(zipFile, tempDir)
                 
-                // Valida la struttura
-                val metadataFile = File(tempDir, METADATA_FILE)
-                if (!metadataFile.exists()) {
+                // Cerca source.json nella root o in una sottocartella
+                val metadataFile = findMetadataFile(tempDir)
+                if (metadataFile == null) {
                     return@withContext Result.failure(
                         IllegalArgumentException("File $METADATA_FILE non trovato nello ZIP")
                     )
                 }
                 
+                // Se il file è in una sottocartella, sposta tutto nella root di tempDir
+                val metadataDir = metadataFile.parentFile
+                if (metadataDir != null && metadataDir != tempDir) {
+                    // Il file è in una sottocartella (es. crocdb/source.json)
+                    // Sposta tutti i file dalla sottocartella alla root
+                    metadataDir.listFiles()?.forEach { file ->
+                        val targetFile = File(tempDir, file.name)
+                        if (file.isDirectory) {
+                            file.copyRecursively(targetFile, overwrite = true)
+                        } else {
+                            file.copyTo(targetFile, overwrite = true)
+                        }
+                    }
+                    // Rimuovi la sottocartella vuota
+                    metadataDir.deleteRecursively()
+                }
+                
+                // Ora il file dovrebbe essere nella root
+                val finalMetadataFile = File(tempDir, METADATA_FILE)
+                if (!finalMetadataFile.exists()) {
+                    return@withContext Result.failure(
+                        IllegalArgumentException("File $METADATA_FILE non trovato dopo la normalizzazione")
+                    )
+                }
+                
                 // Carica metadata
-                val metadata = gson.fromJson(metadataFile.readText(), SourceMetadata::class.java)
+                val metadata = gson.fromJson(finalMetadataFile.readText(), SourceMetadata::class.java)
                 
                 // Valida metadata
                 validateMetadata(metadata)
@@ -127,6 +152,30 @@ class SourceInstaller @Inject constructor(
                 entry = zis.nextEntry
             }
         }
+    }
+    
+    /**
+     * Cerca il file source.json nello ZIP estratto
+     * Supporta sia struttura piatta (source.json nella root) che struttura a cartella (cartella/source.json)
+     */
+    private fun findMetadataFile(rootDir: File): File? {
+        // Cerca prima nella root
+        val rootFile = File(rootDir, METADATA_FILE)
+        if (rootFile.exists()) {
+            return rootFile
+        }
+        
+        // Cerca nelle sottocartelle (massimo un livello di profondità)
+        rootDir.listFiles()?.forEach { file ->
+            if (file.isDirectory) {
+                val subFile = File(file, METADATA_FILE)
+                if (subFile.exists()) {
+                    return subFile
+                }
+            }
+        }
+        
+        return null
     }
     
     /**
