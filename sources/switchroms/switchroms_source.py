@@ -138,7 +138,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
                     "title": title,
                     "platform": "switch",  # Sempre Switch
                     "box_image": box_image,
-                    "screen_image": None,  # SwitchRoms non ha screenshot
+                    # SwitchRoms non ha screenshot, non includere screen_image
                     "regions": [],  # Non disponibili nella lista
                     "links": []  # Verranno recuperati in get_entry
                 })
@@ -493,7 +493,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
             "title": title or "Unknown",
             "platform": "switch",
             "box_image": box_image,
-            "screen_image": None,
+            # SwitchRoms non ha screenshot, non includere screen_image
             "regions": regions,
             "links": download_links
         }
