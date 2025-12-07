@@ -165,57 +165,70 @@ fun SourcesListSection(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable(
+                        enabled = !isCheckingUpdates,
+                        onClick = {
+                            scope.launch {
+                                isCheckingUpdates = true
+                                try {
+                                    availableUpdates = sourceUpdateManager.checkForUpdates(sources)
+                                } catch (e: Exception) {
+                                    android.util.Log.e("SourcesListSection", "Errore verifica aggiornamenti", e)
+                                } finally {
+                                    isCheckingUpdates = false
+                                }
+                            }
+                        }
+                    )
                     .padding(bottom = 12.dp),
                 colors = CardDefaults.cardColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer
+                    containerColor = MaterialTheme.colorScheme.primaryContainer
                 )
             ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
                 ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(
-                            text = stringResource(R.string.sources_check_updates),
-                            style = MaterialTheme.typography.bodyLarge,
-                            fontWeight = FontWeight.Medium
-                        )
-                        if (availableUpdates.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = stringResource(R.string.sources_updates_available, availableUpdates.size),
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer
-                            )
-                        }
-                    }
                     if (isCheckingUpdates) {
                         CircularProgressIndicator(
                             modifier = Modifier.size(20.dp),
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
                             strokeWidth = 2.dp
                         )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = stringResource(R.string.sources_check_updates),
+                            style = MaterialTheme.typography.bodyLarge,
+                            fontWeight = FontWeight.Medium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
                     } else {
-                        IconButton(
-                            onClick = {
-                                scope.launch {
-                                    isCheckingUpdates = true
-                                    try {
-                                        availableUpdates = sourceUpdateManager.checkForUpdates(sources)
-                                    } catch (e: Exception) {
-                                        android.util.Log.e("SourcesListSection", "Errore verifica aggiornamenti", e)
-                                    } finally {
-                                        isCheckingUpdates = false
-                                    }
-                                }
-                            }
+                        Icon(
+                            imageVector = Icons.Default.Refresh,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Refresh,
-                                contentDescription = stringResource(R.string.sources_check_updates)
+                            Text(
+                                text = stringResource(R.string.sources_check_updates),
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer
                             )
+                            if (availableUpdates.isNotEmpty()) {
+                                Spacer(modifier = Modifier.height(4.dp))
+                                Text(
+                                    text = stringResource(R.string.sources_updates_available, availableUpdates.size),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                                )
+                            }
                         }
                     }
                 }

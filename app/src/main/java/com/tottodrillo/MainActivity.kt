@@ -849,9 +849,19 @@ class MainActivity : ComponentActivity() {
                 val contentLength = response.body?.contentLength() ?: -1L
                 val totalBytes = if (contentLength > 0) contentLength else 0L
                 
+                // Mostra notifica iniziale
+                withContext(Dispatchers.Main) {
+                    if (totalBytes > 0) {
+                        showUpdateDownloadProgress(0, totalBytes.toInt(), release.name)
+                    } else {
+                        showUpdateDownloadProgress(0, 0, release.name)
+                    }
+                }
+                
                 // Salva l'APK in cache con progresso
                 val apkFile = File(cacheDir, "update_${release.tagName}.apk")
                 var downloadedBytes = 0L
+                var lastNotifiedProgress = -1
                 
                 response.body?.byteStream()?.use { input ->
                     apkFile.outputStream().use { output ->
@@ -865,9 +875,10 @@ class MainActivity : ComponentActivity() {
                             // Aggiorna la notifica ogni 1% o ogni 100KB
                             if (totalBytes > 0) {
                                 val progress = (downloadedBytes * 100 / totalBytes).toInt()
-                                val previousProgress = ((downloadedBytes - bytesRead) * 100 / totalBytes).toInt()
                                 
-                                if (progress != previousProgress || downloadedBytes % 100_000L == 0L) {
+                                // Notifica solo se la percentuale è cambiata o ogni 100KB
+                                if (progress != lastNotifiedProgress || downloadedBytes % 100_000L == 0L) {
+                                    lastNotifiedProgress = progress
                                     withContext(Dispatchers.Main) {
                                         showUpdateDownloadProgress(
                                             downloadedBytes.toInt(),
@@ -877,9 +888,11 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             } else {
-                                // Se non conosciamo la dimensione totale, mostra progresso indeterminato
-                                withContext(Dispatchers.Main) {
-                                    showUpdateDownloadProgress(0, 0, release.name)
+                                // Se non conosciamo la dimensione totale, aggiorna ogni 100KB
+                                if (downloadedBytes % 100_000L == 0L) {
+                                    withContext(Dispatchers.Main) {
+                                        showUpdateDownloadProgress(0, 0, release.name)
+                                    }
                                 }
                             }
                         }
