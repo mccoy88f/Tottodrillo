@@ -187,22 +187,26 @@ fun RomDetailRoute(
     
     // Controlla periodicamente se l'estrazione è completata ma l'UI non è aggiornata
     // (per gestire il caso in cui l'estrazione completa prima che l'osservazione parta)
+    // Controlla periodicamente se ci sono estrazioni completate (solo se ci sono download completati)
     LaunchedEffect(uiState.rom?.slug) {
         if (uiState.rom != null) {
             while (true) {
-                kotlinx.coroutines.delay(2000) // Controlla ogni 2 secondi
+                kotlinx.coroutines.delay(3000) // Controlla ogni 3 secondi (ridotto frequenza)
                 val currentRom = viewModel.uiState.value.rom
                 if (currentRom != null) {
                     // Verifica se ci sono link scaricati con estrazione Idle che potrebbero essere completati
-                    currentRom.downloadLinks.forEach { link ->
+                    val hasCompletedDownloads = currentRom.downloadLinks.any { link ->
                         val linkStatus = viewModel.uiState.value.linkStatuses[link.url]
-                        if (linkStatus?.first is com.tottodrillo.domain.model.DownloadStatus.Completed &&
-                            linkStatus.second is com.tottodrillo.domain.model.ExtractionStatus.Idle) {
-                            // C'è un download completato ma estrazione Idle, verifica se l'estrazione è completata
-                            android.util.Log.d("RomDetailScreen", "🔍 Verifica se estrazione completata per link ${link.url}")
-                            viewModel.refreshRomStatus()
-                        }
+                        linkStatus?.first is com.tottodrillo.domain.model.DownloadStatus.Completed &&
+                        linkStatus.second is com.tottodrillo.domain.model.ExtractionStatus.Idle
                     }
+                    
+                    // Solo se ci sono download completati con estrazione Idle, verifica
+                    if (hasCompletedDownloads) {
+                        android.util.Log.d("RomDetailScreen", "🔍 Verifica se estrazione completata (download completato trovato)")
+                        viewModel.refreshRomStatus()
+                    }
+                    // Se non ci sono download completati, non fare nulla per evitare loop inutili
                 }
             }
         }

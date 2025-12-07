@@ -867,7 +867,31 @@ class RomRepositoryImpl @Inject constructor(
             val metadata = sourceManager.getSourceMetadata(sourceId)
             val defaultImage = metadata?.defaultImage
             android.util.Log.d("RomRepositoryImpl", "   Source $sourceId: defaultImage=$defaultImage")
-            defaultImage?.let { placeholderUrls.add(it) }
+            
+            defaultImage?.let { imagePath ->
+                // Se è un percorso relativo (es. "switchroms/placeholder.png"), risolvilo come file:// URI
+                if (!imagePath.startsWith("http://") && !imagePath.startsWith("https://") && !imagePath.startsWith("android.resource://")) {
+                    // Cerca la source installata per ottenere il percorso
+                    val installedSources = sourceManager.getInstalledSources()
+                    val source = installedSources.find { it.id == sourceId }
+                    source?.installPath?.let { installPath ->
+                        val placeholderFile = File(installPath, imagePath)
+                        if (placeholderFile.exists()) {
+                            val fileUri = android.net.Uri.fromFile(placeholderFile).toString()
+                            placeholderUrls.add(fileUri)
+                            android.util.Log.d("RomRepositoryImpl", "   ✅ Placeholder risolto: $imagePath -> $fileUri")
+                        } else {
+                            android.util.Log.w("RomRepositoryImpl", "   ⚠️ Placeholder non trovato: ${placeholderFile.absolutePath}")
+                        }
+                    } ?: run {
+                        android.util.Log.w("RomRepositoryImpl", "   ⚠️ Source $sourceId non installata o percorso non disponibile")
+                    }
+                } else {
+                    // È già un URL completo, usalo così com'è
+                    placeholderUrls.add(imagePath)
+                    android.util.Log.d("RomRepositoryImpl", "   ✅ Placeholder URL completo: $imagePath")
+                }
+            }
         }
         
         // Se non ci sono placeholder dalle sorgenti, usa il logo dell'app come ultima spiaggia
