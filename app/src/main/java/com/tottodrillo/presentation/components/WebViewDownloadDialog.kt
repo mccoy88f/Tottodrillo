@@ -143,6 +143,21 @@ fun WebViewDownloadDialog(
                                                 override fun onPageFinished(view: WebView?, url: String?) {
                                                     super.onPageFinished(view, url)
                                                     android.util.Log.d("WebViewDownloadDialog", "✅ Popup caricato: $url")
+                                                    
+                                                    // Disabilita annunci anche nel popup
+                                                    view?.evaluateJavascript(
+                                                        """
+                                                        (function() {
+                                                            try {
+                                                                window.adLink = null;
+                                                                console.log('✅ Annunci popup disabilitati nel popup');
+                                                            } catch(e) {
+                                                                console.log('⚠️ Errore disabilitazione annunci:', e);
+                                                            }
+                                                        })();
+                                                        """.trimIndent(),
+                                                        null
+                                                    )
                                                 }
                                             }
                                             
@@ -253,6 +268,22 @@ fun WebViewDownloadDialog(
                                         error = null
                                         canGoBack = view?.canGoBack() ?: false
                                         android.util.Log.d("WebViewDownloadDialog", "✅ Pagina principale caricata: $url")
+                                        
+                                        // Disabilita annunci popup iniettando JavaScript
+                                        // Questo previene l'apertura di popup pubblicitari su alcuni siti (es. buzzheavier.com)
+                                        view?.evaluateJavascript(
+                                            """
+                                            (function() {
+                                                try {
+                                                    window.adLink = null;
+                                                    console.log('✅ Annunci popup disabilitati');
+                                                } catch(e) {
+                                                    console.log('⚠️ Errore disabilitazione annunci:', e);
+                                                }
+                                            })();
+                                            """.trimIndent(),
+                                            null
+                                        )
                                     }
                                     
                                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
