@@ -384,6 +384,52 @@ class DownloadManager @Inject constructor(
     }
     
     /**
+     * Cerca il nome del file scaricato cercando l'URL in tutti i file .status
+     * Restituisce il nome del file (senza .status) se trovato, null altrimenti
+     */
+    private suspend fun findFileNameByUrl(url: String): String? {
+        val config = configRepository.downloadConfig.first()
+        val downloadDir = File(config.downloadPath)
+        
+        if (!downloadDir.exists() || !downloadDir.isDirectory) {
+            return null
+        }
+        
+        return try {
+            // Cerca tutti i file .status nella directory
+            val statusFiles = downloadDir.listFiles { _, name -> name.endsWith(".status") }
+            if (statusFiles == null || statusFiles.isEmpty()) {
+                return null
+            }
+            
+            // Cerca l'URL in ogni file .status
+            for (statusFile in statusFiles) {
+                val lines = statusFile.readLines().filter { it.isNotBlank() }
+                val urlFound = lines.any { line ->
+                    val lineUrl = if (line.contains('\t')) {
+                        line.substringBefore('\t')
+                    } else {
+                        line.trim()
+                    }
+                    lineUrl == url
+                }
+                
+                if (urlFound) {
+                    // Trovato! Restituisci il nome del file senza .status
+                    val fileName = statusFile.name.removeSuffix(".status")
+                    android.util.Log.d("DownloadManager", "✅ File trovato per URL: $fileName")
+                    return fileName
+                }
+            }
+            
+            null
+        } catch (e: Exception) {
+            android.util.Log.e("DownloadManager", "❌ Errore nella ricerca file per URL: ${e.message}", e)
+            null
+        }
+    }
+    
+    /**
      * Verifica se un URL specifico è presente nel file .status
      * Formato file multi-riga: una riga per ogni URL
      * Ogni riga: <URL> o <URL>\t<PATH_ESTRAZIONE>
@@ -647,15 +693,24 @@ class DownloadManager @Inject constructor(
         }
         
         // SECONDO: Verifica se il file è stato scaricato
+        // Prima prova con il nome originale, poi cerca per URL in tutti i file .status
+        var actualFileName = fileName
         if (!isFileDownloaded(fileName)) {
-            return Pair(
-                com.tottodrillo.domain.model.DownloadStatus.Idle,
-                com.tottodrillo.domain.model.ExtractionStatus.Idle
-            )
+            // Il file con il nome originale non esiste, cerca per URL in tutti i file .status
+            android.util.Log.d("DownloadManager", "🔍 File con nome originale non trovato, cerco per URL: ${link.url}")
+            actualFileName = findFileNameByUrl(link.url)
+            if (actualFileName == null) {
+                android.util.Log.d("DownloadManager", "ℹ️ Nessun file trovato per URL: ${link.url}")
+                return Pair(
+                    com.tottodrillo.domain.model.DownloadStatus.Idle,
+                    com.tottodrillo.domain.model.ExtractionStatus.Idle
+                )
+            }
+            android.util.Log.d("DownloadManager", "✅ File trovato con nome diverso: $actualFileName (originale: $fileName)")
         }
         
         // Verifica se l'URL di questo link è presente nel file .status
-        if (!isUrlInStatusFile(fileName, link.url)) {
+        if (!isUrlInStatusFile(actualFileName, link.url)) {
             android.util.Log.d("DownloadManager", "ℹ️ File trovato ma URL non presente nel file .status: link URL=${link.url}")
             return Pair(
                 com.tottodrillo.domain.model.DownloadStatus.Idle,
@@ -665,7 +720,7 @@ class DownloadManager @Inject constructor(
         
         // URL presente nel file .status, questo è il link scaricato
         val config = configRepository.downloadConfig.first()
-        val filePath = File(config.downloadPath, fileName).absolutePath
+        val filePath = File(config.downloadPath, actualFileName).absolutePath
         val downloadStatus = com.tottodrillo.domain.model.DownloadStatus.Completed(filePath, link.name)
         android.util.Log.i("DownloadManager", "✅ Link scaricato trovato: $filePath")
         
@@ -685,7 +740,7 @@ class DownloadManager @Inject constructor(
                 android.util.Log.w("DownloadManager", "⚠️ Errore estrazione trovato: $extractionError")
                 com.tottodrillo.domain.model.ExtractionStatus.Failed(extractionError)
             } else {
-                val extractionPath = getExtractionPath(fileName, link.url)
+                val extractionPath = getExtractionPath(actualFileName, link.url)
                 if (extractionPath != null) {
                     // Conta i file estratti
                     val extractedDir = File(extractionPath)
