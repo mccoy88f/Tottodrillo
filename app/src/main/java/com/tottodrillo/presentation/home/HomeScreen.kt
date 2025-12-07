@@ -216,11 +216,19 @@ private fun HomeContent(
         }
 
         // ROM in evidenza
-        // TEMPORANEAMENTE DISATTIVATO
-        /*
-        if (uiState.featuredRoms.isNotEmpty()) {
-            SectionHeader(title = stringResource(R.string.home_featured))
-
+        SectionHeader(title = stringResource(R.string.home_featured))
+        
+        if (uiState.isLoadingFeatured) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator()
+            }
+        } else if (uiState.featuredRoms.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -238,15 +246,24 @@ private fun HomeContent(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
-        */
+
+        Spacer(modifier = Modifier.height(24.dp))
 
         // ROM recenti
-        if (uiState.recentRoms.isNotEmpty()) {
-            SectionHeader(title = stringResource(R.string.home_recent))
-
+        SectionHeader(title = stringResource(R.string.home_recent))
+        
+        if (uiState.isLoadingRecent) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator()
+            }
+        } else if (uiState.recentRoms.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -263,14 +280,24 @@ private fun HomeContent(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
 
-        // ROM preferiti
-        if (uiState.favoriteRoms.isNotEmpty()) {
-            SectionHeader(title = stringResource(R.string.home_favorites))
+        Spacer(modifier = Modifier.height(24.dp))
 
+        // ROM preferiti
+        SectionHeader(title = stringResource(R.string.home_favorites))
+        
+        if (uiState.isLoadingFavorites) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator()
+            }
+        } else if (uiState.favoriteRoms.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -287,9 +314,9 @@ private fun HomeContent(
                     )
                 }
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
+
+        Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

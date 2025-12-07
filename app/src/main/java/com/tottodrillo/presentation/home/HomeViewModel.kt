@@ -65,8 +65,7 @@ class HomeViewModel @Inject constructor(
                     }
                     
                     // Carica alcuni ROM in evidenza
-                    // TEMPORANEAMENTE DISATTIVATO
-                    // loadFeaturedRoms()
+                    loadFeaturedRoms()
                     // Carica preferiti
                     loadFavoriteRoms()
                     // Carica ROM recenti
@@ -89,27 +88,39 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Carica ROM in evidenza (ad esempio, giochi popolari)
-     * TEMPORANEAMENTE DISATTIVATO - Non chiamare questa funzione
      */
-    private fun loadFeaturedRoms() {
-        // DISATTIVATO - Non fare nulla per evitare chiamate automatiche a searchRoms
-        // viewModelScope.launch {
-        //     // Cerca ROM senza query specifica per mostrare risultati generali/popolari
-        //     val filters = SearchFilters(query = "")
-        //     
-        //     when (val result = repository.searchRoms(filters, page = 1)) {
-        //         is NetworkResult.Success -> {
-        //             _uiState.update { state ->
-        //                 state.copy(featuredRoms = result.data.take(10))
-        //             }
-        //         }
-        //         is NetworkResult.Error -> {
-        //             // Errore silenzioso per ROM in evidenza
-        //             // Non blocca l'interfaccia
-        //         }
-        //         is NetworkResult.Loading -> {}
-        //     }
-        // }
+    fun loadFeaturedRoms() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingFeatured = true) }
+            try {
+                // Cerca ROM senza query specifica per mostrare risultati generali/popolari
+                val filters = SearchFilters(query = "")
+                
+                when (val result = repository.searchRoms(filters, page = 1)) {
+                    is NetworkResult.Success -> {
+                        _uiState.update { state ->
+                            state.copy(
+                                featuredRoms = result.data.take(10),
+                                isLoadingFeatured = false
+                            )
+                        }
+                    }
+                    is NetworkResult.Error -> {
+                        _uiState.update { it.copy(isLoadingFeatured = false) }
+                        // Errore silenzioso per ROM in evidenza
+                        // Non blocca l'interfaccia
+                    }
+                    is NetworkResult.Loading -> {
+                        // Stato già impostato
+                    }
+                }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingFeatured = false) }
+                android.util.Log.e("HomeViewModel", "Errore nel caricamento ROM in evidenza", e)
+            }
+        }
     }
 
     /**
@@ -119,15 +130,20 @@ class HomeViewModel @Inject constructor(
         // Cancella il job precedente se esiste
         favoriteRomsJob?.cancel()
         favoriteRomsJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingFavorites = true) }
             try {
                 val favorites = repository.getFavoriteRoms().first()
                 _uiState.update { state ->
-                    state.copy(favoriteRoms = favorites.take(10))
+                    state.copy(
+                        favoriteRoms = favorites.take(10),
+                        isLoadingFavorites = false
+                    )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Cancellazione normale, non loggare
                 throw e
             } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingFavorites = false) }
                 // Errore silenzioso per preferiti
                 android.util.Log.e("HomeViewModel", "Errore nel caricamento preferiti", e)
             }
@@ -141,15 +157,20 @@ class HomeViewModel @Inject constructor(
         // Cancella il job precedente se esiste
         recentRomsJob?.cancel()
         recentRomsJob = viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingRecent = true) }
             try {
                 val recent = repository.getRecentRoms().first()
                 _uiState.update { state ->
-                    state.copy(recentRoms = recent)
+                    state.copy(
+                        recentRoms = recent,
+                        isLoadingRecent = false
+                    )
                 }
             } catch (e: kotlinx.coroutines.CancellationException) {
                 // Cancellazione normale, non loggare
                 throw e
             } catch (e: Exception) {
+                _uiState.update { it.copy(isLoadingRecent = false) }
                 // Errore silenzioso per ROM recenti
                 android.util.Log.e("HomeViewModel", "Errore nel caricamento ROM recenti", e)
             }

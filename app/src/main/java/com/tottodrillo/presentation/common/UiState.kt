@@ -26,6 +26,9 @@ data class HomeUiState(
     val recentRoms: List<Rom> = emptyList(),
     val recentPlatforms: List<PlatformInfo> = emptyList(),
     val isLoading: Boolean = false,
+    val isLoadingFeatured: Boolean = false,
+    val isLoadingFavorites: Boolean = false,
+    val isLoadingRecent: Boolean = false,
     val error: String? = null
 )
 
