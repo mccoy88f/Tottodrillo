@@ -875,7 +875,13 @@ class RomRepositoryImpl @Inject constructor(
                     val installedSources = sourceManager.getInstalledSources()
                     val source = installedSources.find { it.id == sourceId }
                     source?.installPath?.let { installPath ->
-                        val placeholderFile = File(installPath, imagePath)
+                        // Rimuovi il prefisso sourceId/ se presente nel percorso (es. "switchroms/placeholder.png" -> "placeholder.png")
+                        val cleanPath = if (imagePath.startsWith("$sourceId/")) {
+                            imagePath.removePrefix("$sourceId/")
+                        } else {
+                            imagePath
+                        }
+                        val placeholderFile = File(installPath, cleanPath)
                         if (placeholderFile.exists()) {
                             val fileUri = android.net.Uri.fromFile(placeholderFile).toString()
                             placeholderUrls.add(fileUri)

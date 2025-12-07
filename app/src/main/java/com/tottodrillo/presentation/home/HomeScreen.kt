@@ -84,11 +84,8 @@ fun HomeScreen(
         }
     }
     
-    // Ricarica anche quando la schermata diventa visibile
-    LaunchedEffect(Unit) {
-        viewModel.loadFavoriteRoms()
-        viewModel.loadRecentRoms()
-    }
+    // NON ricaricare favorite/recenti qui - vengono già caricate in loadHomeData()
+    // Questo evitava chiamate multiple quando si naviga alla ROM detail
     
     // Cancella i job quando si naviga via dalla schermata
     DisposableEffect(Unit) {
