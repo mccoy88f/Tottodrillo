@@ -16,6 +16,10 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Snackbar
+import android.widget.Toast
 import com.tottodrillo.domain.model.DownloadLink
 
 /**
@@ -32,6 +36,7 @@ fun WebViewDownloadDialog(
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    val snackbarHostState = remember { SnackbarHostState() }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -118,6 +123,7 @@ fun WebViewDownloadDialog(
                                         super.onPageStarted(view, url, favicon)
                                         canGoBack = view?.canGoBack() ?: false
                                     }
+                                    
 
                                     override fun onReceivedError(
                                         view: WebView?,
