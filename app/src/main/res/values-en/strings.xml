@@ -204,5 +204,9 @@
     <string name="sources_installing_default">Installing…</string>
     <string name="sources_install_info">You can download official sources from the project website</string>
     <string name="sources_no_sources_info">To use the app, you need to install at least one source. Sources are ZIP packages that contain the configuration to access ROM databases.</string>
+    <string name="sources_check_updates">Check for updates</string>
+    <string name="sources_updates_available">%1$d updates available</string>
+    <string name="sources_update_auto">Update automatically</string>
+    <string name="sources_changelog">Changelog</string>
 </resources>
 

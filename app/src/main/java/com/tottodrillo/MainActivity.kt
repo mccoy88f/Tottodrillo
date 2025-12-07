@@ -39,6 +39,7 @@ import androidx.core.content.PermissionChecker
 import com.tottodrillo.R
 import com.tottodrillo.data.repository.DownloadConfigRepository
 import com.tottodrillo.domain.manager.PlatformManager
+import com.tottodrillo.domain.model.SourcesVersionsResponse
 import com.tottodrillo.domain.repository.RomRepository
 import com.tottodrillo.presentation.downloads.DownloadsViewModel
 import com.tottodrillo.presentation.navigation.TottodrilloNavGraph
@@ -603,42 +604,76 @@ class MainActivity : ComponentActivity() {
      */
     /**
      * Scarica e installa le sorgenti predefinite
-     * Legge i link dal file sources.list nel repository Tottodrillo-Source
+     * Legge le informazioni dal file sources-versions.json nel repository Tottodrillo-Source
      */
     private suspend fun installDefaultSources() = withContext(Dispatchers.IO) {
-        val sourcesListUrl = "https://raw.githubusercontent.com/mccoy88f/Tottodrillo-Source/refs/heads/main/sources.list"
+        val sourcesVersionsUrl = "https://raw.githubusercontent.com/mccoy88f/Tottodrillo-Source/refs/heads/main/sources-versions.json"
         
         try {
-            // Scarica il file sources.list
+            // Scarica il file sources-versions.json
             val listRequest = Request.Builder()
-                .url(sourcesListUrl)
+                .url(sourcesVersionsUrl)
+                .header("Accept", "application/json")
                 .build()
             
             val listResponse = okHttpClient.newCall(listRequest).execute()
             if (!listResponse.isSuccessful) {
-                android.util.Log.e("MainActivity", "❌ Errore download sources.list: ${listResponse.code}")
+                android.util.Log.e("MainActivity", "❌ Errore download sources-versions.json: ${listResponse.code}")
                 return@withContext
             }
             
-            // Leggi i link (uno per riga)
-            val sourcesList = listResponse.body?.string()?.lines()
-                ?.filter { it.isNotBlank() && it.startsWith("http") }
-                ?: emptyList()
-            
-            if (sourcesList.isEmpty()) {
-                android.util.Log.w("MainActivity", "⚠️ Nessun link trovato in sources.list")
+            // Leggi il JSON
+            val responseBody = listResponse.body?.string()
+            if (responseBody == null) {
+                android.util.Log.e("MainActivity", "❌ Response body null")
                 return@withContext
             }
             
-            android.util.Log.d("MainActivity", "📋 Trovati ${sourcesList.size} link in sources.list")
+            // Parse del JSON
+            val gson = com.google.gson.Gson()
+            val versionsResponse = gson.fromJson(
+                responseBody,
+                SourcesVersionsResponse::class.java
+            )
+            
+            val sources = versionsResponse.sources
+            if (sources.isEmpty()) {
+                android.util.Log.w("MainActivity", "⚠️ Nessuna sorgente trovata in sources-versions.json")
+                return@withContext
+            }
+            
+            android.util.Log.d("MainActivity", "📋 Trovate ${sources.size} sorgenti in sources-versions.json")
             
             val installer = com.tottodrillo.domain.manager.SourceInstaller(
                 this@MainActivity,
                 sourceManager
             )
             
+            // Verifica versione app corrente
+            val currentAppVersion = try {
+                val packageInfo = packageManager.getPackageInfo(
+                    packageName,
+                    android.content.pm.PackageManager.GET_META_DATA
+                )
+                packageInfo.versionName ?: "0.0.0"
+            } catch (e: Exception) {
+                "0.0.0"
+            }
+            
             // Scarica e installa ogni sorgente
-            for (url in sourcesList) {
+            for (sourceInfo in sources) {
+                // Verifica compatibilità con versione app
+                if (sourceInfo.minAppVersion != null) {
+                    if (!isVersionNewerOrEqual(currentAppVersion, sourceInfo.minAppVersion)) {
+                        android.util.Log.w(
+                            "MainActivity",
+                            "⚠️ Sorgente ${sourceInfo.id} richiede app versione ${sourceInfo.minAppVersion}, attuale: $currentAppVersion"
+                        )
+                        continue
+                    }
+                }
+                
+                val url = sourceInfo.downloadUrl
                 try {
                     android.util.Log.d("MainActivity", "📥 Scaricando sorgente da: $url")
                     
@@ -653,12 +688,11 @@ class MainActivity : ComponentActivity() {
                         continue
                     }
                     
-                    // Estrai il nome della sorgente dall'URL (es. crocdb-source.zip -> crocdb)
-                    val fileName = url.substringAfterLast("/")
-                    val sourceName = fileName.removeSuffix("-source.zip").removeSuffix(".zip")
+                    // Usa l'ID della sorgente dal JSON
+                    val sourceId = sourceInfo.id
                     
                     // Salva in un file temporaneo
-                    val tempFile = File(this@MainActivity.cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
+                    val tempFile = File(this@MainActivity.cacheDir, "source_${sourceId}_${System.currentTimeMillis()}.zip")
                     response.body?.byteStream()?.use { input ->
                         tempFile.outputStream().use { output ->
                             input.copyTo(output)
@@ -674,7 +708,7 @@ class MainActivity : ComponentActivity() {
                             sourceManager.setSourceEnabled(metadata.id, true)
                         },
                         onFailure = { error ->
-                            android.util.Log.e("MainActivity", "❌ Errore installazione sorgente $sourceName", error)
+                            android.util.Log.e("MainActivity", "❌ Errore installazione sorgente $sourceId", error)
                         }
                     )
                     
@@ -685,8 +719,32 @@ class MainActivity : ComponentActivity() {
                 }
             }
         } catch (e: Exception) {
-            android.util.Log.e("MainActivity", "❌ Errore durante download sources.list", e)
+            android.util.Log.e("MainActivity", "❌ Errore durante download sources-versions.json", e)
         }
+    }
+    
+    /**
+     * Verifica se una versione è più recente o uguale a un'altra
+     */
+    private fun isVersionNewerOrEqual(version1: String, version2: String): Boolean {
+        if (version1 == version2) return true
+        
+        val parts1 = version1.split(".").mapNotNull { it.toIntOrNull() }
+        val parts2 = version2.split(".").mapNotNull { it.toIntOrNull() }
+        
+        val maxLength = maxOf(parts1.size, parts2.size)
+        
+        for (i in 0 until maxLength) {
+            val part1 = parts1.getOrElse(i) { 0 }
+            val part2 = parts2.getOrElse(i) { 0 }
+            
+            when {
+                part1 > part2 -> return true
+                part1 < part2 -> return false
+            }
+        }
+        
+        return false
     }
     
     /**

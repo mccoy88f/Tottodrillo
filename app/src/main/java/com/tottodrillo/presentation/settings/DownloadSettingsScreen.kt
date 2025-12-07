@@ -72,8 +72,17 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import com.tottodrillo.R
 import com.tottodrillo.presentation.downloads.DownloadsViewModel
 import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
+import com.tottodrillo.presentation.settings.SourceUpdateManagerEntryPoint
 import com.tottodrillo.presentation.settings.RomRepositoryEntryPoint
 import dagger.hilt.android.EntryPointAccessors
+import com.tottodrillo.domain.manager.SourceInstaller
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import java.io.File
 import dagger.hilt.android.components.ActivityComponent
 
 /**
@@ -125,6 +134,79 @@ fun DownloadSettingsScreen(
             }
         } catch (e: Exception) {
             null
+        }
+    }
+    
+    val sourceUpdateManager = remember {
+        try {
+            val activity = context as? androidx.activity.ComponentActivity
+            if (activity != null) {
+                EntryPointAccessors.fromActivity(
+                    activity,
+                    SourceUpdateManagerEntryPoint::class.java
+                ).sourceUpdateManager()
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            null
+        }
+    }
+    
+    // Scope per operazioni asincrone
+    val settingsScope = remember {
+        CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    }
+    
+    // Funzione per installare aggiornamento da URL
+    val onUpdateSourceFromUrl: (String) -> Unit = { url ->
+        settingsScope.launch(kotlinx.coroutines.Dispatchers.IO) {
+            try {
+                // Ottieni OkHttpClient tramite EntryPoint
+                val activity = context as? androidx.activity.ComponentActivity
+                if (activity == null || sourceManager == null) return@launch
+                
+                // Crea un OkHttpClient semplice per il download
+                val okHttpClient = okhttp3.OkHttpClient.Builder()
+                    .connectTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .readTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+                    .build()
+                    
+                val request = Request.Builder().url(url).build()
+                val response = okHttpClient.newCall(request).execute()
+                
+                if (!response.isSuccessful) {
+                    android.util.Log.e("DownloadSettingsScreen", "Errore download sorgente: ${response.code}")
+                    return@launch
+                }
+                
+                // Salva in file temporaneo
+                val tempFile = File(context.cacheDir, "source_update_${System.currentTimeMillis()}.zip")
+                response.body?.byteStream()?.use { input ->
+                    tempFile.outputStream().use { output ->
+                        input.copyTo(output)
+                    }
+                }
+                
+                // Installa la sorgente
+                val installer = SourceInstaller(context, sourceManager!!)
+                val result = installer.installFromZip(tempFile)
+                
+                result.fold(
+                    onSuccess = {
+                        android.util.Log.d("DownloadSettingsScreen", "✅ Sorgente aggiornata: ${it.id}")
+                        onSourcesChanged()
+                    },
+                    onFailure = { error ->
+                        android.util.Log.e("DownloadSettingsScreen", "❌ Errore aggiornamento sorgente", error)
+                    }
+                )
+                
+                // Pulisci file temporaneo
+                tempFile.delete()
+            } catch (e: Exception) {
+                android.util.Log.e("DownloadSettingsScreen", "Errore aggiornamento sorgente", e)
+            }
         }
     }
 
@@ -570,6 +652,7 @@ fun DownloadSettingsScreen(
                 
                 SourcesListSection(
                     sourceManager = it,
+                    sourceUpdateManager = sourceUpdateManager,
                     externalRefreshTrigger = refreshTrigger,
                     onSourcesChanged = {
                         // Invalida la cache delle piattaforme e regioni
@@ -589,6 +672,7 @@ fun DownloadSettingsScreen(
                         // Apri il file picker per selezionare il nuovo ZIP
                         onInstallSource()
                     },
+                    onUpdateSourceFromUrl = onUpdateSourceFromUrl,
                     onInstallDefaultSources = {
                         onInstallDefaultSources()
                         // Ricarica dopo l'installazione

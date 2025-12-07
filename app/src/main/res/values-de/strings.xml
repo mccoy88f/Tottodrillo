@@ -193,5 +193,9 @@
     <string name="sources_installing_default">Installation läuft…</string>
     <string name="sources_install_info">Sie können offizielle Quellen von der Projektwebsite herunterladen</string>
     <string name="sources_no_sources_info">Um die App zu verwenden, müssen Sie mindestens eine Quelle installieren. Quellen sind ZIP-Pakete, die die Konfiguration zum Zugriff auf ROM-Datenbanken enthalten.</string>
+    <string name="sources_check_updates">Auf Updates prüfen</string>
+    <string name="sources_updates_available">%1$d Updates verfügbar</string>
+    <string name="sources_update_auto">Automatisch aktualisieren</string>
+    <string name="sources_changelog">Änderungsprotokoll</string>
 </resources>
 

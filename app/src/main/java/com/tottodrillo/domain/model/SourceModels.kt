@@ -45,3 +45,35 @@ data class InstalledSourceConfig(
     val isEnabled: Boolean = true
 )
 
+/**
+ * Informazioni su una versione disponibile di una sorgente dal file sources-versions.json
+ */
+data class SourceVersionInfo(
+    val id: String,
+    val version: String,
+    val downloadUrl: String,
+    val changelog: String? = null,
+    val minAppVersion: String? = null,
+    val releaseDate: String? = null
+)
+
+/**
+ * Risposta del file sources-versions.json
+ */
+data class SourcesVersionsResponse(
+    val sources: List<SourceVersionInfo>
+)
+
+/**
+ * Informazioni su un aggiornamento disponibile per una sorgente
+ */
+data class SourceUpdate(
+    val sourceId: String,
+    val sourceName: String,
+    val currentVersion: String,
+    val availableVersion: String,
+    val downloadUrl: String,
+    val changelog: String? = null,
+    val minAppVersion: String? = null
+)
+

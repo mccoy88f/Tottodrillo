@@ -193,5 +193,9 @@
     <string name="sources_installing_default">Instalando…</string>
     <string name="sources_install_info">Puedes descargar fuentes oficiales desde el sitio web del proyecto</string>
     <string name="sources_no_sources_info">Para usar la aplicación, necesitas instalar al menos una fuente. Las fuentes son paquetes ZIP que contienen la configuración para acceder a bases de datos de ROM.</string>
+    <string name="sources_check_updates">Buscar actualizaciones</string>
+    <string name="sources_updates_available">%1$d actualizaciones disponibles</string>
+    <string name="sources_update_auto">Actualizar automáticamente</string>
+    <string name="sources_changelog">Registro de cambios</string>
 </resources>
 

@@ -193,5 +193,9 @@
     <string name="sources_installing_default">インストール中…</string>
     <string name="sources_install_info">プロジェクトのWebサイトから公式ソースをダウンロードできます</string>
     <string name="sources_no_sources_info">アプリを使用するには、少なくとも1つのソースをインストールする必要があります。ソースは、ROMデータベースにアクセスするための設定を含むZIPパッケージです。</string>
+    <string name="sources_check_updates">更新を確認</string>
+    <string name="sources_updates_available">%1$d件の更新が利用可能</string>
+    <string name="sources_update_auto">自動更新</string>
+    <string name="sources_changelog">変更履歴</string>
 </resources>
 

@@ -193,5 +193,9 @@
     <string name="sources_installing_default">正在安装…</string>
     <string name="sources_install_info">您可以从项目网站下载官方来源</string>
     <string name="sources_no_sources_info">要使用应用，您需要安装至少一个来源。来源是包含用于访问ROM数据库配置的ZIP包。</string>
+    <string name="sources_check_updates">检查更新</string>
+    <string name="sources_updates_available">%1$d个更新可用</string>
+    <string name="sources_update_auto">自动更新</string>
+    <string name="sources_changelog">更新日志</string>
 </resources>
 
