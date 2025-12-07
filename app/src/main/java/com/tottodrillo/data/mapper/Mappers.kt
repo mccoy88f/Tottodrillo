@@ -24,10 +24,10 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     
     // Costruisci la lista coverUrls: prima box (se presente), poi screen (se presente)
     val coverUrls = mutableListOf<String>()
-    if (boxImage != null) {
+    if (boxImage != null && boxImage.isNotBlank()) {
         coverUrls.add(boxImage)
     }
-    if (screenImage != null) {
+    if (screenImage != null && screenImage.isNotBlank()) {
         coverUrls.add(screenImage)
     }
     

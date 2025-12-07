@@ -167,9 +167,11 @@ class RomRepositoryImpl @Inject constructor(
                 var allCoverUrls = roms
                     .flatMap { rom -> 
                         // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
-                        rom.coverUrls
+                        // Filtra null e stringhe vuote
+                        rom.coverUrls.filter { it.isNotBlank() }
                     }
                     .distinct()
+                    .filter { it.isNotBlank() } // Doppio filtro per sicurezza
                 
                 android.util.Log.d("RomRepositoryImpl", "   allCoverUrls iniziale: $allCoverUrls")
                 

@@ -214,10 +214,23 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
         
         print(f"🔗 [get_entry] Recupero dettagli: {page_url}", file=sys.stderr)
         
+        # Verifica che lo slug sia valido per SwitchRoms (non dovrebbe contenere riferimenti ad altre piattaforme)
+        # SwitchRoms ha solo ROM per Nintendo Switch, quindi se lo slug contiene riferimenti ad altre piattaforme,
+        # probabilmente è un errore e dovremmo restituire None
+        if not slug.startswith("http") and ("n3ds" in slug.lower() or "wii" in slug.lower() or "ds" in slug.lower() or "nes" in slug.lower()):
+            print(f"⚠️ [get_entry] Slug non valido per SwitchRoms (contiene riferimenti ad altre piattaforme): {slug}", file=sys.stderr)
+            return json.dumps({"entry": None})
+        
         # Fai la richiesta alla pagina ROM
         session = requests.Session()
         headers = get_browser_headers()
         response = session.get(page_url, headers=headers, timeout=15)
+        
+        # Se la pagina non esiste (404), probabilmente lo slug non è valido per SwitchRoms
+        if response.status_code == 404:
+            print(f"⚠️ [get_entry] Pagina non trovata (404) per: {page_url}", file=sys.stderr)
+            return json.dumps({"entry": None})
+        
         response.raise_for_status()
         
         soup = BeautifulSoup(response.content, 'html.parser')
@@ -345,10 +358,11 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                         # Nome del link
                         link_name = link_text if link_text else f"{format_type or 'ROM'} Download"
                         
-                        # Estrai l'URL finale "click here" dalla pagina di download
+                        # Estrai SEMPRE l'URL finale "click here" dalla pagina di download
                         # Il WebView aprirà direttamente questo URL invece della pagina intermedia
                         final_url = None
                         try:
+                            print(f"🔍 [get_entry] Estrazione URL finale da: {link_url}", file=sys.stderr)
                             link_response = session.get(link_url, headers=get_browser_headers(referer=download_url), timeout=10, allow_redirects=True)
                             link_response.raise_for_status()
                             link_soup = BeautifulSoup(link_response.content, 'html.parser')
@@ -357,6 +371,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                             # Cerca prima per rel="noopener" o "noopener nofollow"
                             click_here_link = link_soup.find('a', href=re.compile(r'https?://'), rel=lambda x: x and 'noopener' in x.lower())
                             if not click_here_link:
+                                print(f"⚠️ [get_entry] Link con rel='noopener' non trovato, provo fallback...", file=sys.stderr)
                                 # Fallback: cerca qualsiasi link esterno nella sezione aligncenter
                                 align_center = link_soup.find('p', class_='aligncenter')
                                 if align_center:
@@ -365,20 +380,37 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
                             if click_here_link:
                                 final_url = click_here_link.get('href', '')
                                 if final_url and final_url.startswith('http'):
-                                    print(f"✅ [get_entry] URL finale estratto: {final_url[:80]}...", file=sys.stderr)
+                                    print(f"✅ [get_entry] URL finale estratto: {final_url[:100]}...", file=sys.stderr)
                                 else:
+                                    print(f"⚠️ [get_entry] URL estratto non valido: {final_url}", file=sys.stderr)
                                     final_url = None
+                            else:
+                                print(f"⚠️ [get_entry] Link 'click here' non trovato nella pagina", file=sys.stderr)
+                                # Debug: stampa alcuni link trovati nella pagina
+                                all_links = link_soup.find_all('a', href=re.compile(r'https?://'))
+                                print(f"🔍 [get_entry] Trovati {len(all_links)} link esterni nella pagina", file=sys.stderr)
+                                if all_links:
+                                    for i, link in enumerate(all_links[:3]):  # Primi 3 per debug
+                                        href = link.get('href', '')
+                                        rel = link.get('rel', [])
+                                        print(f"  Link {i+1}: {href[:80]}... (rel: {rel})", file=sys.stderr)
                         except Exception as e:
-                            print(f"⚠️ [get_entry] Impossibile estrarre URL finale per {link_url}: {e}", file=sys.stderr)
+                            print(f"❌ [get_entry] Errore estrazione URL finale per {link_url}: {e}", file=sys.stderr)
+                            import traceback
+                            print(f"   Traceback: {traceback.format_exc()}", file=sys.stderr)
                         
                         # Per SwitchRoms, apriamo il WebView direttamente sul link "click here" se disponibile
-                        # Se non disponibile, apriamo la pagina intermedia
+                        # Se non disponibile, usiamo la pagina intermedia come fallback
                         # Il WebView intercetterà il download quando parte
+                        download_url_to_use = final_url if final_url else link_url
+                        if not final_url:
+                            print(f"⚠️ [get_entry] Usando URL intermedio come fallback: {link_url}", file=sys.stderr)
+                        
                         download_links.append({
                             "name": link_name,
                             "type": "ROM",
                             "format": format_type or "unknown",
-                            "url": final_url if final_url else link_url,  # Usa URL finale se disponibile, altrimenti intermedio
+                            "url": download_url_to_use,  # Usa URL finale se disponibile, altrimenti intermedio
                             "size": None,
                             "size_str": size_str,
                             "requires_webview": True  # Sempre true per SwitchRoms: apri WebView per intercettare download
