@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
 import javax.inject.Inject
 
 /**
@@ -28,8 +29,22 @@ class HomeViewModel @Inject constructor(
     private val _uiState = MutableStateFlow(HomeUiState())
     val uiState: StateFlow<HomeUiState> = _uiState.asStateFlow()
 
+    // Traccia i job per poterli cancellare quando si naviga via
+    private var favoriteRomsJob: Job? = null
+    private var recentRomsJob: Job? = null
+
     init {
         loadHomeData()
+    }
+    
+    /**
+     * Cancella tutti i job attivi (chiamato quando si naviga via dalla home)
+     */
+    fun cancelActiveJobs() {
+        favoriteRomsJob?.cancel()
+        recentRomsJob?.cancel()
+        favoriteRomsJob = null
+        recentRomsJob = null
     }
 
     /**
@@ -53,11 +68,9 @@ class HomeViewModel @Inject constructor(
                     // TEMPORANEAMENTE DISATTIVATO
                     // loadFeaturedRoms()
                     // Carica preferiti
-                    // TEMPORANEAMENTE DISATTIVATO - Evita chiamate a getRomBySlug all'avvio
-                    // loadFavoriteRoms()
+                    loadFavoriteRoms()
                     // Carica ROM recenti
-                    // TEMPORANEAMENTE DISATTIVATO - Evita chiamate a getRomBySlug all'avvio
-                    // loadRecentRoms()
+                    loadRecentRoms()
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { 
@@ -103,12 +116,17 @@ class HomeViewModel @Inject constructor(
      * Carica ROM preferiti
      */
     fun loadFavoriteRoms() {
-        viewModelScope.launch {
+        // Cancella il job precedente se esiste
+        favoriteRomsJob?.cancel()
+        favoriteRomsJob = viewModelScope.launch {
             try {
                 val favorites = repository.getFavoriteRoms().first()
                 _uiState.update { state ->
                     state.copy(favoriteRoms = favorites.take(10))
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancellazione normale, non loggare
+                throw e
             } catch (e: Exception) {
                 // Errore silenzioso per preferiti
                 android.util.Log.e("HomeViewModel", "Errore nel caricamento preferiti", e)
@@ -120,12 +138,17 @@ class HomeViewModel @Inject constructor(
      * Carica ROM recenti
      */
     fun loadRecentRoms() {
-        viewModelScope.launch {
+        // Cancella il job precedente se esiste
+        recentRomsJob?.cancel()
+        recentRomsJob = viewModelScope.launch {
             try {
                 val recent = repository.getRecentRoms().first()
                 _uiState.update { state ->
                     state.copy(recentRoms = recent)
                 }
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                // Cancellazione normale, non loggare
+                throw e
             } catch (e: Exception) {
                 // Errore silenzioso per ROM recenti
                 android.util.Log.e("HomeViewModel", "Errore nel caricamento ROM recenti", e)
