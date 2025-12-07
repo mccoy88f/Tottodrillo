@@ -56,6 +56,8 @@ fun WebViewDownloadDialog(
                 // Riferimento al WebView per navigazione indietro
                 var webViewRef by remember { mutableStateOf<WebView?>(null) }
                 var canGoBack by remember { mutableStateOf(false) }
+                var originalUrl by remember { mutableStateOf<String?>(null) }
+                var popupOpen by remember { mutableStateOf(false) }
                 
                 // Header con titolo, pulsante indietro e pulsante chiudi
                 Row(
@@ -116,78 +118,154 @@ fun WebViewDownloadDialog(
                                         isUserGesture: Boolean,
                                         resultMsg: android.os.Message?
                                     ): Boolean {
-                                        // Crea una nuova WebView per il popup (in background)
-                                        val newWebView = WebView(context)
-                                        newWebView.settings.javaScriptEnabled = true
-                                        newWebView.settings.domStorageEnabled = true
+                                        android.util.Log.d("WebViewDownloadDialog", "🔔 Popup richiesto, imposto flag")
+                                        popupOpen = true
                                         
-                                        // Intercetta il download anche dal popup
-                                        newWebView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-                                            // Chiudi il popup
-                                            (view?.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                        // Sposta il lavoro pesante fuori dal main thread per evitare frame saltati
+                                        android.os.Handler(android.os.Looper.getMainLooper()).post {
+                                            // Crea una nuova WebView per il popup (in background, invisibile)
+                                            val newWebView = WebView(context)
+                                            newWebView.settings.javaScriptEnabled = true
+                                            newWebView.settings.domStorageEnabled = true
+                                            newWebView.visibility = android.view.View.GONE // Nascondi il popup
                                             
-                                            // Estrai il nome del file e avvia il download
-                                            var extractedFileName: String? = null
-                                            if (contentDisposition != null) {
-                                                val filenameMatch = Regex("filename[*]?=['\"]?([^'\"\\s;]+)['\"]?", RegexOption.IGNORE_CASE).find(contentDisposition)
-                                                if (filenameMatch != null) {
-                                                    extractedFileName = filenameMatch.groupValues[1]
-                                                    try {
-                                                        extractedFileName = java.net.URLDecoder.decode(extractedFileName, "UTF-8")
-                                                    } catch (e: Exception) {}
+                                            // Intercetta la navigazione del popup per caricare l'URL nel popup invece che nel principale
+                                            newWebView.webViewClient = object : WebViewClient() {
+                                                override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                                    // Carica l'URL nel popup
+                                                    request?.url?.let { popupUrl ->
+                                                        android.util.Log.d("WebViewDownloadDialog", "🔗 Popup naviga a: $popupUrl")
+                                                        view?.loadUrl(popupUrl.toString())
+                                                    }
+                                                    return true // Intercetta la navigazione
+                                                }
+                                                
+                                                override fun onPageFinished(view: WebView?, url: String?) {
+                                                    super.onPageFinished(view, url)
+                                                    android.util.Log.d("WebViewDownloadDialog", "✅ Popup caricato: $url")
                                                 }
                                             }
                                             
-                                            if (extractedFileName == null) {
+                                            // Intercetta il download anche dal popup
+                                            newWebView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                                android.util.Log.d("WebViewDownloadDialog", "📥 Download intercettato dal popup: $url")
+                                                
+                                                // Chiudi il popup e resetta il flag
                                                 try {
-                                                    val urlPath = java.net.URL(url).path
-                                                    val lastSegment = urlPath.substringAfterLast('/')
-                                                    if (lastSegment.isNotEmpty() && lastSegment.contains('.')) {
-                                                        extractedFileName = lastSegment
+                                                    (newWebView.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                                } catch (e: Exception) {
+                                                    // Popup già chiuso
+                                                }
+                                                popupOpen = false
+                                                
+                                                // Estrai il nome del file e avvia il download
+                                                var extractedFileName: String? = null
+                                                if (contentDisposition != null) {
+                                                    val filenameMatch = Regex("filename[*]?=['\"]?([^'\"\\s;]+)['\"]?", RegexOption.IGNORE_CASE).find(contentDisposition)
+                                                    if (filenameMatch != null) {
+                                                        extractedFileName = filenameMatch.groupValues[1]
+                                                        try {
+                                                            extractedFileName = java.net.URLDecoder.decode(extractedFileName, "UTF-8")
+                                                        } catch (e: Exception) {}
                                                     }
-                                                } catch (e: Exception) {}
+                                                }
+                                                
+                                                if (extractedFileName == null) {
+                                                    try {
+                                                        val urlPath = java.net.URL(url).path
+                                                        val lastSegment = urlPath.substringAfterLast('/')
+                                                        if (lastSegment.isNotEmpty() && lastSegment.contains('.')) {
+                                                            extractedFileName = lastSegment
+                                                        }
+                                                    } catch (e: Exception) {}
+                                                }
+                                                
+                                                val fileName = extractedFileName // Estrai in una val locale per evitare smart cast issues
+                                                val updatedLink = if (fileName != null) {
+                                                    link.copy(name = fileName)
+                                                } else {
+                                                    link
+                                                }
+                                                
+                                                onDownloadUrlExtracted(url, updatedLink)
                                             }
                                             
-                                            val updatedLink = if (extractedFileName != null) {
-                                                link.copy(name = extractedFileName)
-                                            } else {
-                                                link
-                                            }
+                                            // Aggiungi il popup al parent (invisibile)
+                                            (view?.parent as? android.view.ViewGroup)?.addView(newWebView)
                                             
-                                            onDownloadUrlExtracted(url, updatedLink)
+                                            // Imposta la nuova WebView come destinazione del messaggio
+                                            val transport = resultMsg?.obj as? android.webkit.WebView.WebViewTransport
+                                            transport?.webView = newWebView
+                                            resultMsg?.sendToTarget()
+                                            
+                                            // Chiudi automaticamente il popup dopo 2 secondi e mostra toast
+                                            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                                try {
+                                                    (newWebView.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                                    android.util.Log.d("WebViewDownloadDialog", "🛑 Popup chiuso automaticamente")
+                                                } catch (e: Exception) {
+                                                    // Popup già chiuso
+                                                }
+                                                popupOpen = false
+                                                // Mostra toast per dire all'utente di ricliccare
+                                                Toast.makeText(context, "Popup chiuso. Ora puoi ricliccare su download", Toast.LENGTH_LONG).show()
+                                            }, 2000)
                                         }
-                                        
-                                        // Chiudi automaticamente il popup dopo 1 secondo
-                                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                                            try {
-                                                (view?.parent as? android.view.ViewGroup)?.removeView(newWebView)
-                                            } catch (e: Exception) {
-                                                // Popup già chiuso
-                                            }
-                                            // Mostra toast per dire all'utente di ricliccare
-                                            Toast.makeText(context, "Popup chiuso. Ora puoi ricliccare su download", Toast.LENGTH_LONG).show()
-                                        }, 1000)
-                                        
-                                        // Imposta la nuova WebView come destinazione del messaggio
-                                        val transport = resultMsg?.obj as? android.webkit.WebView.WebViewTransport
-                                        transport?.webView = newWebView
-                                        resultMsg?.sendToTarget()
                                         
                                         return true
                                     }
                                 })
                                 
                                 webViewClient = object : WebViewClient() {
+                                    override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
+                                        val currentUrl = view?.url
+                                        val newUrl = request?.url?.toString()
+                                        
+                                        android.util.Log.d("WebViewDownloadDialog", "🔗 Navigazione principale: $currentUrl -> $newUrl (popupOpen: $popupOpen)")
+                                        
+                                        // Se c'è un popup aperto e la navigazione è verso un URL diverso dall'originale, bloccala
+                                        if (popupOpen && newUrl != null && originalUrl != null && newUrl != originalUrl) {
+                                            android.util.Log.d("WebViewDownloadDialog", "🚫 Bloccata navigazione principale (popup aperto): $newUrl")
+                                            return true // Blocca la navigazione
+                                        }
+                                        
+                                        // Se è un link di download diretto, intercettalo
+                                        if (newUrl != null && (
+                                            newUrl.contains("sto.romsfast.com") || 
+                                            newUrl.contains("?token=") || 
+                                            newUrl.endsWith(".nsp") || 
+                                            newUrl.endsWith(".xci") || 
+                                            newUrl.endsWith(".zip") || 
+                                            newUrl.endsWith(".7z")
+                                        )) {
+                                            android.util.Log.d("WebViewDownloadDialog", "📥 Link download diretto intercettato: $newUrl")
+                                            onDownloadUrlExtracted(newUrl, link)
+                                            return true
+                                        }
+                                        
+                                        // Altrimenti, permetti la navigazione normale
+                                        return false
+                                    }
+                                    
                                     override fun onPageFinished(view: WebView?, url: String?) {
                                         super.onPageFinished(view, url)
                                         isLoading = false
                                         error = null
                                         canGoBack = view?.canGoBack() ?: false
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ Pagina principale caricata: $url")
                                     }
                                     
                                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                                         super.onPageStarted(view, url, favicon)
                                         canGoBack = view?.canGoBack() ?: false
+                                        
+                                        // Salva l'URL originale se non è già stato salvato
+                                        if (originalUrl == null && url != null) {
+                                            originalUrl = url
+                                            android.util.Log.d("WebViewDownloadDialog", "💾 URL originale salvato: $url")
+                                        }
+                                        
+                                        android.util.Log.d("WebViewDownloadDialog", "🔄 Navigazione principale iniziata: $url")
                                     }
                                     
 
@@ -252,6 +330,10 @@ fun WebViewDownloadDialog(
                                     }
                                 }
 
+                                // Imposta l'URL originale prima di caricare
+                                originalUrl = url
+                                android.util.Log.d("WebViewDownloadDialog", "💾 URL originale impostato: $url")
+                                
                                 loadUrl(url)
                             }
                         },
