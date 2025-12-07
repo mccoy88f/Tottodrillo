@@ -734,7 +734,7 @@ class DownloadManager @Inject constructor(
             com.tottodrillo.domain.model.ExtractionStatus.InProgress(progressPercent, currentFile)
         } else {
             // Verifica se è stato estratto o se c'è stato un errore (per questo URL specifico)
-            val extractionError = getExtractionError(fileName, link.url)
+            val extractionError = getExtractionError(actualFileName, link.url)
             if (extractionError != null) {
                 // C'è stato un errore durante l'estrazione
                 android.util.Log.w("DownloadManager", "⚠️ Errore estrazione trovato: $extractionError")
