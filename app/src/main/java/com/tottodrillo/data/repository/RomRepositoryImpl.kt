@@ -521,8 +521,8 @@ class RomRepositoryImpl @Inject constructor(
         )
     }
 
-    override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {
-        android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Richiesta ROM per slug: $slug")
+    override suspend fun getRomBySlug(slug: String, includeDownloadLinks: Boolean): NetworkResult<Rom> {
+        android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Richiesta ROM per slug: $slug (includeDownloadLinks=$includeDownloadLinks)")
         
         val hasSources = sourceManager.hasInstalledSources()
         if (!hasSources) {
@@ -628,10 +628,14 @@ class RomRepositoryImpl @Inject constructor(
                 }
             }
             
-            // Unisci tutti i downloadLinks da tutte le ROM
-            val allDownloadLinks = foundRoms
-                .flatMap { it.downloadLinks }
-                .distinctBy { it.url } // Rimuovi link duplicati (stesso URL)
+            // Unisci tutti i downloadLinks da tutte le ROM (solo se richiesto)
+            val allDownloadLinks = if (includeDownloadLinks) {
+                foundRoms
+                    .flatMap { it.downloadLinks }
+                    .distinctBy { it.url } // Rimuovi link duplicati (stesso URL)
+            } else {
+                emptyList() // Non caricare download links per home screen
+            }
             
             // Unisci tutte le regioni
             val allRegions = foundRoms
@@ -670,11 +674,11 @@ class RomRepositoryImpl @Inject constructor(
             return@flow
         }
         
-        // Carica i dettagli per ogni ROM preferita
+        // Carica i dettagli per ogni ROM preferita (senza download links per performance)
         val favoriteRoms = mutableListOf<Rom>()
         for (slug in favoriteSlugs) {
             try {
-                when (val result = getRomBySlug(slug)) {
+                when (val result = getRomBySlug(slug, includeDownloadLinks = false)) {
                     is NetworkResult.Success -> {
                         favoriteRoms.add(result.data)
                     }
@@ -745,11 +749,11 @@ class RomRepositoryImpl @Inject constructor(
             return@flow
         }
         
-        // Carica i dettagli per ogni ROM recente (mantenendo l'ordine)
+        // Carica i dettagli per ogni ROM recente (senza download links per performance)
         val recentRoms = mutableListOf<Rom>()
         for ((slug, _) in recentEntries) {
             try {
-                when (val result = getRomBySlug(slug)) {
+                when (val result = getRomBySlug(slug, includeDownloadLinks = false)) {
                     is NetworkResult.Success -> {
                         recentRoms.add(result.data)
                     }

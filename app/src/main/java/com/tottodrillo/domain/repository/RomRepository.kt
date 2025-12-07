@@ -42,8 +42,9 @@ interface RomRepository {
     
     /**
      * Ottieni il dettaglio di una ROM a partire dallo slug
+     * @param includeDownloadLinks Se false, i download links non vengono caricati (utile per home screen)
      */
-    suspend fun getRomBySlug(slug: String): NetworkResult<Rom>
+    suspend fun getRomBySlug(slug: String, includeDownloadLinks: Boolean = true): NetworkResult<Rom>
     
     /**
      * Stream di ROM preferite (Flow per reattività)
