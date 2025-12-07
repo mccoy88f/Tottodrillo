@@ -203,6 +203,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     """
     try:
         slug = params.get("slug", "")
+        include_download_links = params.get("include_download_links", True)  # Default True per retrocompatibilità
         if not slug:
             return json.dumps({"entry": None})
         
@@ -317,7 +318,8 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
         
         download_links = []
         
-        if download_url:
+        # Estrai download links solo se richiesto (per performance in home screen e ricerca)
+        if download_url and include_download_links:
             print(f"✅ [get_entry] Pulsante Download trovato: {download_url}", file=sys.stderr)
             
             # Visita la pagina di download

@@ -564,7 +564,7 @@ class RomRepositoryImpl @Inject constructor(
                                 gson
                             )
                             
-                            val result = executor.getEntry(slug)
+                            val result = executor.getEntry(slug, includeDownloadLinks)
                             result.fold(
                                 onSuccess = { entryResponse ->
                                     // Verifica che entry non sia null prima di chiamare toDomain()

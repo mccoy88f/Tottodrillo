@@ -490,7 +490,7 @@ def get_general_search_roms(search_key: str, page_num: int = 1, source_dir: str 
     return roms
 
 
-def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
+def get_rom_entry_by_uri(uri: str, source_dir: str, include_download_links: bool = True) -> Optional[Dict[str, Any]]:
     """Ottiene i dettagli completi di una ROM dall'URI"""
     try:
         # Estrai informazioni dalla pagina ROM per ottenere nome e sistema
@@ -755,92 +755,93 @@ def get_rom_entry_by_uri(uri: str, source_dir: str) -> Optional[Dict[str, Any]]:
                 {'value': '2', 'text': 'Alt2'}
             ]
         
-        # Genera link per ogni combinazione di version (media) e format
+        # Genera link per ogni combinazione di version (media) e format (solo se richiesto)
         links = []
-        for media_item in media_array:
-            media_id = media_item.get('ID')
-            version = media_item.get('Version', '')
-            version_string = media_item.get('VersionString', version)
-            
-            # Per ogni formato disponibile
-            for format_option in format_options:
-                format_value = format_option.get('value', '0')
-                format_text = format_option.get('text', 'Default')
+        if include_download_links:
+            for media_item in media_array:
+                media_id = media_item.get('ID')
+                version = media_item.get('Version', '')
+                version_string = media_item.get('VersionString', version)
                 
-                # Determina la dimensione in base al formato
-                size_str = None
-                size_bytes = 0
-                if format_value == '0':
-                    size_str = media_item.get('ZippedText', '')
-                    size_bytes = int(media_item.get('Zipped', '0') or '0')
-                elif format_value == '1':
-                    size_str = media_item.get('AltZippedText', '')
-                    size_bytes = int(media_item.get('AltZipped', '0') or '0')
-                elif format_value == '2':
-                    size_str = media_item.get('AltZipped2Text', '')
-                    size_bytes = int(media_item.get('AltZipped2', '0') or '0')
-                
-                # Salta i formati non disponibili (dimensione 0)
-                if size_bytes == 0 or size_str in ['0 KB', '0 MB', '0 GB']:
-                    continue
-                
-                # Costruisci l'URL di download
-                # Usa il dominio estratto dal form (può essere dl2 o dl3)
-                # Il formato viene passato come parametro 'alt' (0, 1, o 2)
-                download_url = f'https://{download_domain}/?mediaId={media_id}'
-                if format_value != '0':
-                    download_url += f'&alt={format_value}'
-                
-                # Determina il tipo di formato dal nome
-                format_type = "zip"  # Default
-                format_display = format_text
-                if format_text:
-                    format_lower = format_text.lower()
-                    if '.wbfs' in format_lower or 'wbfs' in format_lower:
-                        format_type = "wbfs"
-                        format_display = ".wbfs"
-                    elif '.rvz' in format_lower or 'rvz' in format_lower:
-                        format_type = "rvz"
-                        format_display = ".rvz"
-                    elif '.7z' in format_lower or '7z' in format_lower:
-                        format_type = "7z"
-                        format_display = ".7z"
-                    elif '.iso' in format_lower or 'iso' in format_lower:
-                        format_type = "iso"
-                        format_display = ".iso"
-                    elif '.zip' in format_lower or 'zip' in format_lower:
-                        format_type = "zip"
-                        format_display = ".zip"
-                    else:
-                        # Se non riconosciuto, usa il testo originale
-                        format_display = format_text
-                else:
-                    # Se non c'è testo, determina dal value
-                    if format_value == '1':
-                        format_display = "Alt Format"
+                # Per ogni formato disponibile
+                for format_option in format_options:
+                    format_value = format_option.get('value', '0')
+                    format_text = format_option.get('text', 'Default')
+                    
+                    # Determina la dimensione in base al formato
+                    size_str = None
+                    size_bytes = 0
+                    if format_value == '0':
+                        size_str = media_item.get('ZippedText', '')
+                        size_bytes = int(media_item.get('Zipped', '0') or '0')
+                    elif format_value == '1':
+                        size_str = media_item.get('AltZippedText', '')
+                        size_bytes = int(media_item.get('AltZipped', '0') or '0')
                     elif format_value == '2':
-                        format_display = "Alt2 Format"
-                
-                # Nome del link: Version - Format (es. "1.1 - .wbfs")
-                link_name = f"Version {version_string}"
-                if format_display and format_display not in ['Default', 'Alt Format', 'Alt2 Format']:
-                    link_name += f" - {format_display}"
-                elif format_display:
-                    link_name += f" - {format_display}"
-                
-                if size_str:
-                    link_name += f" ({size_str})"
-                
-                links.append({
-                    'name': link_name,
-                    'type': 'direct',
-                    'format': format_type,
-                    'url': download_url,
-                    'size_str': size_str
-                })
-        
-        # Se non ci sono link generati (nessun media array), usa il metodo vecchio
-        if not links:
+                        size_str = media_item.get('AltZipped2Text', '')
+                        size_bytes = int(media_item.get('AltZipped2', '0') or '0')
+                    
+                    # Salta i formati non disponibili (dimensione 0)
+                    if size_bytes == 0 or size_str in ['0 KB', '0 MB', '0 GB']:
+                        continue
+                    
+                    # Costruisci l'URL di download
+                    # Usa il dominio estratto dal form (può essere dl2 o dl3)
+                    # Il formato viene passato come parametro 'alt' (0, 1, o 2)
+                    download_url = f'https://{download_domain}/?mediaId={media_id}'
+                    if format_value != '0':
+                        download_url += f'&alt={format_value}'
+                    
+                    # Determina il tipo di formato dal nome
+                    format_type = "zip"  # Default
+                    format_display = format_text
+                    if format_text:
+                        format_lower = format_text.lower()
+                        if '.wbfs' in format_lower or 'wbfs' in format_lower:
+                            format_type = "wbfs"
+                            format_display = ".wbfs"
+                        elif '.rvz' in format_lower or 'rvz' in format_lower:
+                            format_type = "rvz"
+                            format_display = ".rvz"
+                        elif '.7z' in format_lower or '7z' in format_lower:
+                            format_type = "7z"
+                            format_display = ".7z"
+                        elif '.iso' in format_lower or 'iso' in format_lower:
+                            format_type = "iso"
+                            format_display = ".iso"
+                        elif '.zip' in format_lower or 'zip' in format_lower:
+                            format_type = "zip"
+                            format_display = ".zip"
+                        else:
+                            # Se non riconosciuto, usa il testo originale
+                            format_display = format_text
+                    else:
+                        # Se non c'è testo, determina dal value
+                        if format_value == '1':
+                            format_display = "Alt Format"
+                        elif format_value == '2':
+                            format_display = "Alt2 Format"
+                    
+                    # Nome del link: Version - Format (es. "1.1 - .wbfs")
+                    link_name = f"Version {version_string}"
+                    if format_display and format_display not in ['Default', 'Alt Format', 'Alt2 Format']:
+                        link_name += f" - {format_display}"
+                    elif format_display:
+                        link_name += f" - {format_display}"
+                    
+                    if size_str:
+                        link_name += f" ({size_str})"
+                    
+                    links.append({
+                        'name': link_name,
+                        'type': 'direct',
+                        'format': format_type,
+                        'url': download_url,
+                        'size_str': size_str
+                    })
+            
+            # Se non ci sono link generati (nessun media array), usa il metodo vecchio
+            if not links and include_download_links:
             download_url = get_rom_download_url(uri)
             if download_url:
                 format_type = "zip"  # Default
@@ -1127,6 +1128,7 @@ def search_roms(params: Dict[str, Any], source_dir: str) -> str:
 def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     """Ottiene una entry specifica per slug"""
     slug = params.get("slug")
+    include_download_links = params.get("include_download_links", True)  # Default True per retrocompatibilità
     
     if not slug:
         return json.dumps({"error": "Slug non fornito"})
@@ -1150,7 +1152,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     
     # Se abbiamo un URI, usiamolo direttamente
     if uri:
-        entry = get_rom_entry_by_uri(uri, source_dir)
+        entry = get_rom_entry_by_uri(uri, source_dir, include_download_links)
         if entry:
             # Assicuriamoci che lo slug corrisponda
             entry['slug'] = slug
@@ -1169,7 +1171,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
             if rom['slug'] == slug and rom.get('rom_id'):
                 # Trovata! Ora ottieni i dettagli completi
                 uri = rom['rom_id']
-                entry = get_rom_entry_by_uri(uri, source_dir)
+                entry = get_rom_entry_by_uri(uri, source_dir, include_download_links)
                 if entry:
                     return json.dumps({"entry": entry})
     

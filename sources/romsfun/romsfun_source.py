@@ -782,6 +782,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
     - Slug con estensione: new-super-mario-bros-58600.html
     """
     slug = params.get("slug")
+    include_download_links = params.get("include_download_links", True)  # Default True per retrocompatibilità
     
     if not slug:
         return json.dumps({"error": "Slug non fornito"})
@@ -813,7 +814,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
             page_url = f'https://romsfun.com/roms/{slug_normalized.lower()}.html'
     
     try:
-        entry = get_rom_entry_by_url(page_url, source_dir)
+        entry = get_rom_entry_by_url(page_url, source_dir, include_download_links)
         if entry:
             return json.dumps({"entry": entry})
         else:
@@ -825,7 +826,7 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
         return json.dumps({"error": error_msg})
 
 
-def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, Any]]:
+def get_rom_entry_by_url(page_url: str, source_dir: str, include_download_links: bool = True) -> Optional[Dict[str, Any]]:
     """
     Ottiene i dettagli completi di una ROM dall'URL della pagina
     """
@@ -1020,12 +1021,13 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
                 elif 'File size' in label or 'Size' in label:
                     file_size = td.get_text(strip=True)
         
-        # 6. Estrai link di download
+        # 6. Estrai link di download (solo se richiesto per performance)
         # IMPORTANTE: Il pulsante "Download now" ha un href reale che DEVE essere letto, non calcolato
         # Es: href="/download/pokemon-moon-black-2-52778" (il numero post_id è specifico e non calcolabile)
         download_links = []
         
-        # STEP 1: Cerca il pulsante "Download now" e leggi il suo href reale
+        if include_download_links:
+            # STEP 1: Cerca il pulsante "Download now" e leggi il suo href reale
         download_button = soup.find('a', href=re.compile(r'/download/'), class_=lambda x: x and 'btn' in x and 'btn-primary' in x)
         if not download_button:
             # Prova pattern alternativi per il pulsante
@@ -1154,8 +1156,8 @@ def get_rom_entry_by_url(page_url: str, source_dir: str) -> Optional[Dict[str, A
                         'size_str': file_size if file_size else None,
                         'requires_webview': True  # Richiede WebView per gestire il processo
                     })
-        else:
-            print(f"⚠️ [get_rom_entry_by_url] Pulsante Download now non trovato", file=sys.stderr)
+            else:
+                print(f"⚠️ [get_rom_entry_by_url] Pulsante Download now non trovato", file=sys.stderr)
         
         # 7. Costruisci lo slug dalla URL
         slug_match = re.search(r'/roms/[^/]+/([^/]+)\.html', page_url)

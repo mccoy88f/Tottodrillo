@@ -25,8 +25,9 @@ interface SourceExecutor {
     
     /**
      * Ottiene una entry specifica per slug
+     * @param includeDownloadLinks Se false, i download links non vengono estratti (utile per home screen e ricerca)
      */
-    suspend fun getEntry(slug: String): Result<EntryResponse>
+    suspend fun getEntry(slug: String, includeDownloadLinks: Boolean = true): Result<EntryResponse>
     
     /**
      * Ottiene le piattaforme disponibili

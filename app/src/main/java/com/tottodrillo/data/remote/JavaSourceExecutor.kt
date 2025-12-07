@@ -64,7 +64,7 @@ class JavaSourceExecutor(
         }
     }
     
-    override suspend fun getEntry(slug: String): Result<EntryResponse> = withContext(Dispatchers.IO) {
+    override suspend fun getEntry(slug: String, includeDownloadLinks: Boolean): Result<EntryResponse> = withContext(Dispatchers.IO) {
         try {
             val result = getEntryMethod.invoke(executorInstance, slug) as? EntryResponse
             

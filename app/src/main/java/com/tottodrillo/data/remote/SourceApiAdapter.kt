@@ -67,7 +67,7 @@ class SourceApiAdapter(
     /**
      * Ottiene una entry specifica per slug
      */
-    override suspend fun getEntry(slug: String): Result<EntryResponse> = withContext(Dispatchers.IO) {
+    override suspend fun getEntry(slug: String, includeDownloadLinks: Boolean): Result<EntryResponse> = withContext(Dispatchers.IO) {
         try {
             val requestBody = mapOf("slug" to slug)
             

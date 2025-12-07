@@ -78,11 +78,12 @@ class PythonSourceExecutor(
         }
     }
     
-    override suspend fun getEntry(slug: String): Result<EntryResponse> = withContext(Dispatchers.IO) {
+    override suspend fun getEntry(slug: String, includeDownloadLinks: Boolean): Result<EntryResponse> = withContext(Dispatchers.IO) {
         try {
             val params = mapOf(
                 "method" to "getEntry",
-                "slug" to slug
+                "slug" to slug,
+                "include_download_links" to includeDownloadLinks
             )
             
             val jsonResult = executePythonScript(params)
