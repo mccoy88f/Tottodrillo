@@ -13,6 +13,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
+import androidx.compose.material3.Icon
 import com.tottodrillo.domain.model.DownloadLink
 
 /**
@@ -48,7 +51,7 @@ fun WebViewDownloadDialog(
             Column(
                 modifier = Modifier.fillMaxSize()
             ) {
-                // Header con titolo e pulsante chiudi
+                // Header con titolo, pulsante indietro e pulsante chiudi
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -56,10 +59,27 @@ fun WebViewDownloadDialog(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    // Pulsante indietro (a sinistra)
+                    var webViewRef by remember { mutableStateOf<WebView?>(null) }
+                    IconButton(
+                        onClick = {
+                            webViewRef?.goBack()
+                        },
+                        enabled = webViewRef?.canGoBack() == true
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ArrowBack,
+                            contentDescription = "Indietro"
+                        )
+                    }
+                    
                     Text(
-                        text = "Preparazione download...",
-                        style = MaterialTheme.typography.titleLarge
+                        text = "Avvio download manuale",
+                        style = MaterialTheme.typography.titleLarge,
+                        modifier = Modifier.weight(1f),
+                        textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
+                    
                     IconButton(onClick = onDismiss) {
                         Text("✕", style = MaterialTheme.typography.titleLarge)
                     }
@@ -76,6 +96,7 @@ fun WebViewDownloadDialog(
                     AndroidView(
                         factory = { ctx ->
                             WebView(ctx).apply {
+                                webViewRef = this
                                 settings.javaScriptEnabled = true
                                 settings.domStorageEnabled = true
                                 settings.loadWithOverviewMode = true
@@ -185,7 +206,7 @@ fun WebViewDownloadDialog(
                 // Footer con informazioni
                 Divider()
                 Text(
-                    text = "Attendere il completamento del countdown. Il download partirà automaticamente.",
+                    text = "Procedi manualmente al download, se si apre un pop up torna indietro e riprova.",
                     style = MaterialTheme.typography.bodySmall,
                     modifier = Modifier.padding(16.dp),
                     color = MaterialTheme.colorScheme.onSurfaceVariant
