@@ -2,6 +2,7 @@ package com.tottodrillo.presentation.components
 
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebChromeClient
 import android.webkit.DownloadListener
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
@@ -16,9 +17,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
-import androidx.compose.material3.SnackbarHost
-import androidx.compose.material3.SnackbarHostState
-import androidx.compose.material3.Snackbar
 import android.widget.Toast
 import com.tottodrillo.domain.model.DownloadLink
 
@@ -36,7 +34,6 @@ fun WebViewDownloadDialog(
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
-    val snackbarHostState = remember { SnackbarHostState() }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -110,6 +107,75 @@ fun WebViewDownloadDialog(
                                 settings.domStorageEnabled = true
                                 settings.loadWithOverviewMode = true
                                 settings.useWideViewPort = true
+                                
+                                // Intercetta window.open per gestire i popup
+                                setWebChromeClient(object : WebChromeClient() {
+                                    override fun onCreateWindow(
+                                        view: WebView?,
+                                        isDialog: Boolean,
+                                        isUserGesture: Boolean,
+                                        resultMsg: android.os.Message?
+                                    ): Boolean {
+                                        // Crea una nuova WebView per il popup (in background)
+                                        val newWebView = WebView(context)
+                                        newWebView.settings.javaScriptEnabled = true
+                                        newWebView.settings.domStorageEnabled = true
+                                        
+                                        // Intercetta il download anche dal popup
+                                        newWebView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                            // Chiudi il popup
+                                            (view?.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                            
+                                            // Estrai il nome del file e avvia il download
+                                            var extractedFileName: String? = null
+                                            if (contentDisposition != null) {
+                                                val filenameMatch = Regex("filename[*]?=['\"]?([^'\"\\s;]+)['\"]?", RegexOption.IGNORE_CASE).find(contentDisposition)
+                                                if (filenameMatch != null) {
+                                                    extractedFileName = filenameMatch.groupValues[1]
+                                                    try {
+                                                        extractedFileName = java.net.URLDecoder.decode(extractedFileName, "UTF-8")
+                                                    } catch (e: Exception) {}
+                                                }
+                                            }
+                                            
+                                            if (extractedFileName == null) {
+                                                try {
+                                                    val urlPath = java.net.URL(url).path
+                                                    val lastSegment = urlPath.substringAfterLast('/')
+                                                    if (lastSegment.isNotEmpty() && lastSegment.contains('.')) {
+                                                        extractedFileName = lastSegment
+                                                    }
+                                                } catch (e: Exception) {}
+                                            }
+                                            
+                                            val updatedLink = if (extractedFileName != null) {
+                                                link.copy(name = extractedFileName)
+                                            } else {
+                                                link
+                                            }
+                                            
+                                            onDownloadUrlExtracted(url, updatedLink)
+                                        }
+                                        
+                                        // Chiudi automaticamente il popup dopo 1 secondo
+                                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                                            try {
+                                                (view?.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                            } catch (e: Exception) {
+                                                // Popup già chiuso
+                                            }
+                                            // Mostra toast per dire all'utente di ricliccare
+                                            Toast.makeText(context, "Popup chiuso. Ora puoi ricliccare su download", Toast.LENGTH_LONG).show()
+                                        }, 1000)
+                                        
+                                        // Imposta la nuova WebView come destinazione del messaggio
+                                        val transport = resultMsg?.obj as? android.webkit.WebView.WebViewTransport
+                                        transport?.webView = newWebView
+                                        resultMsg?.sendToTarget()
+                                        
+                                        return true
+                                    }
+                                })
                                 
                                 webViewClient = object : WebViewClient() {
                                     override fun onPageFinished(view: WebView?, url: String?) {
