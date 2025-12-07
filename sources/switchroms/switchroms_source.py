@@ -224,14 +224,20 @@ def get_entry(params: Dict[str, Any], source_dir: str) -> str:
         # Fai la richiesta alla pagina ROM
         session = requests.Session()
         headers = get_browser_headers()
-        response = session.get(page_url, headers=headers, timeout=15)
-        
-        # Se la pagina non esiste (404), probabilmente lo slug non è valido per SwitchRoms
-        if response.status_code == 404:
-            print(f"⚠️ [get_entry] Pagina non trovata (404) per: {page_url}", file=sys.stderr)
-            return json.dumps({"entry": None})
-        
-        response.raise_for_status()
+        try:
+            response = session.get(page_url, headers=headers, timeout=15)
+            
+            # Se la pagina non esiste (404), probabilmente lo slug non è valido per SwitchRoms
+            if response.status_code == 404:
+                print(f"⚠️ [get_entry] Pagina non trovata (404) per: {page_url}", file=sys.stderr)
+                return json.dumps({"entry": None})
+            
+            response.raise_for_status()
+        except requests.exceptions.HTTPError as e:
+            if e.response is not None and e.response.status_code == 404:
+                print(f"⚠️ [get_entry] Pagina non trovata (404) per: {page_url}", file=sys.stderr)
+                return json.dumps({"entry": None})
+            raise
         
         soup = BeautifulSoup(response.content, 'html.parser')
         
