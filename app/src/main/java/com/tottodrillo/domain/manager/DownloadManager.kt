@@ -694,7 +694,7 @@ class DownloadManager @Inject constructor(
         
         // SECONDO: Verifica se il file è stato scaricato
         // Prima prova con il nome originale, poi cerca per URL in tutti i file .status
-        var actualFileName = fileName
+        var actualFileName: String? = fileName
         if (!isFileDownloaded(fileName)) {
             // Il file con il nome originale non esiste, cerca per URL in tutti i file .status
             android.util.Log.d("DownloadManager", "🔍 File con nome originale non trovato, cerco per URL: ${link.url}")
@@ -710,7 +710,8 @@ class DownloadManager @Inject constructor(
         }
         
         // Verifica se l'URL di questo link è presente nel file .status
-        if (!isUrlInStatusFile(actualFileName, link.url)) {
+        // actualFileName non può essere null qui perché abbiamo già controllato sopra
+        if (!isUrlInStatusFile(actualFileName!!, link.url)) {
             android.util.Log.d("DownloadManager", "ℹ️ File trovato ma URL non presente nel file .status: link URL=${link.url}")
             return Pair(
                 com.tottodrillo.domain.model.DownloadStatus.Idle,

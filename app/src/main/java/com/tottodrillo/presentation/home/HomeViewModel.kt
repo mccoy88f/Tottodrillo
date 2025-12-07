@@ -53,9 +53,11 @@ class HomeViewModel @Inject constructor(
                     // TEMPORANEAMENTE DISATTIVATO
                     // loadFeaturedRoms()
                     // Carica preferiti
-                    loadFavoriteRoms()
+                    // TEMPORANEAMENTE DISATTIVATO - Evita chiamate a getRomBySlug all'avvio
+                    // loadFavoriteRoms()
                     // Carica ROM recenti
-                    loadRecentRoms()
+                    // TEMPORANEAMENTE DISATTIVATO - Evita chiamate a getRomBySlug all'avvio
+                    // loadRecentRoms()
                 }
                 is NetworkResult.Error -> {
                     _uiState.update { 
@@ -74,26 +76,27 @@ class HomeViewModel @Inject constructor(
 
     /**
      * Carica ROM in evidenza (ad esempio, giochi popolari)
-     * Usa una query vuota per mostrare ROM casuali/popolari invece di una ricerca specifica
+     * TEMPORANEAMENTE DISATTIVATO - Non chiamare questa funzione
      */
     private fun loadFeaturedRoms() {
-        viewModelScope.launch {
-            // Cerca ROM senza query specifica per mostrare risultati generali/popolari
-            val filters = SearchFilters(query = "")
-            
-            when (val result = repository.searchRoms(filters, page = 1)) {
-                is NetworkResult.Success -> {
-                    _uiState.update { state ->
-                        state.copy(featuredRoms = result.data.take(10))
-                    }
-                }
-                is NetworkResult.Error -> {
-                    // Errore silenzioso per ROM in evidenza
-                    // Non blocca l'interfaccia
-                }
-                is NetworkResult.Loading -> {}
-            }
-        }
+        // DISATTIVATO - Non fare nulla per evitare chiamate automatiche a searchRoms
+        // viewModelScope.launch {
+        //     // Cerca ROM senza query specifica per mostrare risultati generali/popolari
+        //     val filters = SearchFilters(query = "")
+        //     
+        //     when (val result = repository.searchRoms(filters, page = 1)) {
+        //         is NetworkResult.Success -> {
+        //             _uiState.update { state ->
+        //                 state.copy(featuredRoms = result.data.take(10))
+        //             }
+        //         }
+        //         is NetworkResult.Error -> {
+        //             // Errore silenzioso per ROM in evidenza
+        //             // Non blocca l'interfaccia
+        //         }
+        //         is NetworkResult.Loading -> {}
+        //     }
+        // }
     }
 
     /**

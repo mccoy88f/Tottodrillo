@@ -235,8 +235,9 @@ fun WebViewDownloadDialog(
                                     }
                                     
                                     // Crea un nuovo link con il nome del file estratto se disponibile
-                                    val updatedLink = if (extractedFileName != null) {
-                                        link.copy(name = extractedFileName)
+                                    val fileName = extractedFileName // Estrai in una val locale per evitare smart cast issues
+                                    val updatedLink = if (fileName != null) {
+                                        link.copy(name = fileName)
                                     } else {
                                         link
                                     }

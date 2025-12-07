@@ -522,6 +522,8 @@ class RomRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getRomBySlug(slug: String): NetworkResult<Rom> {
+        android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Richiesta ROM per slug: $slug")
+        
         val hasSources = sourceManager.hasInstalledSources()
         if (!hasSources) {
             return NetworkResult.Error(
@@ -542,11 +544,15 @@ class RomRepositoryImpl @Inject constructor(
                 )
             }
             
+            android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Cercando in ${enabledSources.size} sorgenti abilitate")
+            
             // Cerca in parallelo in tutte le sorgenti
             val results = coroutineScope {
                 enabledSources.map { source ->
                     async {
                         try {
+                            android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Cercando in sorgente: ${source.id}")
+                            
                             val sourceDir = File(source.installPath ?: return@async null)
                             val metadata = sourceManager.getSourceMetadata(source.id)
                                 ?: return@async null

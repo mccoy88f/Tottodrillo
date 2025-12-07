@@ -501,8 +501,18 @@ class RomDetailViewModel @Inject constructor(
         // Avvia il download con l'URL finale
         viewModelScope.launch {
             try {
+                // Aggiorna lo stato per il link originale (quello mostrato nella UI)
+                val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                currentLinkStatuses[link.url] = Pair(
+                    DownloadStatus.Pending(currentRom.title),
+                    currentLinkStatuses[link.url]?.second ?: ExtractionStatus.Idle
+                )
+                
                 _uiState.update {
-                    it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                    it.copy(
+                        downloadStatus = DownloadStatus.Pending(currentRom.title),
+                        linkStatuses = currentLinkStatuses
+                    )
                 }
 
                 // Crea un nuovo link con l'URL finale e il nome del file aggiornato (se modificato dal WebView)
@@ -515,8 +525,48 @@ class RomDetailViewModel @Inject constructor(
                 )
                 currentWorkId = workId
 
-                // Usa la funzione helper per osservare il download
-                observeDownloadForLink(finalLink, workId)
+                // Osserva il download e aggiorna lo stato sia per l'URL finale che per quello originale
+                currentDownloadJob?.cancel()
+                currentDownloadJob = viewModelScope.launch {
+                    downloadManager.observeDownload(workId).collect { task ->
+                        val status = task?.status ?: DownloadStatus.Idle
+                        val currentRom = _uiState.value.rom
+                        if (currentRom != null) {
+                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            
+                            // Aggiorna lo stato per il link originale (quello mostrato nella UI)
+                            val originalLinkStatus = currentLinkStatuses[link.url]
+                            currentLinkStatuses[link.url] = Pair(
+                                status,
+                                originalLinkStatus?.second ?: ExtractionStatus.Idle
+                            )
+                            
+                            // Aggiorna anche per l'URL finale (se diverso)
+                            if (finalUrl != link.url) {
+                                val finalLinkStatus = currentLinkStatuses[finalUrl]
+                                currentLinkStatuses[finalUrl] = Pair(
+                                    status,
+                                    finalLinkStatus?.second ?: ExtractionStatus.Idle
+                                )
+                            }
+                            
+                            _uiState.update { 
+                                it.copy(
+                                    downloadStatus = status,
+                                    linkStatuses = currentLinkStatuses
+                                ) 
+                            }
+                        } else {
+                            _uiState.update { it.copy(downloadStatus = status) }
+                        }
+                        
+                        // Quando il download termina, ricarica lo stato per verificare se c'è un'estrazione
+                        if (status is DownloadStatus.Completed) {
+                            kotlinx.coroutines.delay(1000) // Aspetta che il file .status sia scritto
+                            refreshRomStatus()
+                        }
+                    }
+                }
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
