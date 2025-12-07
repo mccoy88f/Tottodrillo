@@ -72,6 +72,20 @@ class SearchViewModel @Inject constructor(
         }
         performSearch()
     }
+    
+    /**
+     * Inizializza con una query di ricerca
+     */
+    fun initializeWithQuery(query: String) {
+        _searchQuery.value = query
+        _uiState.update { state ->
+            state.copy(
+                query = query,
+                currentPage = 1
+            )
+        }
+        performSearch()
+    }
 
     /**
      * Osserva le modifiche alla query con debounce

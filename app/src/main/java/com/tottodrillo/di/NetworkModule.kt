@@ -39,6 +39,26 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideUpdateManager(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient,
+        gson: Gson
+    ): com.tottodrillo.domain.manager.UpdateManager {
+        return com.tottodrillo.domain.manager.UpdateManager(context, okHttpClient, gson)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideRomCacheManager(
+        @ApplicationContext context: Context,
+        configRepository: com.tottodrillo.data.repository.DownloadConfigRepository,
+        gson: Gson
+    ): com.tottodrillo.data.repository.RomCacheManager {
+        return com.tottodrillo.data.repository.RomCacheManager(context, configRepository, gson)
+    }
+
+    @Provides
+    @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
             level = HttpLoggingInterceptor.Level.BODY

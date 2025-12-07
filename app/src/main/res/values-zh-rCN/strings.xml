@@ -26,8 +26,10 @@
     <string name="home_welcome">探索</string>
     <string name="home_subtitle">复古游戏的世界</string>
     <string name="home_featured">精选</string>
+    <string name="home_featured_mobygames">精选 (by MobyGames)</string>
     <string name="home_popular_platforms">热门平台</string>
     <string name="home_recent">最近</string>
+    <string name="home_downloaded">已下载/已安装</string>
     <string name="home_favorites">收藏</string>
     <string name="see_all">查看全部</string>
     
@@ -59,6 +61,8 @@
     <string name="rom_detail_open_folder">打开解压文件夹</string>
     <string name="rom_detail_retry_extraction">重试解压</string>
     <string name="rom_detail_no_download_links">没有可用的下载链接</string>
+    <string name="rom_detail_loading_links">正在加载下载链接…</string>
+    <string name="rom_detail_no_download_links_desc">此ROM可能没有此源的可用下载链接。</string>
     <string name="rom_detail_downloading">下载中…</string>
     <string name="rom_detail_installing">安装中…</string>
     
@@ -124,6 +128,20 @@
     <string name="notif_installation_failed">安装失败</string>
     <string name="notif_cancel_download">取消下载</string>
     <string name="notif_cancel_installation">取消安装</string>
+    <string name="notif_update_download_progress">更新下载中</string>
+    <string name="notif_update_download_completed">更新下载完成</string>
+    <string name="notif_update_download_failed">更新下载失败</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">手动下载启动</string>
+    <string name="webview_popup_closed">弹出窗口已关闭。现在可以再次点击下载</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">路径: %1$s\n使用文件管理器手动打开</string>
+    <string name="rom_detail_invalid_slug">无效的ROM标识符</string>
+    <string name="rom_detail_download_error">启动下载时出错</string>
+    <string name="rom_detail_extraction_error">启动解压时出错</string>
+    <string name="rom_detail_open_folder_chooser">打开文件夹</string>
     
     <!-- Explore -->
     <string name="explore_title">探索平台</string>

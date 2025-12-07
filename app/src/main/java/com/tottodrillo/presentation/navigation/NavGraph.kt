@@ -32,15 +32,19 @@ import com.tottodrillo.presentation.settings.DownloadSettingsScreen
 sealed class Screen(val route: String) {
     data object Home : Screen("home")
     data object Search : Screen("search") {
-        fun createRoute(platformCode: String? = null) = if (platformCode != null) {
-            "search/platform/$platformCode"
-        } else {
-            "search"
+        fun createRoute(platformCode: String? = null, query: String? = null) = when {
+            platformCode != null -> "search/platform/$platformCode"
+            query != null -> "search/query/${java.net.URLEncoder.encode(query, "UTF-8")}"
+            else -> "search"
         }
     }
     
     data object SearchWithPlatform : Screen("search/platform/{platformCode}") {
         fun createRoute(platformCode: String) = "search/platform/$platformCode"
+    }
+    
+    data object SearchWithQuery : Screen("search/query/{query}") {
+        fun createRoute(query: String) = "search/query/${java.net.URLEncoder.encode(query, "UTF-8")}"
     }
     data object Explore : Screen("explore")
     data object Settings : Screen("settings")
@@ -137,8 +141,12 @@ fun TottodrilloNavGraph(
             
             HomeScreen(
                 refreshKey = localHomeRefreshKey,
-                onNavigateToSearch = {
-                    navController.navigate(Screen.Search.route)
+                onNavigateToSearch = { query ->
+                    if (query != null) {
+                        navController.navigate(Screen.SearchWithQuery.createRoute(query))
+                    } else {
+                        navController.navigate(Screen.Search.route)
+                    }
                 },
                 onNavigateToExplore = {
                     navController.navigate(Screen.Explore.route)
@@ -188,6 +196,33 @@ fun TottodrilloNavGraph(
                 },
                 onShowFilters = { showFilters = true },
                 initialPlatformCode = platformCode,
+                refreshKey = homeRefreshKey
+            )
+
+            if (showFilters) {
+                SearchFiltersBottomSheet(
+                    onDismiss = { showFilters = false }
+                )
+            }
+        }
+        
+        composable(
+            route = Screen.SearchWithQuery.route,
+            arguments = listOf(
+                navArgument("query") { type = NavType.StringType }
+            )
+        ) { backStackEntry ->
+            val encodedQuery = backStackEntry.arguments?.getString("query") ?: return@composable
+            val query = java.net.URLDecoder.decode(encodedQuery, "UTF-8")
+            
+            SearchScreen(
+                onNavigateBack = { navController.safePopBackStack() },
+                onNavigateToRomDetail = { romSlug ->
+                    navController.navigate(Screen.RomDetail.createRoute(romSlug))
+                },
+                onShowFilters = { showFilters = true },
+                initialPlatformCode = null,
+                initialQuery = query,
                 refreshKey = homeRefreshKey
             )
 

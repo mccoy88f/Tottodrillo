@@ -45,7 +45,8 @@ class DownloadManager @Inject constructor(
         romSlug: String,
         romTitle: String,
         downloadLink: DownloadLink,
-        customPath: String? = null
+        customPath: String? = null,
+        originalUrl: String? = null // URL originale del link (se diverso dall'URL del downloadLink, es. per WebView)
     ): UUID {
         val config = configRepository.downloadConfig.first()
         val targetPath = customPath ?: config.downloadPath
@@ -84,6 +85,7 @@ class DownloadManager @Inject constructor(
         // Input data per il worker
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_URL, downloadLink.url)
+            .putString(DownloadWorker.KEY_ORIGINAL_URL, originalUrl) // URL originale (se diverso)
             .putString(DownloadWorker.KEY_FILE_NAME, fileName)
             .putString(DownloadWorker.KEY_TARGET_PATH, targetPath)
             .putString(DownloadWorker.KEY_ROM_TITLE, romTitle)
@@ -641,10 +643,54 @@ class DownloadManager @Inject constructor(
     
     /**
      * Ottiene il workId di un download attivo per un URL specifico
+     * Se non trova con l'URL originale, cerca anche tramite file .status per trovare l'URL finale associato
      */
     suspend fun getActiveDownloadWorkId(url: String): UUID? {
+        // Prima cerca direttamente con l'URL
         val workInfo = hasActiveDownloadForUrl(url)
-        return workInfo?.id
+        if (workInfo != null) {
+            return workInfo.id
+        }
+        
+        // Se non trova, cerca nel file .status se c'è un download in corso che ha questo URL
+        // Questo è utile quando il download è stato avviato dalla WebView con un URL finale diverso
+        val fileName = findFileNameByUrl(url)
+        if (fileName != null) {
+            // Se c'è un file .status con questo URL, cerca tutti i work attivi per questa ROM
+            // e verifica se uno di essi sta scaricando un file con questo nome
+            val config = configRepository.downloadConfig.first()
+            val filePath = File(config.downloadPath, fileName).absolutePath
+            
+            // Cerca tutti i work attivi di download
+            val allActiveWorks = workManager.getWorkInfosByTag(TAG_DOWNLOAD).get()
+            for (work in allActiveWorks) {
+                if (work.state == WorkInfo.State.RUNNING || work.state == WorkInfo.State.ENQUEUED) {
+                    // Verifica se questo work sta scaricando il file che abbiamo trovato
+                    val workUrl = work.tags.find { it.startsWith("url:") }?.removePrefix("url:")
+                    if (workUrl != null) {
+                        // Verifica se l'URL del work è presente nel file .status del file trovato
+                        val statusFile = File(config.downloadPath, "$fileName.status")
+                        if (statusFile.exists()) {
+                            val lines = statusFile.readLines().filter { it.isNotBlank() }
+                            val hasUrl = lines.any { line ->
+                                val lineUrl = if (line.contains('\t')) {
+                                    line.substringBefore('\t')
+                                } else {
+                                    line.trim()
+                                }
+                                lineUrl == workUrl || lineUrl == url
+                            }
+                            if (hasUrl) {
+                                android.util.Log.d("DownloadManager", "✅ Trovato work attivo tramite file .status: $workUrl")
+                                return work.id
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        return null
     }
     
     /**
@@ -701,10 +747,10 @@ class DownloadManager @Inject constructor(
             actualFileName = findFileNameByUrl(link.url)
             if (actualFileName == null) {
                 android.util.Log.d("DownloadManager", "ℹ️ Nessun file trovato per URL: ${link.url}")
-                return Pair(
-                    com.tottodrillo.domain.model.DownloadStatus.Idle,
-                    com.tottodrillo.domain.model.ExtractionStatus.Idle
-                )
+            return Pair(
+                com.tottodrillo.domain.model.DownloadStatus.Idle,
+                com.tottodrillo.domain.model.ExtractionStatus.Idle
+            )
             }
             android.util.Log.d("DownloadManager", "✅ File trovato con nome diverso: $actualFileName (originale: $fileName)")
         }

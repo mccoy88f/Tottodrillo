@@ -17,7 +17,9 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.Icon
+import androidx.compose.ui.res.stringResource
 import android.widget.Toast
+import com.tottodrillo.R
 import com.tottodrillo.domain.model.DownloadLink
 
 /**
@@ -59,11 +61,11 @@ fun WebViewDownloadDialog(
                 var originalUrl by remember { mutableStateOf<String?>(null) }
                 var popupOpen by remember { mutableStateOf(false) }
                 
-                // Header con titolo, pulsante indietro e pulsante chiudi
+                // Header con titolo, pulsante indietro e pulsante chiudi (barra più stretta, stesso stile del modale info ROMs)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(16.dp),
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -81,14 +83,14 @@ fun WebViewDownloadDialog(
                     }
                     
                     Text(
-                        text = "Avvio download manuale",
-                        style = MaterialTheme.typography.titleLarge,
+                        text = stringResource(R.string.webview_download_title),
+                        style = MaterialTheme.typography.titleMedium,
                         modifier = Modifier.weight(1f),
                         textAlign = androidx.compose.ui.text.style.TextAlign.Center
                     )
                     
                     IconButton(onClick = onDismiss) {
-                        Text("✕", style = MaterialTheme.typography.titleLarge)
+                        Text("✕", style = MaterialTheme.typography.titleMedium)
                     }
                 }
 
@@ -223,7 +225,7 @@ fun WebViewDownloadDialog(
                                                 }
                                                 popupOpen = false
                                                 // Mostra toast per dire all'utente di ricliccare
-                                                Toast.makeText(context, "Popup chiuso. Ora puoi ricliccare su download", Toast.LENGTH_LONG).show()
+                                                Toast.makeText(context, context.getString(R.string.webview_popup_closed), Toast.LENGTH_LONG).show()
                                             }, 2000)
                                         }
                                         

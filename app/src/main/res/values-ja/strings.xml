@@ -26,8 +26,10 @@
     <string name="home_welcome">レトロゲームの世界を</string>
     <string name="home_subtitle">探索しよう</string>
     <string name="home_featured">おすすめ</string>
+    <string name="home_featured_mobygames">おすすめ (by MobyGames)</string>
     <string name="home_popular_platforms">人気のプラットフォーム</string>
     <string name="home_recent">最近</string>
+    <string name="home_downloaded">ダウンロード済み/インストール済み</string>
     <string name="home_favorites">お気に入り</string>
     <string name="see_all">すべて表示</string>
     
@@ -59,6 +61,8 @@
     <string name="rom_detail_open_folder">展開フォルダを開く</string>
     <string name="rom_detail_retry_extraction">展開を再試行</string>
     <string name="rom_detail_no_download_links">ダウンロードリンクがありません</string>
+    <string name="rom_detail_loading_links">ダウンロードリンクを読み込み中…</string>
+    <string name="rom_detail_no_download_links_desc">このROMには、このソースで利用可能なダウンロードリンクがない可能性があります。</string>
     <string name="rom_detail_downloading">ダウンロード中…</string>
     <string name="rom_detail_installing">インストール中…</string>
     
@@ -124,6 +128,20 @@
     <string name="notif_installation_failed">インストール失敗</string>
     <string name="notif_cancel_download">ダウンロードをキャンセル</string>
     <string name="notif_cancel_installation">インストールをキャンセル</string>
+    <string name="notif_update_download_progress">アップデートのダウンロード中</string>
+    <string name="notif_update_download_completed">アップデートのダウンロード完了</string>
+    <string name="notif_update_download_failed">アップデートのダウンロード失敗</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">手動ダウンロード開始</string>
+    <string name="webview_popup_closed">ポップアップが閉じられました。ダウンロードを再度クリックできます</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">パス: %1$s\nファイルマネージャーで手動で開く</string>
+    <string name="rom_detail_invalid_slug">無効なROMスラッグ</string>
+    <string name="rom_detail_download_error">ダウンロードの開始エラー</string>
+    <string name="rom_detail_extraction_error">展開の開始エラー</string>
+    <string name="rom_detail_open_folder_chooser">フォルダを開く</string>
     
     <!-- Explore -->
     <string name="explore_title">プラットフォームを探索</string>

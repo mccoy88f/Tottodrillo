@@ -51,6 +51,11 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -362,6 +367,22 @@ fun DownloadSettingsScreen(
                 description = stringResource(R.string.settings_notifications_desc),
                 checked = config.notificationsEnabled,
                 onCheckedChange = viewModel::updateNotifications
+            )
+
+            Spacer(modifier = Modifier.height(24.dp))
+
+            // Ricerca info ROMs
+            Text(
+                text = stringResource(R.string.settings_rom_info_search),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            RomInfoSearchProviderDropdown(
+                selectedProvider = config.romInfoSearchProvider,
+                onProviderSelected = viewModel::updateRomInfoSearchProvider
             )
 
             Spacer(modifier = Modifier.height(24.dp))
@@ -730,6 +751,52 @@ fun DownloadSettingsScreen(
                 }
                 
                 Spacer(modifier = Modifier.height(24.dp))
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RomInfoSearchProviderDropdown(
+    selectedProvider: String,
+    onProviderSelected: (String) -> Unit
+) {
+    val providers = listOf("gamefaqs", "mobygames")
+    val providerLabels = mapOf(
+        "gamefaqs" to stringResource(R.string.settings_rom_info_search_gamefaqs),
+        "mobygames" to stringResource(R.string.settings_rom_info_search_mobygames)
+    )
+    
+    var expanded by remember { mutableStateOf(false) }
+    
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        OutlinedTextField(
+            value = providerLabels[selectedProvider] ?: selectedProvider,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(stringResource(R.string.settings_rom_info_search)) },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+        
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            providers.forEach { provider ->
+                DropdownMenuItem(
+                    text = { Text(providerLabels[provider] ?: provider) },
+                    onClick = {
+                        onProviderSelected(provider)
+                        expanded = false
+                    }
+                )
             }
         }
     }

@@ -388,7 +388,7 @@ class ExtractionWorker(
         )
         
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Installazione in corso")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_installation_progress))
             .setContentText(contentText)
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
             .setContentIntent(createPendingIntent(romSlug))
@@ -396,7 +396,7 @@ class ExtractionWorker(
             .setProgress(100, progress, progress == 0)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Interrompi installazione",
+                appContext.getString(com.tottodrillo.R.string.notif_cancel_installation),
                 cancelPendingIntent
             )
             .build()
@@ -429,7 +429,7 @@ class ExtractionWorker(
         val contentText = "$fileNameWithoutExt\n$fileNameWithExt"
         
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Installazione completata")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_installation_completed))
             .setContentText(contentText)
             .setStyle(NotificationCompat.BigTextStyle().bigText(contentText))
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
@@ -442,7 +442,7 @@ class ExtractionWorker(
 
     private fun showErrorNotification(romTitle: String, error: String, romSlug: String? = null) {
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Installazione fallita")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_installation_failed))
             .setContentText("$romTitle: $error")
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
             .setContentIntent(createPendingIntent(romSlug))

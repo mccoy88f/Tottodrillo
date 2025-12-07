@@ -66,9 +66,14 @@ fun SearchFiltersBottomSheet(
         sheetState = sheetState
     ) {
         FiltersContent(
-            availablePlatforms = uiState.availablePlatforms.map { it.code to it.displayName },
-            availableRegions = uiState.availableRegions.map { it.code to it.displayName },
-            availableSources = uiState.availableSources,
+            availablePlatforms = uiState.availablePlatforms
+                .map { it.code to it.displayName }
+                .sortedBy { it.second }, // Ordina alfabeticamente per nome
+            availableRegions = uiState.availableRegions
+                .map { it.code to it.displayName }
+                .sortedBy { it.second }, // Ordina alfabeticamente per nome
+            availableSources = uiState.availableSources
+                .sortedBy { it.second }, // Ordina alfabeticamente per nome
             selectedPlatforms = selectedPlatforms,
             selectedRegions = selectedRegions,
             selectedSources = selectedSources,

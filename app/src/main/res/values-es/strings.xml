@@ -26,8 +26,10 @@
     <string name="home_welcome">Explora el mundo</string>
     <string name="home_subtitle">del gaming retro</string>
     <string name="home_featured">Destacados</string>
+    <string name="home_featured_mobygames">Destacados (by MobyGames)</string>
     <string name="home_popular_platforms">Plataformas Populares</string>
     <string name="home_recent">Recientes</string>
+    <string name="home_downloaded">Descargadas/Instaladas</string>
     <string name="home_favorites">Favoritos</string>
     <string name="see_all">Ver todo</string>
     
@@ -59,6 +61,8 @@
     <string name="rom_detail_open_folder">Abrir carpeta de extracción</string>
     <string name="rom_detail_retry_extraction">Reintentar extracción</string>
     <string name="rom_detail_no_download_links">No hay enlaces de descarga disponibles</string>
+    <string name="rom_detail_loading_links">Cargando enlaces de descarga…</string>
+    <string name="rom_detail_no_download_links_desc">Esta ROM podría no tener enlaces de descarga disponibles para esta fuente.</string>
     <string name="rom_detail_downloading">Descargando…</string>
     <string name="rom_detail_installing">Instalando…</string>
     
@@ -124,6 +128,20 @@
     <string name="notif_installation_failed">Instalación fallida</string>
     <string name="notif_cancel_download">Cancelar descarga</string>
     <string name="notif_cancel_installation">Cancelar instalación</string>
+    <string name="notif_update_download_progress">Descarga de actualización en curso</string>
+    <string name="notif_update_download_completed">Descarga de actualización completada</string>
+    <string name="notif_update_download_failed">Descarga de actualización fallida</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Inicio de descarga manual</string>
+    <string name="webview_popup_closed">Popup cerrado. Ahora puedes volver a hacer clic en descargar</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Ruta: %1$s\nAbrir manualmente con un administrador de archivos</string>
+    <string name="rom_detail_invalid_slug">Slug ROM inválido</string>
+    <string name="rom_detail_download_error">Error al iniciar la descarga</string>
+    <string name="rom_detail_extraction_error">Error al iniciar la extracción</string>
+    <string name="rom_detail_open_folder_chooser">Abrir carpeta</string>
     
     <!-- Explore -->
     <string name="explore_title">Explorar Plataformas</string>

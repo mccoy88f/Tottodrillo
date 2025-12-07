@@ -36,7 +36,8 @@ data class DownloadsUiState(
 @HiltViewModel
 class DownloadsViewModel @Inject constructor(
     private val downloadManager: DownloadManager,
-    private val configRepository: DownloadConfigRepository
+    private val configRepository: DownloadConfigRepository,
+    private val romRepository: com.tottodrillo.domain.repository.RomRepository
 ) : ViewModel() {
 
     // Configurazione download
@@ -208,6 +209,15 @@ class DownloadsViewModel @Inject constructor(
     }
 
     /**
+     * Aggiorna provider di ricerca info ROMs
+     */
+    fun updateRomInfoSearchProvider(provider: String) {
+        viewModelScope.launch {
+            configRepository.setRomInfoSearchProvider(provider)
+        }
+    }
+
+    /**
      * Ottiene spazio disponibile
      */
     fun getAvailableSpace(path: String): Long {
@@ -274,6 +284,11 @@ class DownloadsViewModel @Inject constructor(
                     } catch (e: Exception) {
                         android.util.Log.e("DownloadsViewModel", "Errore nel cancellare ${file.name}", e)
                     }
+                }
+                
+                // Cancella anche la cache ROM
+                if (romRepository is com.tottodrillo.data.repository.RomRepositoryImpl) {
+                    romRepository.clearRomCache()
                 }
 
                 _uiState.update { 

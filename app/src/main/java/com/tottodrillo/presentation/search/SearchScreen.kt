@@ -62,6 +62,7 @@ fun SearchScreen(
     onNavigateToRomDetail: (String) -> Unit,
     onShowFilters: () -> Unit,
     initialPlatformCode: String? = null,
+    initialQuery: String? = null,
     refreshKey: Int = 0,
     viewModel: SearchViewModel = hiltViewModel()
 ) {
@@ -72,6 +73,13 @@ fun SearchScreen(
     LaunchedEffect(initialPlatformCode) {
         initialPlatformCode?.let { platformCode ->
             viewModel.initializeWithPlatform(platformCode)
+        }
+    }
+    
+    // Inizializza con query se specificata
+    LaunchedEffect(initialQuery) {
+        initialQuery?.let { query ->
+            viewModel.initializeWithQuery(query)
         }
     }
     
@@ -156,7 +164,8 @@ fun SearchScreen(
             // Content
             Box(modifier = Modifier.fillMaxSize()) {
                 when {
-                    uiState.isLoading && !uiState.hasSearched -> {
+                    // Mostra LoadingIndicator solo se non c'è una ricerca in corso
+                    uiState.isLoading && !uiState.hasSearched && !uiState.isSearching -> {
                         LoadingIndicator()
                     }
                     uiState.showEmptyState -> {
@@ -184,7 +193,8 @@ fun SearchScreen(
                 
                 // Mostra indicatore di caricamento quando si sta facendo una ricerca
                 // Mostra anche quando si applica un filtro e ci sono già risultati (sostituisce i risultati)
-                if (uiState.isSearching && (uiState.results.isEmpty() || uiState.currentPage == 1)) {
+                // Non mostrare se isLoading è true (per evitare doppio indicatore)
+                if (uiState.isSearching && (uiState.results.isEmpty() || uiState.currentPage == 1) && !uiState.isLoading) {
                     Box(
                         modifier = Modifier
                             .fillMaxSize()

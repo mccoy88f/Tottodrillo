@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
 
 **Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from multiple sources. The app supports dynamic source installation via ZIP packages, allowing you to add new ROM sources without updating the app.
 
@@ -25,6 +25,13 @@ This README is also available in other languages:
 ---
 
 ## ✨ Key Features
+
+### 🔍 ROM Info Search (NEW in v2.5.0)
+- **Multiple Search Providers**: Choose between Gamefaqs and MobyGames for ROM information search
+- **Configurable Provider**: Select your preferred search provider in settings
+- **Gamefaqs Integration**: Search ROM information directly on Gamefaqs
+- **MobyGames Integration**: Search ROM information on MobyGames (existing feature)
+- **Dynamic Button Text**: Search button text changes based on selected provider
 
 ### 🔌 Multi-Source System (NEW in v2.0)
 - **Dynamic Source Installation**: Install new ROM sources via ZIP packages without updating the app
@@ -99,6 +106,9 @@ This README is also available in other languages:
   - Update existing sources
   - Uninstall sources
   - Install default sources (CrocDB and Vimm's Lair)
+- **ROM Info Search**:
+  - Choose search provider (Gamefaqs or MobyGames)
+  - Gamefaqs is the default provider
 - **Download Configuration**:
   - Custom download folder selection
   - Available space display

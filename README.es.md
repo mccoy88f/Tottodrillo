@@ -4,6 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
 
 **Tottodrillo** es una aplicación Android moderna y minimalista para explorar, buscar y descargar ROMs de [CrocDB](https://crocdb.net), la base de datos pública de juegos retro.
 
@@ -22,6 +23,13 @@ Este README también está disponible en otros idiomas:
 ---
 
 ## ✨ Características Principales
+
+### 🔍 Búsqueda de Información de ROMs (NUEVO en v2.5.0)
+- **Proveedores Múltiples**: Elige entre Gamefaqs y MobyGames para buscar información de ROMs
+- **Proveedor Configurable**: Selecciona tu proveedor preferido en la configuración
+- **Integración Gamefaqs**: Busca información de ROMs directamente en Gamefaqs
+- **Integración MobyGames**: Busca información de ROMs en MobyGames (característica existente)
+- **Texto de Botón Dinámico**: El texto del botón de búsqueda cambia según el proveedor seleccionado
 
 ### 🔍 Exploración y Búsqueda
 - **Pantalla de Inicio** con ROMs destacadas, plataformas populares, favoritos y ROMs recientes
@@ -74,6 +82,9 @@ Este README también está disponible en otros idiomas:
 - **Tarjetas de ROMs** con ancho máximo uniforme (180dp)
 
 ### ⚙️ Configuración
+- **Búsqueda de Información de ROMs**:
+  - Elige proveedor de búsqueda (Gamefaqs o MobyGames)
+  - Gamefaqs es el proveedor predeterminado
 - **Configuración de Descarga**:
   - Selección de carpeta de descarga personalizada
   - Visualización de espacio disponible

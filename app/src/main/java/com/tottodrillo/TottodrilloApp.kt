@@ -7,12 +7,17 @@ import coil.decode.SvgDecoder
 import com.chaquo.python.Python
 import com.chaquo.python.android.AndroidPlatform
 import dagger.hilt.android.HiltAndroidApp
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import okhttp3.Cookie
 import okhttp3.CookieJar
 import okhttp3.HttpUrl
 import okhttp3.HttpUrl.Companion.toHttpUrl
 import okhttp3.OkHttpClient
+import com.tottodrillo.data.cache.CachedImageFetcher
+import com.tottodrillo.data.repository.RomCacheManager
+import com.tottodrillo.data.repository.DownloadConfigRepository
+import com.google.gson.Gson
 
 /**
  * Application class principale
@@ -23,6 +28,15 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
     
     @Inject
     lateinit var sourceManager: com.tottodrillo.domain.manager.SourceManager
+    
+    // Cache manager per immagini (inizializzato lazy)
+    // Nota: Non possiamo usare @Inject qui perché l'ImageLoader viene creato prima che Hilt sia completamente inizializzato
+    private val cacheManager: RomCacheManager by lazy {
+        // Inizializza il cache manager manualmente
+        val configRepository = com.tottodrillo.data.repository.DownloadConfigRepository(this)
+        val gson = com.google.gson.GsonBuilder().setLenient().create()
+        RomCacheManager(this, configRepository, gson)
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -180,6 +194,8 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
         return ImageLoader.Builder(this)
             .components {
                 add(SvgDecoder.Factory())
+                // Aggiungi il fetcher personalizzato per la cache delle immagini
+                add(CachedImageFetcher.Factory(cacheManager, okHttpClient))
             }
             .okHttpClient(okHttpClient)
             .allowHardware(false) // Disabilita hardware bitmap per evitare problemi con alcuni formati

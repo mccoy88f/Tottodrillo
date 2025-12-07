@@ -15,6 +15,7 @@
     <string name="cancel">Annulla</string>
     <string name="ok">OK</string>
     <string name="back">Indietro</string>
+    <string name="close">Chiudi</string>
     <string name="loading">Caricamento…</string>
     <string name="error">Errore</string>
     <string name="retry">Riprova</string>
@@ -26,8 +27,10 @@
     <string name="home_welcome">Esplora il mondo</string>
     <string name="home_subtitle">del retro gaming</string>
     <string name="home_featured">In Evidenza</string>
+    <string name="home_featured_mobygames">In evidenza (by MobyGames)</string>
     <string name="home_popular_platforms">Piattaforme Popolari</string>
     <string name="home_recent">Recenti</string>
+    <string name="home_downloaded">Scaricate/Installate</string>
     <string name="home_favorites">Preferiti</string>
     <string name="see_all">Vedi tutti</string>
     
@@ -66,9 +69,20 @@
     <string name="settings_wifi_only_desc">Scarica solo quando connesso a WiFi</string>
     <string name="settings_notifications">Notifiche download</string>
     <string name="settings_notifications_desc">Mostra notifiche durante e dopo i download</string>
+    <string name="settings_rom_info_search">Ricerca info sulle ROMs</string>
+    <string name="settings_rom_info_search_gamefaqs">Gamefaqs</string>
+    <string name="settings_rom_info_search_mobygames">MobyGames</string>
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">Dettaglio ROM</string>
+    <string name="rom_detail_search_mobygames">Cerca su MobyGames</string>
+    <string name="rom_detail_search_gamefaqs">Cerca su Gamefaqs</string>
+    <string name="mobygames_search_title">Cerca su MobyGames</string>
+    <string name="mobygames_search_error">Errore nel caricamento della pagina</string>
+    <string name="rom_info_search_title">Ricerca info ROM</string>
+    <string name="rom_info_search_title_gamefaqs">Cerca su Gamefaqs</string>
+    <string name="rom_info_search_title_mobygames">Cerca su MobyGames</string>
+    <string name="rom_info_search_error">Errore nel caricamento della pagina</string>
     <string name="rom_detail_platform">Piattaforma</string>
     <string name="rom_detail_region">Regione</string>
     <string name="rom_detail_release_date">Data di Rilascio</string>
@@ -86,6 +100,8 @@
     <string name="rom_detail_open_folder">Apri cartella estrazione</string>
     <string name="rom_detail_retry_extraction">Riprova estrazione</string>
     <string name="rom_detail_no_download_links">Nessun link di download disponibile</string>
+    <string name="rom_detail_loading_links">Caricamento link di download…</string>
+    <string name="rom_detail_no_download_links_desc">Questa ROM potrebbe non avere link di download disponibili per questa sorgente.</string>
     <string name="rom_detail_downloading">Download in corso…</string>
     <string name="rom_detail_installing">Installazione in corso…</string>
     
@@ -100,6 +116,20 @@
     <string name="notif_installation_failed">Installazione fallita</string>
     <string name="notif_cancel_download">Interrompi download</string>
     <string name="notif_cancel_installation">Interrompi installazione</string>
+    <string name="notif_update_download_progress">Download aggiornamento in corso</string>
+    <string name="notif_update_download_completed">Download aggiornamento completato</string>
+    <string name="notif_update_download_failed">Download aggiornamento fallito</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Avvio download manuale</string>
+    <string name="webview_popup_closed">Popup chiuso. Ora puoi ricliccare su download</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Percorso: %1$s\nApri manualmente con un file manager</string>
+    <string name="rom_detail_invalid_slug">Slug ROM non valido</string>
+    <string name="rom_detail_download_error">Errore nell\'avvio del download</string>
+    <string name="rom_detail_extraction_error">Errore nell\'avvio dell\'estrazione</string>
+    <string name="rom_detail_open_folder_chooser">Apri cartella</string>
     
     <!-- Explore -->
     <string name="explore_title">Esplora Piattaforme</string>

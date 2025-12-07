@@ -10,7 +10,8 @@ data class DownloadConfig(
     val useWifiOnly: Boolean = false,
     val notificationsEnabled: Boolean = true,
     val enableEsDeCompatibility: Boolean = false,
-    val esDeRomsPath: String? = null
+    val esDeRomsPath: String? = null,
+    val romInfoSearchProvider: String = "gamefaqs" // "gamefaqs" o "mobygames"
 )
 
 /**

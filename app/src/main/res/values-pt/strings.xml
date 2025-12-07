@@ -26,8 +26,10 @@
     <string name="home_welcome">Explore o mundo</string>
     <string name="home_subtitle">do retro gaming</string>
     <string name="home_featured">Em Destaque</string>
+    <string name="home_featured_mobygames">Em Destaque (by MobyGames)</string>
     <string name="home_popular_platforms">Plataformas Populares</string>
     <string name="home_recent">Recentes</string>
+    <string name="home_downloaded">Baixadas/Instaladas</string>
     <string name="home_favorites">Favoritos</string>
     <string name="see_all">Ver tudo</string>
     
@@ -59,6 +61,8 @@
     <string name="rom_detail_open_folder">Abrir pasta de extração</string>
     <string name="rom_detail_retry_extraction">Tentar extração novamente</string>
     <string name="rom_detail_no_download_links">Nenhum link de download disponível</string>
+    <string name="rom_detail_loading_links">Carregando links de download…</string>
+    <string name="rom_detail_no_download_links_desc">Esta ROM pode não ter links de download disponíveis para esta fonte.</string>
     <string name="rom_detail_downloading">Baixando…</string>
     <string name="rom_detail_installing">Instalando…</string>
     
@@ -124,6 +128,20 @@
     <string name="notif_installation_failed">Instalação falhou</string>
     <string name="notif_cancel_download">Cancelar download</string>
     <string name="notif_cancel_installation">Cancelar instalação</string>
+    <string name="notif_update_download_progress">Download da atualização em andamento</string>
+    <string name="notif_update_download_completed">Download da atualização concluído</string>
+    <string name="notif_update_download_failed">Download da atualização falhou</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Início de download manual</string>
+    <string name="webview_popup_closed">Popup fechado. Agora você pode clicar novamente em download</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Caminho: %1$s\nAbrir manualmente com um gerenciador de arquivos</string>
+    <string name="rom_detail_invalid_slug">Slug ROM inválido</string>
+    <string name="rom_detail_download_error">Erro ao iniciar o download</string>
+    <string name="rom_detail_extraction_error">Erro ao iniciar a extração</string>
+    <string name="rom_detail_open_folder_chooser">Abrir pasta</string>
     
     <!-- Explore -->
     <string name="explore_title">Explorar Plataformas</string>

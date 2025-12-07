@@ -15,6 +15,7 @@
     <string name="cancel">Cancel</string>
     <string name="ok">OK</string>
     <string name="back">Back</string>
+    <string name="close">Close</string>
     <string name="loading">Loading…</string>
     <string name="error">Error</string>
     <string name="retry">Retry</string>
@@ -26,8 +27,10 @@
     <string name="home_welcome">Explore the world</string>
     <string name="home_subtitle">of retro gaming</string>
     <string name="home_featured">Featured</string>
+    <string name="home_featured_mobygames">Featured (by MobyGames)</string>
     <string name="home_popular_platforms">Popular Platforms</string>
     <string name="home_recent">Recent</string>
+    <string name="home_downloaded">Downloaded/Installed</string>
     <string name="home_favorites">Favorites</string>
     <string name="see_all">See all</string>
     
@@ -42,6 +45,14 @@
     
     <!-- ROM Detail -->
     <string name="rom_detail_title">ROM Details</string>
+    <string name="rom_detail_search_mobygames">Search on MobyGames</string>
+    <string name="rom_detail_search_gamefaqs">Search on Gamefaqs</string>
+    <string name="mobygames_search_title">Search on MobyGames</string>
+    <string name="mobygames_search_error">Error loading page</string>
+    <string name="rom_info_search_title">ROM info search</string>
+    <string name="rom_info_search_title_gamefaqs">Search on Gamefaqs</string>
+    <string name="rom_info_search_title_mobygames">Search on MobyGames</string>
+    <string name="rom_info_search_error">Error loading page</string>
     <string name="rom_detail_platform">Platform</string>
     <string name="rom_detail_region">Region</string>
     <string name="rom_detail_release_date">Release Date</string>
@@ -59,6 +70,8 @@
     <string name="rom_detail_open_folder">Open extraction folder</string>
     <string name="rom_detail_retry_extraction">Retry extraction</string>
     <string name="rom_detail_no_download_links">No download links available</string>
+    <string name="rom_detail_loading_links">Loading download links…</string>
+    <string name="rom_detail_no_download_links_desc">This ROM may not have download links available for this source.</string>
     <string name="rom_detail_downloading">Downloading…</string>
     <string name="rom_detail_installing">Installing…</string>
     
@@ -91,6 +104,9 @@
     <string name="settings_wifi_only_desc">Download only when connected to WiFi</string>
     <string name="settings_notifications">Download notifications</string>
     <string name="settings_notifications_desc">Show notifications during and after downloads</string>
+    <string name="settings_rom_info_search">ROM info search</string>
+    <string name="settings_rom_info_search_gamefaqs">Gamefaqs</string>
+    <string name="settings_rom_info_search_mobygames">MobyGames</string>
     <string name="settings_installation">Installation</string>
     <string name="settings_clear_history">Clear download and installation history</string>
     <string name="settings_clear_history_desc">Delete all .status files in the default download folder</string>
@@ -123,6 +139,20 @@
     <string name="notif_installation_failed">Installation failed</string>
     <string name="notif_cancel_download">Cancel download</string>
     <string name="notif_cancel_installation">Cancel installation</string>
+    <string name="notif_update_download_progress">Update download in progress</string>
+    <string name="notif_update_download_completed">Update download completed</string>
+    <string name="notif_update_download_failed">Update download failed</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Manual download start</string>
+    <string name="webview_popup_closed">Popup closed. You can now click download again</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Path: %1$s\nOpen manually with a file manager</string>
+    <string name="rom_detail_invalid_slug">Invalid ROM slug</string>
+    <string name="rom_detail_download_error">Error starting download</string>
+    <string name="rom_detail_extraction_error">Error starting extraction</string>
+    <string name="rom_detail_open_folder_chooser">Open folder</string>
     
     <!-- Explore -->
     <string name="explore_title">Explore Platforms</string>

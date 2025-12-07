@@ -21,14 +21,17 @@ sealed class UiState<out T> {
  * Stato della schermata Home
  */
 data class HomeUiState(
-    val featuredRoms: List<Rom> = emptyList(),
+    val featuredGames: List<com.tottodrillo.domain.model.FeaturedGame> = emptyList(),
+    val featuredRoms: List<Rom> = emptyList(), // Deprecato, usa featuredGames
     val favoriteRoms: List<Rom> = emptyList(),
     val recentRoms: List<Rom> = emptyList(),
+    val downloadedRoms: List<Rom> = emptyList(),
     val recentPlatforms: List<PlatformInfo> = emptyList(),
     val isLoading: Boolean = false,
     val isLoadingFeatured: Boolean = false,
     val isLoadingFavorites: Boolean = false,
     val isLoadingRecent: Boolean = false,
+    val isLoadingDownloaded: Boolean = false,
     val error: String? = null
 )
 
@@ -74,6 +77,7 @@ data class RomDetailUiState(
     val rom: Rom? = null,
     val isFavorite: Boolean = false,
     val isLoading: Boolean = false,
+    val isLoadingLinks: Boolean = false, // Stato di caricamento per i link di download
     val error: String? = null,
     val downloadStatus: DownloadStatus = DownloadStatus.Idle,
     val extractionStatus: ExtractionStatus = ExtractionStatus.Idle,
@@ -82,7 +86,12 @@ data class RomDetailUiState(
     // WebView headless per gestire download con JavaScript/countdown
     val showWebView: Boolean = false,
     val webViewUrl: String? = null,
-    val webViewLink: com.tottodrillo.domain.model.DownloadLink? = null
+    val webViewLink: com.tottodrillo.domain.model.DownloadLink? = null,
+    // WebView per ricerca MobyGames/Gamefaqs
+    val showMobyGamesWebView: Boolean = false,
+    val mobyGamesSearchUrl: String? = null,
+    val romInfoSearchTitle: String? = null,
+    val romInfoSearchProvider: String = "gamefaqs" // Provider selezionato per la ricerca info ROMs
 )
 
 /**

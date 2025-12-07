@@ -1,6 +1,8 @@
 package com.tottodrillo
 
 import android.Manifest
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.content.ContentUris
 import android.content.Context
 import android.content.Intent
@@ -11,6 +13,7 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.DocumentsContract
 import android.provider.MediaStore
+import androidx.core.app.NotificationCompat
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -33,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.tottodrillo.presentation.components.StoragePermissionDialog
 import androidx.core.content.ContextCompat
 import androidx.core.content.PermissionChecker
+import com.tottodrillo.R
 import com.tottodrillo.data.repository.DownloadConfigRepository
 import com.tottodrillo.domain.manager.PlatformManager
 import com.tottodrillo.domain.repository.RomRepository
@@ -73,7 +77,19 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var okHttpClient: OkHttpClient
     
+    @Inject
+    lateinit var updateManager: com.tottodrillo.domain.manager.UpdateManager
+    
     private val activityScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    
+    private val notificationManager: NotificationManager by lazy {
+        getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+    }
+    
+    companion object {
+        private const val UPDATE_NOTIFICATION_CHANNEL_ID = "update_channel"
+        private const val UPDATE_NOTIFICATION_ID = 2000
+    }
 
     private val requestNotificationPermission = 
         registerForActivityResult(ActivityResultContracts.RequestPermission()) { /* no-op */ }
@@ -197,6 +213,37 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 )
+                
+                // Stato per il dialog di aggiornamento
+                var updateRelease by remember { mutableStateOf<com.tottodrillo.domain.manager.GitHubRelease?>(null) }
+                
+                // Verifica aggiornamenti all'avvio (solo una volta)
+                LaunchedEffect(Unit) {
+                    activityScope.launch {
+                        try {
+                            val release = updateManager.checkForUpdate()
+                            if (release != null) {
+                                updateRelease = release
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("MainActivity", "Errore verifica aggiornamento", e)
+                        }
+                    }
+                }
+                
+                // Dialog aggiornamento
+                updateRelease?.let { release ->
+                    com.tottodrillo.presentation.components.UpdateDialog(
+                        release = release,
+                        onDismiss = { updateRelease = null },
+                        onDownload = {
+                            updateRelease = null
+                            activityScope.launch {
+                                downloadAndInstallUpdate(release)
+                            }
+                        }
+                    )
+                }
                 
                 // Controlla se ci sono sorgenti abilitate (non solo installate)
                 var hasEnabledSources by remember { mutableStateOf<Boolean?>(null) }
@@ -556,56 +603,273 @@ class MainActivity : ComponentActivity() {
      */
     /**
      * Scarica e installa le sorgenti predefinite
+     * Legge i link dal file sources.list nel repository Tottodrillo-Source
      */
     private suspend fun installDefaultSources() = withContext(Dispatchers.IO) {
-        val defaultSources = listOf(
-            "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/crocdb/crocdb-source.zip" to "crocdb",
-            "https://github.com/mccoy88f/Tottodrillo/raw/refs/heads/main/sources/vimms/vimms-source.zip" to "vimms"
-        )
+        val sourcesListUrl = "https://raw.githubusercontent.com/mccoy88f/Tottodrillo-Source/refs/heads/main/sources.list"
         
-        val installer = com.tottodrillo.domain.manager.SourceInstaller(
-            this@MainActivity,
-            sourceManager
-        )
+        try {
+            // Scarica il file sources.list
+            val listRequest = Request.Builder()
+                .url(sourcesListUrl)
+                .build()
+            
+            val listResponse = okHttpClient.newCall(listRequest).execute()
+            if (!listResponse.isSuccessful) {
+                android.util.Log.e("MainActivity", "❌ Errore download sources.list: ${listResponse.code}")
+                return@withContext
+            }
+            
+            // Leggi i link (uno per riga)
+            val sourcesList = listResponse.body?.string()?.lines()
+                ?.filter { it.isNotBlank() && it.startsWith("http") }
+                ?: emptyList()
+            
+            if (sourcesList.isEmpty()) {
+                android.util.Log.w("MainActivity", "⚠️ Nessun link trovato in sources.list")
+                return@withContext
+            }
+            
+            android.util.Log.d("MainActivity", "📋 Trovati ${sourcesList.size} link in sources.list")
+            
+            val installer = com.tottodrillo.domain.manager.SourceInstaller(
+                this@MainActivity,
+                sourceManager
+            )
+            
+            // Scarica e installa ogni sorgente
+            for (url in sourcesList) {
+                try {
+                    android.util.Log.d("MainActivity", "📥 Scaricando sorgente da: $url")
+                    
+                    // Scarica il file ZIP
+                    val request = Request.Builder()
+                        .url(url)
+                        .build()
+                    
+                    val response = okHttpClient.newCall(request).execute()
+                    if (!response.isSuccessful) {
+                        android.util.Log.e("MainActivity", "❌ Errore download sorgente da $url: ${response.code}")
+                        continue
+                    }
+                    
+                    // Estrai il nome della sorgente dall'URL (es. crocdb-source.zip -> crocdb)
+                    val fileName = url.substringAfterLast("/")
+                    val sourceName = fileName.removeSuffix("-source.zip").removeSuffix(".zip")
+                    
+                    // Salva in un file temporaneo
+                    val tempFile = File(this@MainActivity.cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
+                    response.body?.byteStream()?.use { input ->
+                        tempFile.outputStream().use { output ->
+                            input.copyTo(output)
+                        }
+                    }
+                    
+                    // Installa la sorgente
+                    val result = installer.installFromZip(tempFile)
+                    result.fold(
+                        onSuccess = { metadata ->
+                            android.util.Log.d("MainActivity", "✅ Sorgente installata: ${metadata.name}")
+                            // Abilita la sorgente di default
+                            sourceManager.setSourceEnabled(metadata.id, true)
+                        },
+                        onFailure = { error ->
+                            android.util.Log.e("MainActivity", "❌ Errore installazione sorgente $sourceName", error)
+                        }
+                    )
+                    
+                    // Pulisci file temporaneo
+                    tempFile.delete()
+                } catch (e: Exception) {
+                    android.util.Log.e("MainActivity", "❌ Errore durante installazione sorgente da $url", e)
+                }
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "❌ Errore durante download sources.list", e)
+        }
+    }
+    
+    /**
+     * Crea il canale di notifica per gli aggiornamenti
+     */
+    private fun createUpdateNotificationChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(
+                UPDATE_NOTIFICATION_CHANNEL_ID,
+                "Aggiornamenti",
+                NotificationManager.IMPORTANCE_DEFAULT
+            ).apply {
+                description = "Notifiche per il download degli aggiornamenti dell'app"
+            }
+            notificationManager.createNotificationChannel(channel)
+        }
+    }
+    
+    /**
+     * Mostra una notifica di progresso per il download dell'aggiornamento
+     */
+    private fun showUpdateDownloadProgress(progress: Int, max: Int, versionName: String) {
+        val progressPercent = if (max > 0) {
+            (progress * 100 / max).coerceIn(0, 100)
+        } else {
+            0
+        }
         
-        for ((url, sourceName) in defaultSources) {
+        val notification = NotificationCompat.Builder(this, UPDATE_NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notif_update_download_progress))
+            .setContentText("$versionName - $progressPercent%")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setProgress(max, progress, max == 0)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
+            .build()
+        
+        notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
+    }
+    
+    /**
+     * Mostra una notifica di completamento per il download dell'aggiornamento
+     */
+    private fun showUpdateDownloadCompleted(versionName: String) {
+        val notification = NotificationCompat.Builder(this, UPDATE_NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notif_update_download_completed))
+            .setContentText(versionName)
+            .setSmallIcon(R.drawable.ic_notification)
+            .setAutoCancel(true)
+            .build()
+        
+        notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
+    }
+    
+    /**
+     * Mostra una notifica di errore per il download dell'aggiornamento
+     */
+    private fun showUpdateDownloadError(versionName: String, error: String) {
+        val notification = NotificationCompat.Builder(this, UPDATE_NOTIFICATION_CHANNEL_ID)
+            .setContentTitle(getString(R.string.notif_update_download_failed))
+            .setContentText("$versionName: $error")
+            .setSmallIcon(R.drawable.ic_notification)
+            .setAutoCancel(true)
+            .build()
+        
+        notificationManager.notify(UPDATE_NOTIFICATION_ID, notification)
+    }
+    
+    /**
+     * Scarica e installa l'APK di aggiornamento
+     */
+    private suspend fun downloadAndInstallUpdate(release: com.tottodrillo.domain.manager.GitHubRelease) {
+        withContext(Dispatchers.IO) {
             try {
-                // Scarica il file
+                // Crea il canale di notifica se non esiste
+                createUpdateNotificationChannel()
+                
+                val apkUrl = updateManager.getApkDownloadUrl(release)
+                if (apkUrl == null) {
+                    android.util.Log.e("MainActivity", "❌ Nessun APK trovato nella release")
+                    withContext(Dispatchers.Main) {
+                        showUpdateDownloadError(release.name, "APK non trovato")
+                    }
+                    return@withContext
+                }
+                
+                // Scarica l'APK
                 val request = Request.Builder()
-                    .url(url)
+                    .url(apkUrl)
                     .build()
                 
                 val response = okHttpClient.newCall(request).execute()
                 if (!response.isSuccessful) {
-                    android.util.Log.e("MainActivity", "❌ Errore download sorgente $sourceName: ${response.code}")
-                    continue
+                    android.util.Log.e("MainActivity", "❌ Errore download APK: ${response.code}")
+                    withContext(Dispatchers.Main) {
+                        showUpdateDownloadError(release.name, "Errore ${response.code}")
+                    }
+                    return@withContext
                 }
                 
-                // Salva in un file temporaneo
-                val tempFile = File(this@MainActivity.cacheDir, "source_${sourceName}_${System.currentTimeMillis()}.zip")
+                // Ottieni la dimensione totale del file (se disponibile)
+                val contentLength = response.body?.contentLength() ?: -1L
+                val totalBytes = if (contentLength > 0) contentLength else 0L
+                
+                // Salva l'APK in cache con progresso
+                val apkFile = File(cacheDir, "update_${release.tagName}.apk")
+                var downloadedBytes = 0L
+                
                 response.body?.byteStream()?.use { input ->
-                    tempFile.outputStream().use { output ->
-                        input.copyTo(output)
+                    apkFile.outputStream().use { output ->
+                        val buffer = ByteArray(8192)
+                        var bytesRead: Int
+                        
+                        while (input.read(buffer).also { bytesRead = it } != -1) {
+                            output.write(buffer, 0, bytesRead)
+                            downloadedBytes += bytesRead
+                            
+                            // Aggiorna la notifica ogni 1% o ogni 100KB
+                            if (totalBytes > 0) {
+                                val progress = (downloadedBytes * 100 / totalBytes).toInt()
+                                val previousProgress = ((downloadedBytes - bytesRead) * 100 / totalBytes).toInt()
+                                
+                                if (progress != previousProgress || downloadedBytes % 100_000L == 0L) {
+                                    withContext(Dispatchers.Main) {
+                                        showUpdateDownloadProgress(
+                                            downloadedBytes.toInt(),
+                                            totalBytes.toInt(),
+                                            release.name
+                                        )
+                                    }
+                                }
+                            } else {
+                                // Se non conosciamo la dimensione totale, mostra progresso indeterminato
+                                withContext(Dispatchers.Main) {
+                                    showUpdateDownloadProgress(0, 0, release.name)
+                                }
+                            }
+                        }
                     }
                 }
                 
-                // Installa la sorgente
-                val result = installer.installFromZip(tempFile)
-                result.fold(
-                    onSuccess = { metadata ->
-                        // Abilita la sorgente di default
-                        sourceManager.setSourceEnabled(metadata.id, true)
-                    },
-                    onFailure = { error ->
-                        android.util.Log.e("MainActivity", "❌ Errore installazione sorgente $sourceName", error)
-                    }
-                )
+                // Mostra notifica di completamento
+                withContext(Dispatchers.Main) {
+                    showUpdateDownloadCompleted(release.name)
+                }
                 
-                // Pulisci file temporaneo
-                tempFile.delete()
+                // Installa l'APK
+                withContext(Dispatchers.Main) {
+                    installApk(apkFile)
+                }
             } catch (e: Exception) {
-                android.util.Log.e("MainActivity", "❌ Errore durante installazione sorgente $sourceName", e)
+                android.util.Log.e("MainActivity", "❌ Errore download/installazione APK", e)
+                withContext(Dispatchers.Main) {
+                    showUpdateDownloadError(release.name, e.message ?: "Errore sconosciuto")
+                }
             }
+        }
+    }
+    
+    /**
+     * Installa un file APK
+     */
+    private fun installApk(apkFile: File) {
+        try {
+            val uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                androidx.core.content.FileProvider.getUriForFile(
+                    this,
+                    "${packageName}.fileprovider",
+                    apkFile
+                )
+            } else {
+                Uri.fromFile(apkFile)
+            }
+            
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(uri, "application/vnd.android.package-archive")
+                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+            
+            startActivity(intent)
+        } catch (e: Exception) {
+            android.util.Log.e("MainActivity", "❌ Errore installazione APK", e)
         }
     }
     

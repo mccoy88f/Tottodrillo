@@ -35,6 +35,7 @@ class DownloadConfigRepository @Inject constructor(
         val ENABLE_ES_DE_COMPATIBILITY = booleanPreferencesKey("enable_es_de_compatibility")
         val ES_DE_ROMS_PATH = stringPreferencesKey("es_de_roms_path")
         val FIRST_LAUNCH_COMPLETED = booleanPreferencesKey("first_launch_completed")
+        val ROM_INFO_SEARCH_PROVIDER = stringPreferencesKey("rom_info_search_provider")
     }
 
     /**
@@ -48,7 +49,8 @@ class DownloadConfigRepository @Inject constructor(
             useWifiOnly = preferences[WIFI_ONLY] ?: false,
             notificationsEnabled = preferences[NOTIFICATIONS_ENABLED] ?: true,
             enableEsDeCompatibility = preferences[ENABLE_ES_DE_COMPATIBILITY] ?: false,
-            esDeRomsPath = preferences[ES_DE_ROMS_PATH]
+            esDeRomsPath = preferences[ES_DE_ROMS_PATH],
+            romInfoSearchProvider = preferences[ROM_INFO_SEARCH_PROVIDER] ?: "gamefaqs"
         )
     }
 
@@ -189,6 +191,15 @@ class DownloadConfigRepository @Inject constructor(
     suspend fun setFirstLaunchCompleted() {
         appContext.dataStore.edit { preferences ->
             preferences[FIRST_LAUNCH_COMPLETED] = true
+        }
+    }
+
+    /**
+     * Aggiorna il provider di ricerca info ROMs
+     */
+    suspend fun setRomInfoSearchProvider(provider: String) {
+        appContext.dataStore.edit { preferences ->
+            preferences[ROM_INFO_SEARCH_PROVIDER] = provider
         }
     }
     

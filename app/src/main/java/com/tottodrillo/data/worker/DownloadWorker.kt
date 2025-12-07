@@ -34,6 +34,7 @@ class DownloadWorker(
 
     companion object {
         const val KEY_URL = "download_url"
+        const val KEY_ORIGINAL_URL = "original_url" // URL originale del link (se diverso dall'URL finale)
         const val KEY_FILE_NAME = "file_name"
         const val KEY_TARGET_PATH = "target_path"
         const val KEY_ROM_TITLE = "rom_title"
@@ -90,6 +91,7 @@ class DownloadWorker(
 
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val url = inputData.getString(KEY_URL) ?: return@withContext Result.failure()
+        val originalUrl = inputData.getString(KEY_ORIGINAL_URL) // URL originale (opzionale, per download da WebView)
         val fileName = inputData.getString(KEY_FILE_NAME) ?: return@withContext Result.failure()
         val targetPath = inputData.getString(KEY_TARGET_PATH) ?: return@withContext Result.failure()
         val romTitle = inputData.getString(KEY_ROM_TITLE) ?: "ROM"
@@ -114,8 +116,9 @@ class DownloadWorker(
             downloadFile(url, outputFile, romTitle, romSlug)
 
             // Crea/aggiorna file .status per confermare il download completato
-            // Formato multi-riga: una riga per ogni URL scaricato
-            // Ogni riga: <URL> o <URL>\t<PATH_ESTRAZIONE>
+            // Formato multi-riga:
+            // Prima riga (opzionale): SLUG:<slug>
+            // Righe successive: <URL> o <URL>\t<PATH_ESTRAZIONE>
             try {
                 val statusFile = File(targetPath, "$fileName.status")
                 
@@ -126,29 +129,61 @@ class DownloadWorker(
                     emptyList()
                 }
                 
-                // Verifica se l'URL esiste già nelle righe
-                val urlExists = existingLines.any { line ->
+                // Estrai lo slug esistente (se presente) e le righe URL
+                val existingSlug = existingLines.firstOrNull { it.startsWith("SLUG:") }?.substringAfter("SLUG:")?.trim()
+                val urlLines = existingLines.filterNot { it.startsWith("SLUG:") }
+                
+                // Usa lo slug passato o quello esistente
+                val slugToSave = romSlug?.takeIf { it.isNotEmpty() } ?: existingSlug
+                
+                // Verifica se l'URL (o l'URL originale) esiste già nelle righe
+                val urlExists = urlLines.any { line ->
                     val existingUrl = if (line.contains('\t')) {
                         line.substringBefore('\t')
                     } else {
                         line.trim()
                     }
-                    existingUrl == url
+                    existingUrl == url || (originalUrl != null && existingUrl == originalUrl)
                 }
                 
+                val updatedUrlLines = urlLines.toMutableList()
                 if (!urlExists) {
                     // Aggiungi una nuova riga per questo URL
-                    val newLine = url
-                    val updatedContent = if (existingLines.isNotEmpty()) {
-                        (existingLines + newLine).joinToString("\n")
-                    } else {
-                        newLine
-                    }
-                    statusFile.writeText(updatedContent)
+                    updatedUrlLines.add(url)
                     Log.d("DownloadWorker", "✅ URL aggiunto al file .status: ${statusFile.absolutePath} -> $url")
+                    
+                    // Se c'è un URL originale diverso, aggiungilo anche al file .status
+                    // Questo permette di trovare il download anche quando si cerca con l'URL originale
+                    if (originalUrl != null && originalUrl != url) {
+                        val originalUrlExists = urlLines.any { line ->
+                            val existingUrl = if (line.contains('\t')) {
+                                line.substringBefore('\t')
+                            } else {
+                                line.trim()
+                            }
+                            existingUrl == originalUrl
+                        }
+                        
+                        if (!originalUrlExists) {
+                            updatedUrlLines.add(originalUrl)
+                            Log.d("DownloadWorker", "✅ URL originale aggiunto al file .status: $originalUrl")
+                        }
+                    }
                 } else {
                     Log.d("DownloadWorker", "ℹ️ URL già presente nel file .status, nessuna modifica: $url")
                 }
+                
+                // Costruisci il contenuto finale: slug (se presente) seguito dalle righe URL
+                val finalContent = buildString {
+                    if (slugToSave != null) {
+                        appendLine("SLUG:$slugToSave")
+                    }
+                    updatedUrlLines.forEach { line ->
+                        appendLine(line)
+                    }
+                }.trimEnd()
+                
+                statusFile.writeText(finalContent)
             } catch (e: Exception) {
                 Log.e("DownloadWorker", "Errore nella creazione/aggiornamento del file .status", e)
             }
@@ -332,7 +367,7 @@ class DownloadWorker(
         )
         
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Download in corso")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_download_progress))
             .setContentText(romTitle)
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
             .setContentIntent(createPendingIntent(romSlug))
@@ -340,7 +375,7 @@ class DownloadWorker(
             .setOngoing(true)
             .addAction(
                 android.R.drawable.ic_menu_close_clear_cancel,
-                "Interrompi download",
+                appContext.getString(com.tottodrillo.R.string.notif_cancel_download),
                 cancelPendingIntent
             )
             .build()
@@ -362,7 +397,7 @@ class DownloadWorker(
      */
     private fun showCompletedNotification(romTitle: String, filePath: String, romSlug: String?) {
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Download completato")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_download_completed))
             .setContentText(romTitle)
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
             .setContentIntent(createPendingIntent(romSlug))
@@ -377,7 +412,7 @@ class DownloadWorker(
      */
     private fun showErrorNotification(romTitle: String, error: String, romSlug: String?) {
         val notification = NotificationCompat.Builder(appContext, NOTIFICATION_CHANNEL_ID)
-            .setContentTitle("Download fallito")
+            .setContentTitle(appContext.getString(com.tottodrillo.R.string.notif_download_failed))
             .setContentText("$romTitle: $error")
             .setSmallIcon(com.tottodrillo.R.drawable.ic_notification)
             .setContentIntent(createPendingIntent(romSlug))

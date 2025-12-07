@@ -44,7 +44,8 @@ class RomRepositoryImpl @Inject constructor(
     private val platformManager: com.tottodrillo.domain.manager.PlatformManager,
     private val sourceManager: com.tottodrillo.domain.manager.SourceManager,
     private val okHttpClient: OkHttpClient,
-    private val gson: Gson
+    private val gson: Gson,
+    private val cacheManager: RomCacheManager
 ) : RomRepository {
 
     // Cache in memoria per le piattaforme (evita chiamate ripetute)
@@ -533,6 +534,23 @@ class RomRepositoryImpl @Inject constructor(
             )
         }
         
+        // PRIMA: Controlla se la ROM è in cache (solo dati, senza link)
+        val cachedRom = cacheManager.loadRomFromCache(slug)
+        if (cachedRom != null) {
+            android.util.Log.d("RomRepositoryImpl", "✅ ROM trovata in cache: $slug")
+            
+            // Se non servono i link, restituisci direttamente dalla cache
+            if (!includeDownloadLinks) {
+                return NetworkResult.Success(cachedRom)
+            }
+            
+            // Se servono i link, carica solo quelli dalla sorgente e uniscili
+            // (i link vengono sempre ricaricati per essere aggiornati)
+            val romWithLinks = loadRomWithLinksOnly(slug, cachedRom)
+            return romWithLinks
+        }
+        
+        // SECONDO: Se non in cache, carica dalla sorgente
         return try {
             // Cerca in tutte le sorgenti abilitate
             val enabledSources = sourceManager.getEnabledSources()
@@ -664,6 +682,68 @@ class RomRepositoryImpl @Inject constructor(
             )
         }
     }
+    
+    /**
+     * Carica solo i link di download per una ROM (usato quando la ROM è in cache)
+     */
+    private suspend fun loadRomWithLinksOnly(slug: String, cachedRom: Rom): NetworkResult<Rom> {
+        return try {
+            val enabledSources = sourceManager.getEnabledSources()
+            if (enabledSources.isEmpty()) {
+                return NetworkResult.Error(
+                    com.tottodrillo.data.remote.NetworkException.UnknownError(
+                        "Nessuna sorgente abilitata"
+                    )
+                )
+            }
+            
+            // Carica solo i link dalle sorgenti
+            val allDownloadLinks = coroutineScope {
+                enabledSources.map { source ->
+                    async {
+                        try {
+                            val sourceDir = File(source.installPath ?: return@async emptyList<com.tottodrillo.domain.model.DownloadLink>())
+                            val metadata = sourceManager.getSourceMetadata(source.id) ?: return@async emptyList()
+                            
+                            val executor = SourceExecutor.create(
+                                metadata,
+                                sourceDir,
+                                okHttpClient,
+                                gson
+                            )
+                            
+                            val result = executor.getEntry(slug, includeDownloadLinks = true)
+                            result.fold(
+                                onSuccess = { entryResponse ->
+                                    entryResponse.entry?.links?.map { link ->
+                                        com.tottodrillo.domain.model.DownloadLink(
+                                            name = link.name,
+                                            type = link.type,
+                                            format = link.format,
+                                            url = link.url,
+                                            size = link.sizeStr,
+                                            sourceId = source.id,
+                                            requiresWebView = link.requiresWebView
+                                        )
+                                    } ?: emptyList()
+                                },
+                                onFailure = { emptyList() }
+                            )
+                        } catch (e: Exception) {
+                            emptyList()
+                        }
+                    }
+                }.awaitAll()
+            }.flatten().distinctBy { it.url }
+            
+            // Unisci la ROM dalla cache con i link aggiornati
+            val romWithLinks = cachedRom.copy(downloadLinks = allDownloadLinks)
+            NetworkResult.Success(romWithLinks)
+        } catch (e: Exception) {
+            android.util.Log.e("RomRepositoryImpl", "Errore caricamento link per ROM in cache", e)
+            NetworkResult.Success(cachedRom) // Restituisci comunque la ROM dalla cache
+        }
+    }
 
     override fun getFavoriteRoms(): Flow<List<Rom>> = flow {
         // Carica i favoriti dal file .status
@@ -767,6 +847,154 @@ class RomRepositoryImpl @Inject constructor(
         }
         
         emit(recentRoms)
+    }
+    
+    override fun getDownloadedRoms(): Flow<List<Rom>> = flow {
+        // Carica le ROM scaricate/installate dai file .status (già ordinate per data decrescente)
+        val downloadedSlugsWithTimestamp = loadDownloadedRomsFromStatusFiles()
+        
+        if (downloadedSlugsWithTimestamp.isEmpty()) {
+            emit(emptyList())
+            return@flow
+        }
+        
+        // Carica i dettagli per ogni ROM scaricata (senza download links per performance)
+        // Mantiene l'ordine per timestamp (più recenti per prime)
+        val downloadedRoms = mutableListOf<Rom>()
+        for ((slug, _) in downloadedSlugsWithTimestamp) {
+            try {
+                when (val result = getRomBySlug(slug, includeDownloadLinks = false)) {
+                    is NetworkResult.Success -> {
+                        downloadedRoms.add(result.data)
+                    }
+                    else -> {
+                        // Se una ROM non viene trovata (es. eliminata), continua con le altre
+                    }
+                }
+            } catch (e: Exception) {
+                // Ignora errori per singole ROM e continua
+            }
+        }
+        
+        emit(downloadedRoms)
+    }
+    
+    /**
+     * Carica gli slug delle ROM scaricate/installate dai file .status
+     * Legge tutti i file .status nella directory di download e cerca di estrarre lo slug
+     * Restituisce una lista di Pair<slug, timestamp> ordinata per data decrescente (più recenti per prime)
+     */
+    private suspend fun loadDownloadedRomsFromStatusFiles(): List<Pair<String, Long>> {
+        return try {
+            val config = configRepository.downloadConfig.first()
+            val downloadDir = File(config.downloadPath)
+            
+            if (!downloadDir.exists() || !downloadDir.isDirectory) {
+                return emptyList()
+            }
+            
+            // Cerca tutti i file .status (escludendo i file di sistema come favorites e recent)
+            val statusFiles = downloadDir.listFiles { _, name -> 
+                name.endsWith(".status") && 
+                name != FAVORITES_FILE_NAME && 
+                name != RECENT_FILE_NAME
+            } ?: return emptyList()
+            
+            val slugToTimestamp = mutableMapOf<String, Long>()
+            
+            for (statusFile in statusFiles) {
+                try {
+                    // Usa la data di modifica del file .status come timestamp del download
+                    val fileTimestamp = statusFile.lastModified()
+                    
+                    val lines = statusFile.readLines().filter { it.isNotBlank() }
+                    
+                    // Cerca lo slug nella prima riga (formato: SLUG:<slug>)
+                    var slug: String? = null
+                    val urlLines = mutableListOf<String>()
+                    
+                    for (line in lines) {
+                        if (line.startsWith("SLUG:")) {
+                            // Estrai lo slug dalla riga speciale
+                            slug = line.substringAfter("SLUG:").trim()
+                        } else {
+                            // Aggiungi le righe URL alla lista
+                            urlLines.add(line)
+                        }
+                    }
+                    
+                    // Se non c'è uno slug esplicito, prova a estrarlo dall'URL o dal nome del file
+                    if (slug == null && urlLines.isNotEmpty()) {
+                        val firstUrl = if (urlLines.first().contains('\t')) {
+                            urlLines.first().substringBefore('\t').trim()
+                        } else {
+                            urlLines.first().trim()
+                        }
+                        slug = extractSlugFromUrlOrFileName(firstUrl, statusFile.name)
+                    }
+                    
+                    if (slug != null) {
+                        // Se lo slug esiste già, usa il timestamp più recente
+                        val existingTimestamp = slugToTimestamp[slug]
+                        if (existingTimestamp == null || fileTimestamp > existingTimestamp) {
+                            slugToTimestamp[slug] = fileTimestamp
+                        }
+                    }
+                } catch (e: Exception) {
+                    android.util.Log.w("RomRepositoryImpl", "Errore lettura file .status: ${statusFile.name}", e)
+                }
+            }
+            
+            // Ordina per timestamp decrescente (più recenti per prime) e restituisci solo gli slug
+            slugToTimestamp.entries
+                .sortedByDescending { it.value }
+                .map { Pair(it.key, it.value) }
+        } catch (e: Exception) {
+            android.util.Log.e("RomRepositoryImpl", "Errore nel caricamento ROM scaricate", e)
+            emptyList()
+        }
+    }
+    
+    /**
+     * Estrae lo slug da un URL o dal nome del file
+     * Prova vari pattern comuni per le sorgenti
+     */
+    private fun extractSlugFromUrlOrFileName(url: String, fileName: String): String? {
+        // Pattern comuni per estrarre lo slug:
+        // 1. Vimm's Lair: https://vimm.net/vault/{slug}
+        // 2. SwitchRoms: https://switchroms.io/roms/{slug}
+        // 3. CrocDB: potrebbe essere nell'URL o nel nome del file
+        
+        // Prova Vimm's Lair
+        val vimmPattern = Regex("vimm\\.net/vault/([^/?]+)")
+        vimmPattern.find(url)?.let {
+            return it.groupValues[1]
+        }
+        
+        // Prova SwitchRoms
+        val switchRomsPattern = Regex("switchroms\\.io/roms/([^/?]+)")
+        switchRomsPattern.find(url)?.let {
+            return it.groupValues[1]
+        }
+        
+        // Prova CrocDB (potrebbe avere slug nell'URL)
+        val crocdbPattern = Regex("crocdb\\.net/.*?/([^/?]+)")
+        crocdbPattern.find(url)?.let {
+            return it.groupValues[1]
+        }
+        
+        // Se non trovato nell'URL, prova a estrarre dal nome del file
+        // Rimuovi estensione e .status
+        val cleanFileName = fileName
+            .removeSuffix(".status")
+            .substringBeforeLast(".")
+        
+        // Se il nome del file sembra uno slug (senza spazi, caratteri speciali limitati), usalo
+        if (cleanFileName.matches(Regex("^[a-zA-Z0-9_-]+$")) && cleanFileName.length > 3) {
+            return cleanFileName
+        }
+        
+        return null
     }
     
     /**
@@ -980,5 +1208,19 @@ class RomRepositoryImpl @Inject constructor(
     override fun clearCache() {
         platformsCache = null
         regionsCache = null
+    }
+    
+    /**
+     * Pulisce la cache ROM (chiamato quando si cancella lo storico)
+     */
+    suspend fun clearRomCache() {
+        cacheManager.clearCache()
+    }
+    
+    /**
+     * Pulisce la cache di una ROM specifica (chiamato quando si fa refresh)
+     */
+    suspend fun clearRomCache(slug: String) {
+        cacheManager.clearRomCache(slug)
     }
 }

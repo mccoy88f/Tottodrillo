@@ -32,6 +32,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
@@ -55,6 +56,7 @@ import com.tottodrillo.R
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.tottodrillo.domain.model.PlatformInfo
+import com.tottodrillo.domain.model.FeaturedGame
 import com.tottodrillo.presentation.common.HomeUiState
 import com.tottodrillo.presentation.components.EmptyState
 import com.tottodrillo.presentation.components.LoadingIndicator
@@ -67,7 +69,7 @@ import com.tottodrillo.presentation.components.RomCard
 @Composable
 fun HomeScreen(
     refreshKey: Int = 0,
-    onNavigateToSearch: () -> Unit,
+    onNavigateToSearch: (String?) -> Unit,
     onNavigateToExplore: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
     onNavigateToRomDetail: (String) -> Unit,
@@ -122,7 +124,7 @@ fun HomeScreen(
                             contentDescription = stringResource(R.string.settings)
                         )
                     }
-                    IconButton(onClick = onNavigateToSearch) {
+                    IconButton(onClick = { onNavigateToSearch(null) }) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = stringResource(R.string.search)
@@ -137,7 +139,7 @@ fun HomeScreen(
     ) { padding ->
         when {
             uiState.isLoading && uiState.recentPlatforms.isEmpty() -> {
-                LoadingIndicator(modifier = Modifier.padding(padding))
+                LoadingIndicator(modifier = Modifier.padding(padding), showLogo = true)
             }
             uiState.error != null && uiState.recentPlatforms.isEmpty() -> {
                 EmptyState(
@@ -151,6 +153,7 @@ fun HomeScreen(
                     onNavigateToExplore = onNavigateToExplore,
                     onNavigateToPlatform = onNavigateToPlatform,
                     onNavigateToRomDetail = onNavigateToRomDetail,
+                    onNavigateToSearch = onNavigateToSearch,
                     modifier = Modifier.padding(padding)
                 )
             }
@@ -164,6 +167,7 @@ private fun HomeContent(
     onNavigateToExplore: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
     onNavigateToRomDetail: (String) -> Unit,
+    onNavigateToSearch: (String?) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -216,8 +220,11 @@ private fun HomeContent(
         }
 
         // ROM in evidenza
-        SectionHeader(title = stringResource(R.string.home_featured))
-        
+            SectionHeader(
+                title = stringResource(R.string.home_featured),
+                onSeeAllClick = null
+            )
+
         if (uiState.isLoadingFeatured) {
             Box(
                 modifier = Modifier
@@ -228,21 +235,32 @@ private fun HomeContent(
             ) {
                 LoadingIndicator()
             }
-        } else if (uiState.featuredRoms.isNotEmpty()) {
+        } else if (uiState.featuredGames.isNotEmpty()) {
             LazyRow(
                 contentPadding = PaddingValues(horizontal = 20.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                items(uiState.featuredRoms.size, key = { uiState.featuredRoms[it].slug }) { index ->
-                    val rom = uiState.featuredRoms[index]
-                    // Per le LazyRow orizzontali, carica sempre le prime 10 immagini
-                    // dato che sono liste brevi e l'utente le vedrà tutte scorrendo
+                items(uiState.featuredGames.size, key = { uiState.featuredGames[it].gameUrl }) { index ->
+                    val game = uiState.featuredGames[index]
+                    // Crea una ROM temporanea per usare RomCard
+                    val tempRom = com.tottodrillo.domain.model.Rom(
+                        slug = game.gameUrl, // Usa l'URL come slug temporaneo
+                        id = null,
+                        title = game.title,
+                        platform = com.tottodrillo.domain.model.PlatformInfo.UNKNOWN,
+                        coverUrl = game.imageUrl,
+                        coverUrls = listOfNotNull(game.imageUrl),
+                        regions = emptyList(),
+                        downloadLinks = emptyList(),
+                        isFavorite = false,
+                        sourceId = null
+                    )
                     val shouldLoad = index < 10
                     RomCard(
-                        rom = rom,
-                        onClick = { onNavigateToRomDetail(rom.slug) },
+                        rom = tempRom,
+                        onClick = { onNavigateToSearch(game.title) },
                         shouldLoadImage = shouldLoad,
-                        modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
+                        modifier = Modifier.width(180.dp)
                     )
                 }
             }
@@ -251,8 +269,8 @@ private fun HomeContent(
         Spacer(modifier = Modifier.height(24.dp))
 
         // ROM recenti
-        SectionHeader(title = stringResource(R.string.home_recent))
-        
+            SectionHeader(title = stringResource(R.string.home_recent))
+
         if (uiState.isLoadingRecent) {
             Box(
                 modifier = Modifier
@@ -284,9 +302,43 @@ private fun HomeContent(
 
         Spacer(modifier = Modifier.height(24.dp))
 
+        // ROM scaricate/installate
+            SectionHeader(title = stringResource(R.string.home_downloaded))
+
+        if (uiState.isLoadingDownloaded) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(240.dp)
+                    .padding(horizontal = 20.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                LoadingIndicator()
+            }
+        } else if (uiState.downloadedRoms.isNotEmpty()) {
+            LazyRow(
+                contentPadding = PaddingValues(horizontal = 20.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                items(uiState.downloadedRoms.size, key = { uiState.downloadedRoms[it].slug }) { index ->
+                    val rom = uiState.downloadedRoms[index]
+                    // Per le LazyRow orizzontali, carica sempre le prime 10 immagini
+                    val shouldLoad = index < 10
+                    RomCard(
+                        rom = rom,
+                        onClick = { onNavigateToRomDetail(rom.slug) },
+                        shouldLoadImage = shouldLoad,
+                        modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
         // ROM preferiti
-        SectionHeader(title = stringResource(R.string.home_favorites))
-        
+            SectionHeader(title = stringResource(R.string.home_favorites))
+
         if (uiState.isLoadingFavorites) {
             Box(
                 modifier = Modifier
@@ -313,10 +365,10 @@ private fun HomeContent(
                         modifier = Modifier.width(180.dp) // Larghezza massima come nella ricerca
                     )
                 }
+                }
             }
-        }
 
-        Spacer(modifier = Modifier.height(24.dp))
+            Spacer(modifier = Modifier.height(24.dp))
     }
 }
 

@@ -1,5 +1,6 @@
 package com.tottodrillo.presentation.components
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,6 +16,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.Favorite
@@ -66,87 +69,32 @@ fun RomCard(
                     .aspectRatio(0.75f),
                 contentAlignment = Alignment.Center
             ) {
-                // Usa coverUrl se disponibile, altrimenti usa il primo elemento di coverUrls (placeholder)
-                val imageUrl = rom.coverUrl ?: rom.coverUrls.firstOrNull()
-                // Se l'immagine fallisce, prova con il prossimo elemento di coverUrls (placeholder)
-                val fallbackUrl = if (rom.coverUrl != null && rom.coverUrls.size > 1) {
-                    // Se coverUrl è presente ma fallisce, usa il prossimo elemento (placeholder)
-                    rom.coverUrls.firstOrNull { it != rom.coverUrl }
-                } else {
-                    null
+                // Prepara la lista di URL da provare in ordine:
+                // 1. coverUrl (se presente)
+                // 2. Tutti gli altri elementi di coverUrls (placeholder inclusi)
+                val urlsToTry = mutableListOf<String>()
+                if (rom.coverUrl != null) {
+                    urlsToTry.add(rom.coverUrl)
+                }
+                // Aggiungi tutti gli elementi di coverUrls che non sono già coverUrl
+                rom.coverUrls.forEach { url ->
+                    if (url !in urlsToTry) {
+                        urlsToTry.add(url)
+                    }
                 }
                 
                 android.util.Log.d("RomCard", "🎴 [RomCard] ROM: ${rom.title}")
                 android.util.Log.d("RomCard", "   coverUrl: ${rom.coverUrl}")
                 android.util.Log.d("RomCard", "   coverUrls: ${rom.coverUrls}")
-                android.util.Log.d("RomCard", "   imageUrl selezionato: $imageUrl")
-                android.util.Log.d("RomCard", "   fallbackUrl: $fallbackUrl")
+                android.util.Log.d("RomCard", "   urlsToTry: $urlsToTry")
                 android.util.Log.d("RomCard", "   shouldLoadImage: $shouldLoadImage")
                 
-                if (shouldLoadImage && imageUrl != null) {
-                    android.util.Log.d("RomCard", "🖼️ Caricamento immagine per ${rom.title}: $imageUrl")
-                    SubcomposeAsyncImage(
-                        model = imageUrl,
+                if (shouldLoadImage && urlsToTry.isNotEmpty()) {
+                    // Usa un composable ricorsivo per provare tutte le immagini in sequenza
+                    TryImageUrls(
+                        urls = urlsToTry,
                         contentDescription = rom.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit, // Centra l'immagine mantenendo le proporzioni
-                        loading = {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                            }
-                        },
-                        error = {
-                            // Se c'è un fallback (placeholder), provalo, altrimenti mostra icona errore
-                            if (fallbackUrl != null) {
-                                android.util.Log.d("RomCard", "   ⚠️ Immagine fallita, provo fallback: $fallbackUrl")
-                                SubcomposeAsyncImage(
-                                    model = fallbackUrl,
-                                    contentDescription = rom.title,
-                                    modifier = Modifier.fillMaxSize(),
-                                    contentScale = ContentScale.Fit,
-                        loading = {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator(modifier = Modifier.size(32.dp))
-                            }
-                        },
-                        error = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.BrokenImage,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(48.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    )
-                } else {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .background(MaterialTheme.colorScheme.surfaceVariant),
-                                    contentAlignment = Alignment.Center
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.BrokenImage,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(48.dp),
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
-                            }
-                        }
+                        modifier = Modifier.fillMaxSize()
                     )
                 } else {
                     // Placeholder quando l'immagine non deve essere caricata o non c'è nessuna immagine
@@ -203,13 +151,31 @@ fun RomCard(
 
                 Spacer(modifier = Modifier.height(4.dp))
 
-                Text(
-                    text = rom.platform.displayName,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
+                // Mostra badge MobyGames se la piattaforma è UNKNOWN (giochi featured)
+                if (rom.platform.code == "unknown") {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Text(
+                            text = "🔗",
+                            style = MaterialTheme.typography.bodySmall
+                        )
+                        Text(
+                            text = "MobyGames",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                } else {
+                    Text(
+                        text = rom.platform.displayName,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
 
                 if (rom.regions.isNotEmpty()) {
                     Spacer(modifier = Modifier.height(4.dp))
@@ -227,6 +193,63 @@ fun RomCard(
             }
         }
     }
+}
+
+/**
+ * Composable che prova a caricare immagini in sequenza fino a trovarne una valida
+ */
+@Composable
+internal fun TryImageUrls(
+    urls: List<String>,
+    contentDescription: String,
+    modifier: Modifier = Modifier,
+    currentIndex: Int = 0
+) {
+    if (currentIndex >= urls.size) {
+        // Tutte le immagini hanno fallito, mostra icona errore
+        Box(
+            modifier = modifier
+                .background(MaterialTheme.colorScheme.surfaceVariant),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.BrokenImage,
+                contentDescription = null,
+                modifier = Modifier.size(48.dp),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+        return
+    }
+    
+    val currentUrl = urls[currentIndex]
+    
+    android.util.Log.d("RomCard", "   🖼️ Tentativo ${currentIndex + 1}/${urls.size}: $currentUrl")
+    
+    SubcomposeAsyncImage(
+        model = currentUrl,
+        contentDescription = contentDescription,
+        modifier = modifier,
+        contentScale = ContentScale.Fit,
+        loading = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                CircularProgressIndicator(modifier = Modifier.size(32.dp))
+            }
+        },
+        error = {
+            android.util.Log.w("RomCard", "   ⚠️ Immagine fallita: $currentUrl, provo prossima...")
+            // Prova la prossima immagine
+            TryImageUrls(
+                urls = urls,
+                contentDescription = contentDescription,
+                modifier = modifier,
+                currentIndex = currentIndex + 1
+            )
+        }
+    )
 }
 
 /**
@@ -290,15 +313,44 @@ fun EmptyState(
 
 /**
  * Indicatore di caricamento
+ * @param showLogo Se true, mostra logo e nome dell'app (per caricamento iniziale)
  */
 @Composable
 fun LoadingIndicator(
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
+    showLogo: Boolean = false
 ) {
     Box(
         modifier = modifier.fillMaxSize(),
         contentAlignment = Alignment.Center
     ) {
-        CircularProgressIndicator()
+        if (showLogo) {
+            // Versione con logo e nome per caricamento iniziale
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                // Logo dell'app senza clip circolare
+                Image(
+                    painter = painterResource(id = com.tottodrillo.R.mipmap.ic_launcher_foreground),
+                    contentDescription = null,
+                    modifier = Modifier.size(60.dp)
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                // Nome dell'app
+                Text(
+                    text = "Tottodrillo",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
+                Spacer(modifier = Modifier.height(24.dp))
+                // Indicatore di caricamento
+                CircularProgressIndicator()
+            }
+        } else {
+            // Versione semplice solo con indicatore per caricamenti delle sezioni
+            CircularProgressIndicator()
+        }
     }
 }

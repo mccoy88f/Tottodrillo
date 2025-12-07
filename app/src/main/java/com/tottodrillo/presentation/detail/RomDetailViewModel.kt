@@ -10,6 +10,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.tottodrillo.data.remote.NetworkResult
 import com.tottodrillo.data.remote.getUserMessage
+import com.tottodrillo.data.repository.DownloadConfigRepository
 import com.tottodrillo.domain.manager.DownloadManager
 import com.tottodrillo.domain.model.DownloadLink
 import com.tottodrillo.domain.model.DownloadStatus
@@ -24,6 +25,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
@@ -35,6 +37,7 @@ import javax.inject.Inject
 class RomDetailViewModel @Inject constructor(
     private val repository: RomRepository,
     private val downloadManager: DownloadManager,
+    private val configRepository: DownloadConfigRepository,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -56,6 +59,28 @@ class RomDetailViewModel @Inject constructor(
         viewModelScope.launch {
             if (romSlug.isNotEmpty()) {
                 repository.trackRomOpened(romSlug)
+            }
+        }
+        // Carica il provider di ricerca info ROMs
+        loadRomInfoSearchProvider()
+    }
+    
+    /**
+     * Carica il provider di ricerca info ROMs dalla configurazione
+     */
+    private fun loadRomInfoSearchProvider() {
+        viewModelScope.launch {
+            // Carica il valore iniziale
+            val config = configRepository.downloadConfig.first()
+            _uiState.update {
+                it.copy(romInfoSearchProvider = config.romInfoSearchProvider)
+            }
+            
+            // Osserva i cambiamenti
+            configRepository.downloadConfig.collect { config ->
+                _uiState.update {
+                    it.copy(romInfoSearchProvider = config.romInfoSearchProvider)
+                }
             }
         }
     }
@@ -97,7 +122,21 @@ class RomDetailViewModel @Inject constructor(
         viewModelScope.launch {
             // Per ogni link, verifica se c'è un download in corso
             downloadLinks.forEach { link ->
-                val activeDownloadWorkId = downloadManager.getActiveDownloadWorkId(link.url)
+                // Cerca prima con l'URL originale del link
+                var activeDownloadWorkId = downloadManager.getActiveDownloadWorkId(link.url)
+                
+                // Se non trova e il link richiede WebView, potrebbe essere stato avviato con un URL finale diverso
+                // In questo caso, checkLinkStatus dovrebbe trovare il file .status e l'URL finale
+                if (activeDownloadWorkId == null && link.requiresWebView) {
+                    // Verifica lo stato del link per vedere se c'è un download in corso
+                    val linkStatus = downloadManager.checkLinkStatus(link)
+                    if (linkStatus.first is DownloadStatus.InProgress) {
+                        // C'è un download in corso, cerca di nuovo con l'URL originale
+                        // (getActiveDownloadWorkId ora cerca anche tramite file .status)
+                        activeDownloadWorkId = downloadManager.getActiveDownloadWorkId(link.url)
+                    }
+                }
+                
                 if (activeDownloadWorkId != null) {
                     // Se non stiamo già osservando questo work, avvia l'osservazione
                     if (currentWorkId != activeDownloadWorkId) {
@@ -338,64 +377,132 @@ class RomDetailViewModel @Inject constructor(
      */
     fun refreshRomDetail() {
         viewModelScope.launch {
+            // Cancella la cache della ROM per forzare il refresh completo
+            if (repository is com.tottodrillo.data.repository.RomRepositoryImpl) {
+                repository.clearRomCache(romSlug)
+            }
             loadRomDetail()
         }
+    }
+    
+    /**
+     * Ricarica solo i link di download (senza ricaricare info e immagini)
+     */
+    fun refreshDownloadLinks() {
+        val currentRom = _uiState.value.rom ?: return
+        loadDownloadLinks(currentRom.slug)
     }
 
     /**
      * Carica i dettagli della ROM dallo slug
+     * Prima carica info e immagini (senza link), poi carica i link in modo asincrono
      */
     private fun loadRomDetail() {
         if (romSlug.isEmpty()) {
             _uiState.update {
                 it.copy(
                     isLoading = false,
-                    error = "Slug ROM non valido"
+                    error = context.getString(com.tottodrillo.R.string.rom_detail_invalid_slug)
                 )
             }
             return
         }
 
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true, error = null) }
+            // PRIMA FASE: Carica ROM senza link (info e immagini)
+            _uiState.update { it.copy(isLoading = true, isLoadingLinks = false, error = null) }
 
-            when (val result = repository.getRomBySlug(romSlug)) {
+            when (val result = repository.getRomBySlug(romSlug, includeDownloadLinks = false)) {
                 is NetworkResult.Success -> {
                     val rom = result.data
                     
-                    // Calcola lo stato per ogni link separatamente
-                    val linkStatuses = rom.downloadLinks.associate { link ->
-                        link.url to downloadManager.checkLinkStatus(link)
-                    }
-                    
-                    // Verifica lo stato di download ed estrazione (per retrocompatibilità)
-                    val (downloadStatus, extractionStatus) = downloadManager.checkRomStatus(romSlug, rom.downloadLinks)
-                    
+                    // Aggiorna lo stato con ROM senza link
                     _uiState.update {
                         it.copy(
                             rom = rom,
                             isFavorite = rom.isFavorite,
-                            downloadStatus = downloadStatus,
-                            extractionStatus = extractionStatus,
-                            linkStatuses = linkStatuses,
                             isLoading = false,
+                            isLoadingLinks = true, // Inizia il caricamento dei link
                             error = null
                         )
                     }
                     
-                    // Riavvia l'osservazione per i download/estrazioni in corso
-                    startObservingActiveTasks(rom.downloadLinks)
+                    // SECONDA FASE: Carica i link in modo asincrono
+                    loadDownloadLinks(romSlug)
                 }
                 is NetworkResult.Error -> {
                     _uiState.update {
                         it.copy(
                             isLoading = false,
+                            isLoadingLinks = false,
                             error = result.exception.getUserMessage()
                         )
                     }
                 }
                 is NetworkResult.Loading -> {
                     // già gestito dallo stato isLoading
+                }
+            }
+        }
+    }
+    
+    /**
+     * Carica i link di download in modo asincrono
+     */
+    private fun loadDownloadLinks(slug: String) {
+        viewModelScope.launch {
+            try {
+                when (val result = repository.getRomBySlug(slug, includeDownloadLinks = true)) {
+                    is NetworkResult.Success -> {
+                        val romWithLinks = result.data
+                        val currentRom = _uiState.value.rom
+                        
+                        // Aggiorna la ROM con i link
+                        val updatedRom = currentRom?.copy(
+                            downloadLinks = romWithLinks.downloadLinks
+                        ) ?: romWithLinks
+                        
+                        // Calcola lo stato per ogni link separatamente
+                        val linkStatuses = updatedRom.downloadLinks.associate { link ->
+                            link.url to downloadManager.checkLinkStatus(link)
+                        }
+                        
+                        // Verifica lo stato di download ed estrazione (per retrocompatibilità)
+                        val (downloadStatus, extractionStatus) = downloadManager.checkRomStatus(slug, updatedRom.downloadLinks)
+                        
+                        _uiState.update {
+                            it.copy(
+                                rom = updatedRom,
+                                downloadStatus = downloadStatus,
+                                extractionStatus = extractionStatus,
+                                linkStatuses = linkStatuses,
+                                isLoadingLinks = false
+                            )
+                        }
+                        
+                        // Riavvia l'osservazione per i download/estrazioni in corso
+                        startObservingActiveTasks(updatedRom.downloadLinks)
+                    }
+                    is NetworkResult.Error -> {
+                        // Se fallisce il caricamento dei link, mostra comunque la ROM senza link
+                        _uiState.update {
+                            it.copy(
+                                isLoadingLinks = false,
+                                error = "Errore nel caricamento dei link di download: ${result.exception.getUserMessage()}"
+                            )
+                        }
+                    }
+                    is NetworkResult.Loading -> {
+                        // già gestito dallo stato isLoadingLinks
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RomDetailViewModel", "Errore caricamento link", e)
+                _uiState.update {
+                    it.copy(
+                        isLoadingLinks = false,
+                        error = "Errore nel caricamento dei link: ${e.message}"
+                    )
                 }
             }
         }
@@ -473,7 +580,7 @@ class RomDetailViewModel @Inject constructor(
                     } catch (e: Exception) {
                         _uiState.update {
                             it.copy(
-                                error = e.message ?: "Errore nell'avvio del download"
+                                error = e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_download_error)
                             )
                         }
                     }
@@ -521,7 +628,8 @@ class RomDetailViewModel @Inject constructor(
                 val workId = downloadManager.startDownload(
                     romSlug = currentRom.slug,
                     romTitle = currentRom.title,
-                    downloadLink = finalLink
+                    downloadLink = finalLink,
+                    originalUrl = link.url // Passa l'URL originale per salvare anche quello nel file .status
                 )
                 currentWorkId = workId
 
@@ -570,7 +678,7 @@ class RomDetailViewModel @Inject constructor(
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
-                        error = e.message ?: "Errore nell'avvio del download"
+                        error = e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_download_error)
                     )
                 }
             }
@@ -638,7 +746,7 @@ class RomDetailViewModel @Inject constructor(
                 _uiState.update {
                     it.copy(
                         extractionStatus = ExtractionStatus.Failed(
-                            e.message ?: "Errore nell'avvio dell'estrazione"
+                            e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_extraction_error)
                         )
                     )
                 }
@@ -678,7 +786,7 @@ class RomDetailViewModel @Inject constructor(
                     android.os.Handler(android.os.Looper.getMainLooper()).post {
                         Toast.makeText(
                             context,
-                            "Percorso: $extractionPath\nApri manualmente con un file manager",
+                            context.getString(com.tottodrillo.R.string.rom_detail_extraction_path, extractionPath),
                             Toast.LENGTH_LONG
                         ).show()
                     }
@@ -694,7 +802,7 @@ class RomDetailViewModel @Inject constructor(
                             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         }
                         
-                        val chooser = Intent.createChooser(intent, "Apri cartella")
+                        val chooser = Intent.createChooser(intent, context.getString(com.tottodrillo.R.string.rom_detail_open_folder_chooser))
                         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         context.startActivity(chooser)
                     } catch (e: Exception) {
@@ -724,7 +832,7 @@ class RomDetailViewModel @Inject constructor(
                                 setDataAndType(Uri.parse("file://$extractionPath"), "resource/folder")
                                 addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                             },
-                            "Apri cartella"
+                            context.getString(com.tottodrillo.R.string.rom_detail_open_folder_chooser)
                         )
                         chooser.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                         context.startActivity(chooser)
@@ -733,6 +841,53 @@ class RomDetailViewModel @Inject constructor(
             } catch (e: Exception) {
                 android.util.Log.e("RomDetailViewModel", "Errore nell'apertura della cartella", e)
             }
+        }
+    }
+    
+    /**
+     * Apre il WebView per la ricerca info ROMs (MobyGames o Gamefaqs)
+     */
+    fun openMobyGamesSearch(query: String) {
+        viewModelScope.launch {
+            val config = configRepository.downloadConfig.first()
+            val (searchUrl, title) = when (config.romInfoSearchProvider) {
+                "gamefaqs" -> {
+                    // Per Gamefaqs, sostituisci gli spazi con + invece di usare URLEncoder
+                    val encodedQuery = query.replace(" ", "+")
+                    "https://gamefaqs.gamespot.com/search?game=$encodedQuery" to 
+                    context.getString(com.tottodrillo.R.string.rom_info_search_title_gamefaqs)
+                }
+                "mobygames" -> {
+                    val encodedQuery = java.net.URLEncoder.encode(query, "UTF-8")
+                    "https://www.mobygames.com/search/?q=$encodedQuery&type=game" to 
+                    context.getString(com.tottodrillo.R.string.rom_info_search_title_mobygames)
+                }
+                else -> {
+                    val encodedQuery = query.replace(" ", "+")
+                    "https://gamefaqs.gamespot.com/search?game=$encodedQuery" to 
+                    context.getString(com.tottodrillo.R.string.rom_info_search_title_gamefaqs)
+                }
+            }
+            _uiState.update {
+                it.copy(
+                    showMobyGamesWebView = true,
+                    mobyGamesSearchUrl = searchUrl,
+                    romInfoSearchTitle = title
+                )
+            }
+        }
+    }
+    
+    /**
+     * Chiude il WebView MobyGames/Gamefaqs
+     */
+    fun closeMobyGamesWebView() {
+        _uiState.update {
+            it.copy(
+                showMobyGamesWebView = false,
+                mobyGamesSearchUrl = null,
+                romInfoSearchTitle = null
+            )
         }
     }
 }

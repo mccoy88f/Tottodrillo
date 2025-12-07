@@ -77,6 +77,12 @@ interface RomRepository {
     fun getRecentRoms(): Flow<List<Rom>>
     
     /**
+     * Stream di ROM scaricate e/o installate
+     * Recupera le ROM basandosi sui file .status nella directory di download
+     */
+    fun getDownloadedRoms(): Flow<List<Rom>>
+    
+    /**
      * Pulisce la cache delle piattaforme e regioni
      * Utile quando cambiano le sorgenti abilitate
      */

@@ -26,8 +26,10 @@
     <string name="home_welcome">Explorez le monde</string>
     <string name="home_subtitle">du rétro gaming</string>
     <string name="home_featured">En vedette</string>
+    <string name="home_featured_mobygames">En vedette (by MobyGames)</string>
     <string name="home_popular_platforms">Plateformes populaires</string>
     <string name="home_recent">Récents</string>
+    <string name="home_downloaded">Téléchargées/Installées</string>
     <string name="home_favorites">Favoris</string>
     <string name="see_all">Voir tout</string>
     
@@ -59,6 +61,8 @@
     <string name="rom_detail_open_folder">Ouvrir le dossier d\'extraction</string>
     <string name="rom_detail_retry_extraction">Réessayer l\'extraction</string>
     <string name="rom_detail_no_download_links">Aucun lien de téléchargement disponible</string>
+    <string name="rom_detail_loading_links">Chargement des liens de téléchargement…</string>
+    <string name="rom_detail_no_download_links_desc">Cette ROM pourrait ne pas avoir de liens de téléchargement disponibles pour cette source.</string>
     <string name="rom_detail_downloading">Téléchargement en cours…</string>
     <string name="rom_detail_installing">Installation en cours…</string>
     
@@ -124,6 +128,20 @@
     <string name="notif_installation_failed">Installation échouée</string>
     <string name="notif_cancel_download">Annuler le téléchargement</string>
     <string name="notif_cancel_installation">Annuler l\'installation</string>
+    <string name="notif_update_download_progress">Téléchargement de la mise à jour en cours</string>
+    <string name="notif_update_download_completed">Téléchargement de la mise à jour terminé</string>
+    <string name="notif_update_download_failed">Échec du téléchargement de la mise à jour</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Démarrage du téléchargement manuel</string>
+    <string name="webview_popup_closed">Popup fermé. Vous pouvez maintenant cliquer à nouveau sur télécharger</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Chemin : %1$s\nOuvrir manuellement avec un gestionnaire de fichiers</string>
+    <string name="rom_detail_invalid_slug">Slug ROM invalide</string>
+    <string name="rom_detail_download_error">Erreur lors du démarrage du téléchargement</string>
+    <string name="rom_detail_extraction_error">Erreur lors du démarrage de l\'extraction</string>
+    <string name="rom_detail_open_folder_chooser">Ouvrir le dossier</string>
     
     <!-- Explore -->
     <string name="explore_title">Explorer les plateformes</string>

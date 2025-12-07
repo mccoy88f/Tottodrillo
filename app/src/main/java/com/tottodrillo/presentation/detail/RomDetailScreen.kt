@@ -67,6 +67,9 @@ import com.tottodrillo.domain.model.Rom
 import com.tottodrillo.presentation.common.RomDetailUiState
 import com.tottodrillo.presentation.components.EmptyState
 import com.tottodrillo.presentation.components.LoadingIndicator
+import com.tottodrillo.presentation.components.TryImageUrls
+import com.tottodrillo.presentation.components.MobyGamesWebViewDialog
+import com.tottodrillo.presentation.components.MobyGamesWebViewDialog
 
 /**
  * Entry point composable per la schermata di dettaglio ROM.
@@ -204,8 +207,8 @@ fun RomDetailRoute(
                     // Solo se ci sono download completati con estrazione Idle, verifica
                     if (hasCompletedDownloads) {
                         android.util.Log.d("RomDetailScreen", "🔍 Verifica se estrazione completata (download completato trovato)")
-                        viewModel.refreshRomStatus()
-                    }
+                            viewModel.refreshRomStatus()
+                        }
                     // Se non ci sono download completati, non fare nulla per evitare loop inutili
                 }
             }
@@ -231,6 +234,21 @@ fun RomDetailRoute(
             )
         }
     }
+    
+    // WebView per ricerca MobyGames/Gamefaqs
+    if (uiState.showMobyGamesWebView) {
+        val mobyGamesUrl = uiState.mobyGamesSearchUrl
+        val searchTitle = uiState.romInfoSearchTitle
+        if (mobyGamesUrl != null) {
+            MobyGamesWebViewDialog(
+                url = mobyGamesUrl,
+                title = searchTitle ?: stringResource(R.string.rom_info_search_title),
+                onDismiss = {
+                    viewModel.closeMobyGamesWebView()
+                }
+            )
+        }
+    }
 
     when {
         uiState.isLoading && rom == null -> {
@@ -249,6 +267,8 @@ fun RomDetailRoute(
                 downloadStatus = uiState.downloadStatus,
                 extractionStatus = uiState.extractionStatus,
                 linkStatuses = uiState.linkStatuses,
+                isLoadingLinks = uiState.isLoadingLinks,
+                romInfoSearchProvider = uiState.romInfoSearchProvider,
                 onNavigateBack = onNavigateBack,
                 onNavigateToPlatform = onNavigateToPlatform,
                 onToggleFavorite = { viewModel.toggleFavorite() },
@@ -265,10 +285,22 @@ fun RomDetailRoute(
                 onRefresh = {
                     viewModel.refreshRomDetail()
                 },
+                onSearchMobyGames = { query ->
+                    viewModel.openMobyGamesSearch(query)
+                },
                 isRefreshing = isRefreshing
             )
         }
     }
+}
+
+/**
+ * Estrae il nome del gioco senza parentesi per la ricerca MobyGames
+ * Es: "New super mario (wii)" -> "New super mario"
+ */
+private fun extractGameTitleForMobyGames(title: String): String {
+    // Rimuovi tutto tra parentesi (incluse le parentesi stesse)
+    return title.replace(Regex("\\([^)]*\\)"), "").trim()
 }
 
 /**
@@ -282,6 +314,8 @@ fun RomDetailScreen(
     downloadStatus: com.tottodrillo.domain.model.DownloadStatus,
     extractionStatus: com.tottodrillo.domain.model.ExtractionStatus,
     linkStatuses: Map<String, Pair<com.tottodrillo.domain.model.DownloadStatus, com.tottodrillo.domain.model.ExtractionStatus>> = emptyMap(),
+    isLoadingLinks: Boolean = false,
+    romInfoSearchProvider: String = "gamefaqs",
     onNavigateBack: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
     onToggleFavorite: () -> Unit,
@@ -289,6 +323,7 @@ fun RomDetailScreen(
     onExtractClick: (String, String) -> Unit,
     onOpenExtractionFolder: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
+    onSearchMobyGames: (String) -> Unit = {},
     isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -359,42 +394,50 @@ fun RomDetailScreen(
                         .aspectRatio(1.33f)
                 )
             } else {
-                // Singola immagine
+                // Singola immagine - usa la stessa logica di RomCard per provare tutti i placeholder
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .aspectRatio(1.33f),
                     contentAlignment = Alignment.Center
                 ) {
-                    SubcomposeAsyncImage(
-                        model = rom.coverUrl ?: rom.coverUrls.firstOrNull(),
-                        contentDescription = rom.title,
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit,
-                        loading = {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        },
-                        error = {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.BrokenImage,
-                                    contentDescription = null,
-                                    modifier = Modifier.size(64.dp),
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
+                    // Prepara la lista di URL da provare in ordine:
+                    // 1. coverUrl (se presente)
+                    // 2. Tutti gli altri elementi di coverUrls (placeholder inclusi)
+                    val urlsToTry = mutableListOf<String>()
+                    if (rom.coverUrl != null) {
+                        urlsToTry.add(rom.coverUrl)
+                    }
+                    // Aggiungi tutti gli elementi di coverUrls che non sono già coverUrl
+                    rom.coverUrls.forEach { url ->
+                        if (url !in urlsToTry) {
+                            urlsToTry.add(url)
                         }
-                    )
+                    }
+                    
+                    if (urlsToTry.isNotEmpty()) {
+                        // Usa lo stesso composable ricorsivo di RomCard
+                        TryImageUrls(
+                            urls = urlsToTry,
+                            contentDescription = rom.title,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    } else {
+                        // Nessuna immagine disponibile
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .background(MaterialTheme.colorScheme.surfaceVariant),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.BrokenImage,
+                                contentDescription = null,
+                                modifier = Modifier.size(64.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
                 }
             }
 
@@ -420,6 +463,39 @@ fun RomDetailScreen(
                         .clickable { onNavigateToPlatform(rom.platform.code) }
                         .padding(vertical = 4.dp, horizontal = 4.dp)
                 )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // Link "Cerca su MobyGames/Gamefaqs" con sfondo tipo regioni
+                val searchButtonText = when (romInfoSearchProvider) {
+                    "gamefaqs" -> stringResource(R.string.rom_detail_search_gamefaqs)
+                    "mobygames" -> stringResource(R.string.rom_detail_search_mobygames)
+                    else -> stringResource(R.string.rom_detail_search_gamefaqs)
+                }
+                Surface(
+                    shape = RoundedCornerShape(12.dp),
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.clickable { 
+                        val query = extractGameTitleForMobyGames(rom.title)
+                        onSearchMobyGames(query)
+                    }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Text(
+                            text = "🔗",
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = searchButtonText,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(16.dp))
 
@@ -463,7 +539,6 @@ fun RomDetailScreen(
                 }
 
                 // Download links
-                if (rom.downloadLinks.isNotEmpty()) {
                     Text(
                         text = stringResource(R.string.rom_detail_download),
                         style = MaterialTheme.typography.titleLarge,
@@ -471,6 +546,65 @@ fun RomDetailScreen(
                     )
                     Spacer(modifier = Modifier.height(12.dp))
 
+                when {
+                    isLoadingLinks -> {
+                        // Mostra rotella di caricamento mentre i link vengono caricati
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(vertical = 24.dp),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Column(
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(32.dp),
+                                    color = MaterialTheme.colorScheme.primary
+                                )
+                                Text(
+                                    text = stringResource(R.string.rom_detail_loading_links),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    }
+                    rom.downloadLinks.isEmpty() -> {
+                        // Mostra messaggio se non ci sono link disponibili
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(12.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Download,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(48.dp),
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                )
+                                Text(
+                                    text = stringResource(R.string.rom_detail_no_download_links),
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    text = stringResource(R.string.rom_detail_no_download_links_desc),
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+                                )
+                            }
+                        }
+                    }
+                    else -> {
+                        // Mostra i link disponibili
                     rom.downloadLinks.forEach { link ->
                         // Usa lo stato specifico per questo link se disponibile, altrimenti usa lo stato generale
                         val (linkDownloadStatus, linkExtractionStatus) = linkStatuses[link.url] 
@@ -485,6 +619,7 @@ fun RomDetailScreen(
                             onOpenExtractionFolder = onOpenExtractionFolder,
                             modifier = Modifier.padding(bottom = 12.dp)
                         )
+                        }
                     }
                 }
             }
