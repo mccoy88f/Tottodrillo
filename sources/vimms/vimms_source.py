@@ -657,7 +657,7 @@ def get_rom_entry_by_uri(uri: str, source_dir: str, include_download_links: bool
                         elif width == 400 and height == 100:
                             # Dimensione tipica per immagini di errore Vimm's Lair
                             print(f"⚠️ [get_rom_entry_by_uri] Screen ha dimensioni tipiche di errore ({width}x{height}): {screen_url}", file=sys.stderr)
-        else:
+                        else:
                             valid_screen_url = screen_url
                             print(f"✅ [get_rom_entry_by_uri] Screen valido trovato: {screen_url} (size: {width}x{height})", file=sys.stderr)
                     except ImportError:
@@ -842,16 +842,16 @@ def get_rom_entry_by_uri(uri: str, source_dir: str, include_download_links: bool
             
             # Se non ci sono link generati (nessun media array), usa il metodo vecchio
             if not links and include_download_links:
-            download_url = get_rom_download_url(uri)
-            if download_url:
-                format_type = "zip"  # Default
-                links.append({
-                    'name': 'Download',
-                    'type': 'direct',
-                    'format': format_type,
-                    'url': download_url,
-                    'size_str': None
-                })
+                download_url = get_rom_download_url(uri)
+                if download_url:
+                    format_type = "zip"  # Default
+                    links.append({
+                        'name': 'Download',
+                        'type': 'direct',
+                        'format': format_type,
+                        'url': download_url,
+                        'size_str': None
+                    })
         
         slug = get_rom_slug_from_uri(uri)
         
