@@ -96,7 +96,9 @@ data class RomLink(
     @SerializedName("source_url")
     val sourceUrl: String? = null,
     @SerializedName("requires_webview")
-    val requiresWebView: Boolean = false // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
+    val requiresWebView: Boolean = false, // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
+    @SerializedName("delay_seconds")
+    val delaySeconds: Int? = null // Secondi da attendere prima di avviare il download (es. per validazione server)
 )
 
 /**

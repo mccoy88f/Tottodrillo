@@ -103,7 +103,7 @@ class RomRepositoryImpl @Inject constructor(
                 }
             }
             
-            // Cerca in tutte le sorgenti in parallelo
+            // Cerca nelle sorgenti selezionate (già filtrate se c'è un filtro attivo) in parallelo
             val allRoms = coroutineScope {
                 enabledSources.map { source ->
                     async {
@@ -723,7 +723,8 @@ class RomRepositoryImpl @Inject constructor(
                                             url = link.url,
                                             size = link.sizeStr,
                                             sourceId = source.id,
-                                            requiresWebView = link.requiresWebView
+                                            requiresWebView = link.requiresWebView,
+                                            delaySeconds = link.delaySeconds
                                         )
                                     } ?: emptyList()
                                 },

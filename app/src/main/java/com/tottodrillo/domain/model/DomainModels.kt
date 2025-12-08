@@ -84,7 +84,8 @@ data class DownloadLink(
     val url: String,
     val size: String?,
     val sourceId: String? = null, // ID della sorgente che ha fornito questo link
-    val requiresWebView: Boolean = false // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
+    val requiresWebView: Boolean = false, // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
+    val delaySeconds: Int? = null // Secondi da attendere prima di avviare il download (es. per validazione server)
 )
 
 /**

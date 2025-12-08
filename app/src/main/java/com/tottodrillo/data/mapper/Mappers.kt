@@ -71,7 +71,8 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
                 url = link.url,
                 size = link.sizeStr,
                 sourceId = sourceId,
-                requiresWebView = link.requiresWebView
+                requiresWebView = link.requiresWebView,
+                delaySeconds = link.delaySeconds
             )
         },
         sourceId = sourceId
