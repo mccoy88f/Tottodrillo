@@ -800,18 +800,15 @@ fun RomDetailScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    } else {
-                        Spacer(modifier = Modifier.height(12.dp))
-                    }
                 }
 
                 // Download links
-                    Text(
-                        text = stringResource(R.string.rom_detail_download),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = stringResource(R.string.rom_detail_download),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
+                Spacer(modifier = Modifier.height(12.dp))
 
                 when {
                     isLoadingLinks -> {
