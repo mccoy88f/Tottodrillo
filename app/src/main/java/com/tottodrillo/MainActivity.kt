@@ -815,15 +815,14 @@ class MainActivity : ComponentActivity() {
      * Scarica e installa l'APK di aggiornamento
      */
     private suspend fun downloadAndInstallUpdate(release: com.tottodrillo.domain.manager.GitHubRelease) {
+        // Crea il canale di notifica PRIMA di entrare nel blocco IO
+        createUpdateNotificationChannel()
+        
+        // Mostra notifica iniziale IMMEDIATAMENTE quando parte il download
+        showUpdateDownloadProgress(0, 0, release.name)
+        
         withContext(Dispatchers.IO) {
             try {
-                // Crea il canale di notifica se non esiste
-                createUpdateNotificationChannel()
-                
-                // Mostra notifica iniziale immediatamente all'avvio del download
-                withContext(Dispatchers.Main) {
-                    showUpdateDownloadProgress(0, 0, release.name)
-                }
                 
                 val apkUrl = updateManager.getApkDownloadUrl(release)
                 if (apkUrl == null) {
