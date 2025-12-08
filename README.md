@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from multiple sources. The app supports dynamic source installation via ZIP packages, allowing you to add new ROM sources without updating the app.
 
@@ -26,11 +26,18 @@ This README is also available in other languages:
 
 ## ✨ Key Features
 
-### 🔍 ROM Info Search (NEW in v2.5.0)
+### 🎮 IGDB Integration (NEW in v2.7.0)
+- **Metadata Import**: Search and import rich metadata for your ROMs from the Internet Game Database (IGDB)
+- **Comprehensive Game Information**: Import title, cover art, description, storyline, genres, developer, publisher, rating, screenshots, and more
+- **Easy Configuration**: Set up your IGDB Client ID and Secret directly in Settings
+- **Smart Matching**: View matching platforms and confirm before importing metadata
+- **Enhanced ROM Details**: Enrich your ROM collection with professional metadata and high-quality cover art from IGDB
+
+### 🔍 ROM Info Search
 - **Multiple Search Providers**: Choose between Gamefaqs and MobyGames for ROM information search
 - **Configurable Provider**: Select your preferred search provider in settings
 - **Gamefaqs Integration**: Search ROM information directly on Gamefaqs
-- **MobyGames Integration**: Search ROM information on MobyGames (existing feature)
+- **MobyGames Integration**: Search ROM information on MobyGames
 - **Dynamic Button Text**: Search button text changes based on selected provider
 
 ### 🔌 Multi-Source System (NEW in v2.0)
@@ -98,7 +105,8 @@ This README is also available in other languages:
 - **ROM Cards** with uniform maximum width (180dp)
 - **Image Carousel**: Swipeable carousel for multiple ROM images
 
-### ⚙️ Settings
+### ⚙️ Settings (Redesigned in v2.7.0)
+- **Tree Structure with Expandable Groups**: Settings organized into 8 collapsible categories for better navigation
 - **Source Management**:
   - View all installed sources
   - Enable/disable sources
@@ -109,17 +117,19 @@ This README is also available in other languages:
 - **ROM Info Search**:
   - Choose search provider (Gamefaqs or MobyGames)
   - Gamefaqs is the default provider
+  - IGDB integration settings (Client ID and Secret configuration)
 - **Download Configuration**:
   - Custom download folder selection
   - Available space display
+  - Storage permissions management (Android 11+)
   - WiFi-only downloads
-  - Notifications on/off
+  - Notifications on/off (for downloads, installations, and updates)
 - **Installation Configuration**:
   - Delete original file after installation
   - ES-DE compatibility with folder selection
 - **History Management**:
   - Clear download and extraction history (with confirmation)
-- **App Information**:
+- **App Information** (Always visible):
   - App version
   - GitHub link
   - Support section
@@ -312,27 +322,6 @@ For detailed documentation on creating sources, see the [Tottodrillo-Source repo
 3. Enable the source and start using it!
 
 See the documentation files for complete examples and API details.
-
-## 🎯 Roadmap / To Do
-
-Features planned for future versions:
-
-- [ ] **ScreenScraper.fr support**
-  - Integration with ScreenScraper API to enrich ROM data
-  - Improve names, descriptions, and images via user's private account
-  - ScreenScraper credentials configuration in settings
-  - Automatic fallback if account not configured
-
-- [ ] **Custom ROM lists and bulk download**
-  - Create custom ROM lists
-  - Save and manage multiple lists
-  - Bulk download of all ROMs in a list
-  - Priority and queue management for multiple downloads
-
-- [ ] **Source marketplace**
-  - Browse and install sources from a central repository
-  - Source ratings and reviews
-  - Automatic source updates
 
 ## 🌐 Localization
 

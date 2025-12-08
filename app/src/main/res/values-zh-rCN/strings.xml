@@ -89,8 +89,8 @@
     <string name="settings_delete_after_extraction_desc">安装成功后删除下载的文件</string>
     <string name="settings_wifi_only">仅WiFi</string>
     <string name="settings_wifi_only_desc">仅在连接WiFi时下载</string>
-    <string name="settings_notifications">下载通知</string>
-    <string name="settings_notifications_desc">在下载期间和之后显示通知</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_notifications_desc">显示下载、安装和更新的通知</string>
     <string name="settings_installation">安装</string>
     <string name="settings_clear_history">清除下载和安装历史</string>
     <string name="settings_clear_history_desc">删除默认下载文件夹中的所有.status文件</string>
@@ -131,6 +131,9 @@
     <string name="notif_update_download_progress">更新下载中</string>
     <string name="notif_update_download_completed">更新下载完成</string>
     <string name="notif_update_download_failed">更新下载失败</string>
+    <string name="notif_source_update_download_progress">源更新下载中</string>
+    <string name="notif_source_update_download_completed">源更新完成</string>
+    <string name="notif_source_update_download_failed">源更新失败</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">手动下载启动</string>

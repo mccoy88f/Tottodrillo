@@ -89,8 +89,8 @@
     <string name="settings_delete_after_extraction_desc">Eliminar el archivo descargado después de la instalación completada</string>
     <string name="settings_wifi_only">Solo WiFi</string>
     <string name="settings_wifi_only_desc">Descargar solo cuando esté conectado a WiFi</string>
-    <string name="settings_notifications">Notificaciones de descarga</string>
-    <string name="settings_notifications_desc">Mostrar notificaciones durante y después de las descargas</string>
+    <string name="settings_notifications">Notificaciones</string>
+    <string name="settings_notifications_desc">Mostrar notificaciones para descargas, instalaciones y actualizaciones</string>
     <string name="settings_installation">Instalación</string>
     <string name="settings_clear_history">Borrar historial de descargas e instalaciones</string>
     <string name="settings_clear_history_desc">Eliminar todos los archivos .status en la carpeta de descarga predeterminada</string>
@@ -131,6 +131,9 @@
     <string name="notif_update_download_progress">Descarga de actualización en curso</string>
     <string name="notif_update_download_completed">Descarga de actualización completada</string>
     <string name="notif_update_download_failed">Descarga de actualización fallida</string>
+    <string name="notif_source_update_download_progress">Descarga de actualización de fuente en curso</string>
+    <string name="notif_source_update_download_completed">Actualización de fuente completada</string>
+    <string name="notif_source_update_download_failed">Actualización de fuente fallida</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">Inicio de descarga manual</string>

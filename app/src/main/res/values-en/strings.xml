@@ -102,8 +102,8 @@
     <string name="settings_delete_after_extraction_desc">Delete the downloaded file after successful installation</string>
     <string name="settings_wifi_only">WiFi only</string>
     <string name="settings_wifi_only_desc">Download only when connected to WiFi</string>
-    <string name="settings_notifications">Download notifications</string>
-    <string name="settings_notifications_desc">Show notifications during and after downloads</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Show notifications for downloads, installations and updates</string>
     <string name="settings_rom_info_search">ROM info search</string>
     <string name="settings_rom_info_search_gamefaqs">Gamefaqs</string>
     <string name="settings_rom_info_search_mobygames">MobyGames</string>
@@ -142,6 +142,9 @@
     <string name="notif_update_download_progress">Update download in progress</string>
     <string name="notif_update_download_completed">Update download completed</string>
     <string name="notif_update_download_failed">Update download failed</string>
+    <string name="notif_source_update_download_progress">Source update download in progress</string>
+    <string name="notif_source_update_download_completed">Source update completed</string>
+    <string name="notif_source_update_download_failed">Source update failed</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">Manual download start</string>

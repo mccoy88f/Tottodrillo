@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo** ist eine moderne und minimale Android-App zum Erkunden, Suchen und Herunterladen von ROMs von [CrocDB](https://crocdb.net), der öffentlichen Retro-Gaming-Datenbank.
 
@@ -24,11 +24,18 @@ Dieses README ist auch in anderen Sprachen verfügbar:
 
 ## ✨ Hauptfunktionen
 
-### 🔍 ROM-Info-Suche (NEU in v2.5.0)
+### 🎮 IGDB-Integration (NEU in v2.7.0)
+- **Metadaten-Import**: Suche und importiere umfangreiche Metadaten für deine ROMs aus der Internet Game Database (IGDB)
+- **Umfassende Spielinformationen**: Importiere Titel, Cover, Beschreibung, Handlung, Genres, Entwickler, Publisher, Bewertung, Screenshots und mehr
+- **Einfache Konfiguration**: Richte deine IGDB Client ID und Secret direkt in den Einstellungen ein
+- **Intelligente Übereinstimmung**: Zeige passende Plattformen an und bestätige vor dem Importieren von Metadaten
+- **Erweiterte ROM-Details**: Bereichere deine ROM-Sammlung mit professionellen Metadaten und hochwertigen Covers von IGDB
+
+### 🔍 ROM-Info-Suche
 - **Mehrere Suchanbieter**: Wähle zwischen Gamefaqs und MobyGames für die ROM-Informationssuche
 - **Konfigurierbarer Anbieter**: Wähle deinen bevorzugten Suchanbieter in den Einstellungen
 - **Gamefaqs-Integration**: Suche ROM-Informationen direkt auf Gamefaqs
-- **MobyGames-Integration**: Suche ROM-Informationen auf MobyGames (bestehende Funktion)
+- **MobyGames-Integration**: Suche ROM-Informationen auf MobyGames
 - **Dynamischer Button-Text**: Der Suchbutton-Text ändert sich basierend auf dem ausgewählten Anbieter
 
 ### 🔍 Erkundung & Suche
@@ -81,21 +88,24 @@ Dieses README ist auch in anderen Sprachen verfügbar:
 - **Regions-Badges** mit Emoji-Flaggen
 - **ROM-Karten** mit einheitlicher maximaler Breite (180dp)
 
-### ⚙️ Einstellungen
+### ⚙️ Einstellungen (Neu gestaltet in v2.7.0)
+- **Baumstruktur mit erweiterbaren Gruppen**: Einstellungen in 8 zusammenklappbare Kategorien organisiert für bessere Navigation
 - **ROM-Info-Suche**:
   - Suchanbieter wählen (Gamefaqs oder MobyGames)
   - Gamefaqs ist der Standardanbieter
+  - IGDB-Integrations-Einstellungen (Client ID und Secret-Konfiguration)
 - **Download-Konfiguration**:
   - Benutzerdefinierte Download-Ordnerauswahl
   - Verfügbarer Speicherplatz-Anzeige
+  - Speicherberechtigungs-Verwaltung (Android 11+)
   - Nur-WiFi-Downloads
-  - Benachrichtigungen ein/aus
+  - Benachrichtigungen ein/aus (für Downloads, Installationen und Updates)
 - **Installations-Konfiguration**:
   - Originaldatei nach Installation löschen
   - ES-DE-Kompatibilität mit Ordnerauswahl
 - **Verlaufsverwaltung**:
   - Download- und Installationsverlauf löschen (mit Bestätigung)
-- **App-Informationen**:
+- **App-Informationen** (Immer sichtbar):
   - App-Version
   - GitHub-Link
   - Support-Bereich
@@ -242,27 +252,6 @@ Die APK wird generiert in: `app/build/outputs/apk/`
 - `.status`-Dateien für Download/Installations-Tracking
 - Mehrzeilen-Format zur Unterstützung mehrerer Downloads derselben Datei
 - Verlauf löschen mit Benutzerbestätigung
-
-## 🎯 Roadmap / To Do
-
-Geplante Funktionen für zukünftige Versionen:
-
-- [ ] **Multi-Quellen-Struktur-Implementierung**
-  - Unterstützung für mehrere ROM-Quellen neben CrocDB
-  - Quellen-Konfiguration und -Auswahl in den Einstellungen
-  - Vereinheitlichung der Ergebnisse aus verschiedenen Quellen
-
-- [ ] **ScreenScraper.fr-Unterstützung**
-  - Integration mit ScreenScraper-API zur Anreicherung von ROM-Daten
-  - Verbesserung von Namen, Beschreibungen und Bildern über privates Benutzerkonto
-  - ScreenScraper-Anmeldedaten-Konfiguration in den Einstellungen
-  - Automatischer Fallback, wenn Konto nicht konfiguriert
-
-- [ ] **Benutzerdefinierte ROM-Listen und Massen-Download**
-  - Erstellen benutzerdefinierter ROM-Listen
-  - Speichern und Verwalten mehrerer Listen
-  - Massen-Download aller ROMs in einer Liste
-  - Prioritäts- und Warteschlangen-Verwaltung für mehrere Downloads
 
 ## 🌐 Lokalisierung
 

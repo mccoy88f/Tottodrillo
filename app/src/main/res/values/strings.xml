@@ -67,8 +67,8 @@
     <string name="settings_delete_archives_desc">Elimina archivi ZIP dopo l\'estrazione</string>
     <string name="settings_wifi_only">Solo WiFi</string>
     <string name="settings_wifi_only_desc">Scarica solo quando connesso a WiFi</string>
-    <string name="settings_notifications">Notifiche download</string>
-    <string name="settings_notifications_desc">Mostra notifiche durante e dopo i download</string>
+    <string name="settings_notifications">Notifiche</string>
+    <string name="settings_notifications_desc">Mostra notifiche per download, installazioni e aggiornamenti</string>
     <string name="settings_rom_info_search">Ricerca info sulle ROMs</string>
     <string name="settings_rom_info_search_gamefaqs">Gamefaqs</string>
     <string name="settings_rom_info_search_mobygames">MobyGames</string>
@@ -119,6 +119,9 @@
     <string name="notif_update_download_progress">Download aggiornamento in corso</string>
     <string name="notif_update_download_completed">Download aggiornamento completato</string>
     <string name="notif_update_download_failed">Download aggiornamento fallito</string>
+    <string name="notif_source_update_download_progress">Download aggiornamento sorgente in corso</string>
+    <string name="notif_source_update_download_completed">Aggiornamento sorgente completato</string>
+    <string name="notif_source_update_download_failed">Aggiornamento sorgente fallito</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">Avvio download manuale</string>

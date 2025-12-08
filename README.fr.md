@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo** est une application Android moderne et minimaliste pour explorer, rechercher et télécharger des ROMs depuis [CrocDB](https://crocdb.net), la base de données publique de jeux rétro.
 
@@ -24,11 +24,18 @@ Ce README est également disponible dans d'autres langues :
 
 ## ✨ Caractéristiques Principales
 
-### 🔍 Recherche d'Informations ROMs (NOUVEAU en v2.5.0)
+### 🎮 Intégration IGDB (NOUVEAU en v2.7.0)
+- **Importation de Métadonnées**: Recherchez et importez des métadonnées riches pour vos ROMs depuis Internet Game Database (IGDB)
+- **Informations Complètes sur les Jeux**: Importez titre, couverture, description, scénario, genres, développeur, éditeur, note, captures d'écran et plus encore
+- **Configuration Facile**: Configurez votre Client ID et Secret IGDB directement dans les Paramètres
+- **Correspondance Intelligente**: Visualisez les plateformes correspondantes et confirmez avant d'importer les métadonnées
+- **Détails de ROM Enrichis**: Enrichissez votre collection de ROMs avec des métadonnées professionnelles et des couvertures de haute qualité d'IGDB
+
+### 🔍 Recherche d'Informations ROMs
 - **Fournisseurs Multiples**: Choisissez entre Gamefaqs et MobyGames pour la recherche d'informations ROMs
 - **Fournisseur Configurable**: Sélectionnez votre fournisseur préféré dans les paramètres
 - **Intégration Gamefaqs**: Recherchez des informations ROM directement sur Gamefaqs
-- **Intégration MobyGames**: Recherchez des informations ROM sur MobyGames (fonctionnalité existante)
+- **Intégration MobyGames**: Recherchez des informations ROM sur MobyGames
 - **Texte de Bouton Dynamique**: Le texte du bouton de recherche change selon le fournisseur sélectionné
 
 ### 🔍 Exploration et Recherche
@@ -81,21 +88,24 @@ Ce README est également disponible dans d'autres langues :
 - **Badges de Région** avec drapeaux emoji
 - **Cartes ROM** avec largeur maximale uniforme (180dp)
 
-### ⚙️ Paramètres
+### ⚙️ Paramètres (Redessiné en v2.7.0)
+- **Structure en Arbre avec Groupes Dépliables**: Paramètres organisés en 8 catégories repliables pour une meilleure navigation
 - **Recherche d'Informations ROMs** :
   - Choisir le fournisseur de recherche (Gamefaqs ou MobyGames)
   - Gamefaqs est le fournisseur par défaut
+  - Paramètres d'intégration IGDB (configuration Client ID et Secret)
 - **Configuration du Téléchargement** :
   - Sélection du dossier de téléchargement personnalisé
   - Affichage de l'espace disponible
+  - Gestion des permissions de stockage (Android 11+)
   - Téléchargements WiFi uniquement
-  - Notifications activées/désactivées
+  - Notifications activées/désactivées (pour téléchargements, installations et mises à jour)
 - **Configuration de l'Installation** :
   - Suppression du fichier original après installation
   - Compatibilité ES-DE avec sélection de dossier
 - **Gestion de l'Historique** :
   - Effacement de l'historique des téléchargements et extractions (avec confirmation)
-- **Informations sur l'App** :
+- **Informations sur l'App** (Toujours visible) :
   - Version de l'app
   - Lien GitHub
   - Section de support
@@ -242,27 +252,6 @@ L'APK sera généré dans : `app/build/outputs/apk/`
 - Fichiers `.status` pour suivre les téléchargements/installations
 - Format multi-lignes pour supporter plusieurs téléchargements du même fichier
 - Effacement de l'historique avec confirmation utilisateur
-
-## 🎯 Roadmap / To Do
-
-Fonctionnalités prévues pour les prochaines versions :
-
-- [ ] **Implémentation de la structure multi-source**
-  - Support de plusieurs sources de ROMs en plus de CrocDB
-  - Configuration et sélection des sources dans les paramètres
-  - Unification des résultats de différentes sources
-
-- [ ] **Support ScreenScraper.fr**
-  - Intégration avec l'API ScreenScraper pour enrichir les données ROM
-  - Amélioration des noms, descriptions et images via le compte privé de l'utilisateur
-  - Configuration des identifiants ScreenScraper dans les paramètres
-  - Fallback automatique si le compte n'est pas configuré
-
-- [ ] **Listes personnalisées de ROMs et téléchargement en masse**
-  - Créer des listes personnalisées de ROMs
-  - Sauvegarder et gérer plusieurs listes
-  - Téléchargement en masse de toutes les ROMs d'une liste
-  - Gestion des priorités et de la file d'attente pour plusieurs téléchargements
 
 ## 🌐 Localisation
 

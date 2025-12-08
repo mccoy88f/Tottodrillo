@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo** es una aplicación Android moderna y minimalista para explorar, buscar y descargar ROMs de [CrocDB](https://crocdb.net), la base de datos pública de juegos retro.
 
@@ -24,11 +24,18 @@ Este README también está disponible en otros idiomas:
 
 ## ✨ Características Principales
 
-### 🔍 Búsqueda de Información de ROMs (NUEVO en v2.5.0)
+### 🎮 Integración IGDB (NUEVO en v2.7.0)
+- **Importación de Metadatos**: Busca e importa metadatos ricos para tus ROMs desde Internet Game Database (IGDB)
+- **Información Completa de Juegos**: Importa título, portada, descripción, trama, géneros, desarrollador, editor, valoración, capturas de pantalla y más
+- **Configuración Sencilla**: Configura tu Client ID y Secret de IGDB directamente en Configuración
+- **Coincidencia Inteligente**: Visualiza las plataformas coincidentes y confirma antes de importar metadatos
+- **Detalles de ROM Enriquecidos**: Enriquece tu colección de ROMs con metadatos profesionales y portadas de alta calidad de IGDB
+
+### 🔍 Búsqueda de Información de ROMs
 - **Proveedores Múltiples**: Elige entre Gamefaqs y MobyGames para buscar información de ROMs
 - **Proveedor Configurable**: Selecciona tu proveedor preferido en la configuración
 - **Integración Gamefaqs**: Busca información de ROMs directamente en Gamefaqs
-- **Integración MobyGames**: Busca información de ROMs en MobyGames (característica existente)
+- **Integración MobyGames**: Busca información de ROMs en MobyGames
 - **Texto de Botón Dinámico**: El texto del botón de búsqueda cambia según el proveedor seleccionado
 
 ### 🔍 Exploración y Búsqueda
@@ -81,21 +88,24 @@ Este README también está disponible en otros idiomas:
 - **Insignias de Región** con banderas emoji
 - **Tarjetas de ROMs** con ancho máximo uniforme (180dp)
 
-### ⚙️ Configuración
+### ⚙️ Configuración (Rediseñado en v2.7.0)
+- **Estructura de Árbol con Grupos Expandibles**: Configuración organizada en 8 categorías colapsables para mejor navegación
 - **Búsqueda de Información de ROMs**:
   - Elige proveedor de búsqueda (Gamefaqs o MobyGames)
   - Gamefaqs es el proveedor predeterminado
+  - Configuración de integración IGDB (configuración de Client ID y Secret)
 - **Configuración de Descarga**:
   - Selección de carpeta de descarga personalizada
   - Visualización de espacio disponible
+  - Gestión de permisos de almacenamiento (Android 11+)
   - Descargas solo WiFi
-  - Notificaciones on/off
+  - Notificaciones on/off (para descargas, instalaciones y actualizaciones)
 - **Configuración de Instalación**:
   - Eliminar archivo original después de la instalación
   - Compatibilidad ES-DE con selección de carpeta
 - **Gestión de Historial**:
   - Borrar historial de descargas e instalaciones (con confirmación)
-- **Información de la App**:
+- **Información de la App** (Siempre visible):
   - Versión de la app
   - Enlace a GitHub
   - Sección de soporte
@@ -242,27 +252,6 @@ El APK se generará en: `app/build/outputs/apk/`
 - Archivos `.status` para seguimiento de descargas/instalaciones
 - Formato multi-línea para soportar múltiples descargas del mismo archivo
 - Borrar historial con confirmación del usuario
-
-## 🎯 Roadmap / To Do
-
-Funcionalidades planificadas para futuras versiones:
-
-- [ ] **Implementación de estructura multi-fuente**
-  - Soporte para múltiples fuentes de ROMs además de CrocDB
-  - Configuración y selección de fuentes en la configuración
-  - Unificación de resultados de diferentes fuentes
-
-- [ ] **Soporte para ScreenScraper.fr**
-  - Integración con API de ScreenScraper para enriquecer datos de ROMs
-  - Mejora de nombres, descripciones e imágenes mediante cuenta privada del usuario
-  - Configuración de credenciales de ScreenScraper en la configuración
-  - Fallback automático si la cuenta no está configurada
-
-- [ ] **Listas personalizadas de ROMs y descarga masiva**
-  - Crear listas personalizadas de ROMs
-  - Guardar y gestionar múltiples listas
-  - Descarga masiva de todas las ROMs en una lista
-  - Gestión de prioridades y cola para múltiples descargas
 
 ## 🌐 Localización
 

@@ -89,8 +89,8 @@
     <string name="settings_delete_after_extraction_desc">Supprimer le fichier téléchargé après l\'installation réussie</string>
     <string name="settings_wifi_only">WiFi uniquement</string>
     <string name="settings_wifi_only_desc">Télécharger uniquement lorsqu\'il est connecté au WiFi</string>
-    <string name="settings_notifications">Notifications de téléchargement</string>
-    <string name="settings_notifications_desc">Afficher les notifications pendant et après les téléchargements</string>
+    <string name="settings_notifications">Notifications</string>
+    <string name="settings_notifications_desc">Afficher les notifications pour les téléchargements, installations et mises à jour</string>
     <string name="settings_installation">Installation</string>
     <string name="settings_clear_history">Effacer l\'historique des téléchargements et installations</string>
     <string name="settings_clear_history_desc">Supprimer tous les fichiers .status dans le dossier de téléchargement par défaut</string>
@@ -131,6 +131,9 @@
     <string name="notif_update_download_progress">Téléchargement de la mise à jour en cours</string>
     <string name="notif_update_download_completed">Téléchargement de la mise à jour terminé</string>
     <string name="notif_update_download_failed">Échec du téléchargement de la mise à jour</string>
+    <string name="notif_source_update_download_progress">Téléchargement de la mise à jour de la source en cours</string>
+    <string name="notif_source_update_download_completed">Mise à jour de la source terminée</string>
+    <string name="notif_source_update_download_failed">Échec de la mise à jour de la source</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">Démarrage du téléchargement manuel</string>

@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo**は、レトロゲームの公開データベースである[CrocDB](https://crocdb.net)からROMを探索、検索、ダウンロードするためのモダンでミニマルなAndroidアプリです。
 
@@ -24,11 +24,18 @@
 
 ## ✨ 主な機能
 
-### 🔍 ROM情報検索（v2.5.0で新機能）
+### 🎮 IGDB統合（v2.7.0で新機能）
+- **メタデータのインポート**: Internet Game Database (IGDB)からROMの豊富なメタデータを検索してインポート
+- **包括的なゲーム情報**: タイトル、カバーアート、説明、ストーリーライン、ジャンル、開発者、パブリッシャー、評価、スクリーンショットなどをインポート
+- **簡単な設定**: 設定でIGDB Client IDとSecretを直接設定
+- **スマートマッチング**: 一致するプラットフォームを表示し、メタデータをインポートする前に確認
+- **強化されたROM詳細**: IGDBのプロフェッショナルなメタデータと高品質なカバーアートでROMコレクションを充実
+
+### 🔍 ROM情報検索
 - **複数の検索プロバイダー**: ROM情報検索にGamefaqsとMobyGamesから選択
 - **設定可能なプロバイダー**: 設定で好みの検索プロバイダーを選択
 - **Gamefaqs統合**: Gamefaqsで直接ROM情報を検索
-- **MobyGames統合**: MobyGamesでROM情報を検索（既存機能）
+- **MobyGames統合**: MobyGamesでROM情報を検索
 - **動的ボタンテキスト**: 選択したプロバイダーに基づいて検索ボタンのテキストが変更
 
 ### 🔍 探索と検索
@@ -81,21 +88,24 @@
 - **地域バッジ**：絵文字フラグ
 - **ROMカード**：統一された最大幅（180dp）
 
-### ⚙️ 設定
+### ⚙️ 設定（v2.7.0で再設計）
+- **展開可能なグループを持つツリー構造**: より良いナビゲーションのために8つの折りたたみ可能なカテゴリに整理された設定
 - **ROM情報検索**：
   - 検索プロバイダーの選択（GamefaqsまたはMobyGames）
   - Gamefaqsがデフォルトプロバイダー
+  - IGDB統合設定（Client IDとSecretの設定）
 - **ダウンロード設定**：
   - カスタムダウンロードフォルダの選択
   - 利用可能容量の表示
+  - ストレージ権限の管理（Android 11+）
   - WiFiのみダウンロード
-  - 通知のオン/オフ
+  - 通知のオン/オフ（ダウンロード、インストール、更新用）
 - **インストール設定**：
   - インストール後の元ファイル削除
   - フォルダ選択付きES-DE互換性
 - **履歴管理**：
   - ダウンロードと展開履歴のクリア（確認付き）
-- **アプリ情報**：
+- **アプリ情報**（常に表示）：
   - アプリバージョン
   - GitHubリンク
   - サポートセクション

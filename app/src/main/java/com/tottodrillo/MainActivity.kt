@@ -822,6 +822,11 @@ class MainActivity : ComponentActivity() {
                 // Crea il canale di notifica se non esiste
                 createUpdateNotificationChannel()
                 
+                // Mostra notifica iniziale immediatamente all'avvio del download
+                withContext(Dispatchers.Main) {
+                    showUpdateDownloadProgress(0, 0, release.name)
+                }
+                
                 val apkUrl = updateManager.getApkDownloadUrl(release)
                 if (apkUrl == null) {
                     android.util.Log.e("MainActivity", "❌ Nessun APK trovato nella release")
@@ -849,12 +854,10 @@ class MainActivity : ComponentActivity() {
                 val contentLength = response.body?.contentLength() ?: -1L
                 val totalBytes = if (contentLength > 0) contentLength else 0L
                 
-                // Mostra notifica iniziale
-                withContext(Dispatchers.Main) {
-                    if (totalBytes > 0) {
+                // Aggiorna la notifica con la dimensione totale se disponibile
+                if (totalBytes > 0) {
+                    withContext(Dispatchers.Main) {
                         showUpdateDownloadProgress(0, totalBytes.toInt(), release.name)
-                    } else {
-                        showUpdateDownloadProgress(0, 0, release.name)
                     }
                 }
                 

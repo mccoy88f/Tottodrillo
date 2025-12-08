@@ -89,8 +89,8 @@
     <string name="settings_delete_after_extraction_desc">インストール完了後にダウンロードしたファイルを削除</string>
     <string name="settings_wifi_only">WiFiのみ</string>
     <string name="settings_wifi_only_desc">WiFi接続時のみダウンロード</string>
-    <string name="settings_notifications">ダウンロード通知</string>
-    <string name="settings_notifications_desc">ダウンロード中およびダウンロード後に通知を表示</string>
+    <string name="settings_notifications">通知</string>
+    <string name="settings_notifications_desc">ダウンロード、インストール、更新の通知を表示</string>
     <string name="settings_installation">インストール</string>
     <string name="settings_clear_history">ダウンロードとインストールの履歴をクリア</string>
     <string name="settings_clear_history_desc">デフォルトのダウンロードフォルダ内のすべての.statusファイルを削除</string>
@@ -131,6 +131,9 @@
     <string name="notif_update_download_progress">アップデートのダウンロード中</string>
     <string name="notif_update_download_completed">アップデートのダウンロード完了</string>
     <string name="notif_update_download_failed">アップデートのダウンロード失敗</string>
+    <string name="notif_source_update_download_progress">ソース更新のダウンロード中</string>
+    <string name="notif_source_update_download_completed">ソース更新完了</string>
+    <string name="notif_source_update_download_failed">ソース更新失敗</string>
     
     <!-- WebView Download Dialog -->
     <string name="webview_download_title">手動ダウンロード開始</string>

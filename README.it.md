@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.5.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
 
 **Tottodrillo** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da [CrocDB](https://crocdb.net), il database pubblico di giochi retro.
 
@@ -26,11 +26,18 @@ Questo README è disponibile anche in altre lingue:
 
 ## ✨ Caratteristiche Principali
 
-### 🔍 Ricerca Info ROMs (NUOVO in v2.5.0)
+### 🎮 Integrazione IGDB (NUOVO in v2.7.0)
+- **Importazione Metadati**: Cerca e importa metadati ricchi per le tue ROM dall'Internet Game Database (IGDB)
+- **Informazioni Complete sui Giochi**: Importa titolo, copertina, descrizione, trama, generi, sviluppatore, editore, valutazione, screenshot e molto altro
+- **Configurazione Semplice**: Imposta il tuo Client ID e Secret IGDB direttamente nelle Impostazioni
+- **Corrispondenza Intelligente**: Visualizza le piattaforme corrispondenti e conferma prima di importare i metadati
+- **Dettagli ROM Arricchiti**: Arricchisci la tua collezione ROM con metadati professionali e copertine di alta qualità da IGDB
+
+### 🔍 Ricerca Info ROMs
 - **Provider Multipli**: Scegli tra Gamefaqs e MobyGames per la ricerca di informazioni sulle ROM
 - **Provider Configurabile**: Seleziona il provider preferito nelle impostazioni
 - **Integrazione Gamefaqs**: Cerca informazioni ROM direttamente su Gamefaqs
-- **Integrazione MobyGames**: Cerca informazioni ROM su MobyGames (funzionalità esistente)
+- **Integrazione MobyGames**: Cerca informazioni ROM su MobyGames
 - **Testo Pulsante Dinamico**: Il testo del pulsante di ricerca cambia in base al provider selezionato
 
 ### 🔍 Esplorazione e Ricerca
@@ -83,21 +90,24 @@ Questo README è disponibile anche in altre lingue:
 - **Badge Regioni** con emoji flags
 - **Card ROM** con larghezza massima uniforme (180dp)
 
-### ⚙️ Impostazioni
+### ⚙️ Impostazioni (Ridisegnato in v2.7.0)
+- **Struttura ad Albero con Gruppi Espandibili**: Impostazioni organizzate in 8 categorie collassabili per una migliore navigazione
 - **Ricerca Info ROMs**:
   - Scegli provider di ricerca (Gamefaqs o MobyGames)
   - Gamefaqs è il provider predefinito
+  - Impostazioni integrazione IGDB (configurazione Client ID e Secret)
 - **Configurazione Download**:
   - Selezione cartella download personalizzata
   - Visualizzazione spazio disponibile
+  - Gestione permessi storage (Android 11+)
   - Download solo WiFi
-  - Notifiche on/off
+  - Notifiche on/off (per download, installazioni e aggiornamenti)
 - **Configurazione Installazione**:
   - Eliminazione file originale dopo installazione
   - Compatibilità ES-DE con selezione cartella
 - **Gestione Storico**:
   - Cancellazione storico download ed estrazioni (con conferma)
-- **Informazioni App**:
+- **Informazioni App** (Sempre visibili):
   - Versione app
   - Link GitHub
   - Sezione supporto
@@ -244,27 +254,6 @@ L'APK verrà generato in: `app/build/outputs/apk/`
 - File `.status` per tracking download/installazione
 - Formato multi-riga per supportare download multipli dello stesso file
 - Cancellazione storico con conferma utente
-
-## 🎯 Roadmap / To Do
-
-Funzionalità pianificate per le prossime versioni:
-
-- [ ] **Implementazione della struttura multisource**
-  - Supporto per multiple sorgenti ROM oltre a CrocDB
-  - Configurazione e selezione sorgenti nelle impostazioni
-  - Unificazione dei risultati da diverse sorgenti
-
-- [ ] **Supporto ScreenScraper.fr**
-  - Integrazione con API ScreenScraper per arricchire i dati ROM
-  - Miglioramento nomi, descrizioni e immagini tramite account privato dell'utente
-  - Configurazione credenziali ScreenScraper nelle impostazioni
-  - Fallback automatico se account non configurato
-
-- [ ] **Liste ROM personali e download collettivo**
-  - Creazione liste personali di ROM
-  - Salvataggio e gestione liste multiple
-  - Download collettivo di tutte le ROM in una lista
-  - Gestione priorità e queue per download multipli
 
 ## 🌐 Localizzazione
 
