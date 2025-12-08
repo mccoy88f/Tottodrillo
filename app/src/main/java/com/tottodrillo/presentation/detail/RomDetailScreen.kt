@@ -872,20 +872,20 @@ fun RomDetailScreen(
                     }
                     else -> {
                         // Mostra i link disponibili
-                    rom.downloadLinks.forEach { link ->
-                        // Usa lo stato specifico per questo link se disponibile, altrimenti usa lo stato generale
-                        val (linkDownloadStatus, linkExtractionStatus) = linkStatuses[link.url] 
-                            ?: Pair(downloadStatus, extractionStatus)
-                        
-                        DownloadLinkCard(
-                            link = link,
-                            downloadStatus = linkDownloadStatus,
-                            extractionStatus = linkExtractionStatus,
-                            onDownloadClick = { onDownloadClick(link) },
-                            onExtractClick = onExtractClick,
-                            onOpenExtractionFolder = onOpenExtractionFolder,
-                            modifier = Modifier.padding(bottom = 12.dp)
-                        )
+                        rom.downloadLinks.forEach { link ->
+                            // Usa lo stato specifico per questo link se disponibile, altrimenti usa lo stato generale
+                            val (linkDownloadStatus, linkExtractionStatus) = linkStatuses[link.url] 
+                                ?: Pair(downloadStatus, extractionStatus)
+                            
+                            DownloadLinkCard(
+                                link = link,
+                                downloadStatus = linkDownloadStatus,
+                                extractionStatus = linkExtractionStatus,
+                                onDownloadClick = { onDownloadClick(link) },
+                                onExtractClick = onExtractClick,
+                                onOpenExtractionFolder = onOpenExtractionFolder,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
                         }
                     }
                 }

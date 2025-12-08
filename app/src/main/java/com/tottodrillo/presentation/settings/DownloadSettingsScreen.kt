@@ -191,7 +191,8 @@ fun DownloadSettingsScreen(
     onInstallSource: () -> Unit = {},
     onInstallDefaultSources: () -> Unit = {},
     onSourcesChanged: () -> Unit = {},
-    viewModel: DownloadsViewModel = hiltViewModel()
+    viewModel: DownloadsViewModel = hiltViewModel(),
+    initialExpandedGroup: String? = null
 ) {
     val config by viewModel.downloadConfig.collectAsState()
     val showClearHistoryDialog by viewModel.showClearHistoryDialog.collectAsState()
@@ -420,6 +421,13 @@ fun DownloadSettingsScreen(
     // Stato per tracciare quali gruppi sono espansi
     var expandedGroups by rememberSaveable { 
         mutableStateOf(setOf<String>()) 
+    }
+    
+    // Espandi automaticamente il gruppo iniziale se specificato
+    LaunchedEffect(initialExpandedGroup) {
+        if (initialExpandedGroup != null && !expandedGroups.contains(initialExpandedGroup)) {
+            expandedGroups = expandedGroups + initialExpandedGroup
+        }
     }
     
     fun toggleGroup(groupId: String) {

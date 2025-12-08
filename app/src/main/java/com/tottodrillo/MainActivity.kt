@@ -311,11 +311,16 @@ class MainActivity : ComponentActivity() {
                     hasEnabledSources == false -> {
                         // Stato per mostrare le impostazioni quando necessario
                         var showSettings by remember { mutableStateOf(false) }
+                        var showSourcesSection by remember { mutableStateOf(false) }
                         
                         if (showSettings) {
                             // Mostra direttamente la schermata delle impostazioni
                             com.tottodrillo.presentation.settings.DownloadSettingsScreen(
-                                onNavigateBack = { showSettings = false },
+                                onNavigateBack = { 
+                                    showSettings = false
+                                    showSourcesSection = false
+                                },
+                                initialExpandedGroup = if (showSourcesSection) "sources" else null,
                                 onSelectFolder = { openDownloadFolderLauncher.launch(null) },
                                 onSelectEsDeFolder = { openEsDeFolderLauncher.launch(null) },
                                 onRequestStoragePermission = {
@@ -343,6 +348,7 @@ class MainActivity : ComponentActivity() {
                             // Mostra schermata "Nessuna sorgente abilitata"
                             com.tottodrillo.presentation.sources.NoEnabledSourcesScreen(
                                 onNavigateToSettings = {
+                                    showSourcesSection = true
                                     showSettings = true
                                 },
                                 onInstallDefaultSources = {
