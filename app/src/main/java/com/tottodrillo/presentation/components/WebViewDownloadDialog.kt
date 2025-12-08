@@ -249,6 +249,7 @@ fun WebViewDownloadDialog(
                                         // Se è un link di download diretto, intercettalo
                                         if (newUrl != null && (
                                             newUrl.contains("sto.romsfast.com") || 
+                                            newUrl.contains("download.nswpediax.site") ||  // NSWpedia link diretti
                                             newUrl.contains("?token=") || 
                                             newUrl.endsWith(".nsp") || 
                                             newUrl.endsWith(".xci") || 
@@ -354,11 +355,22 @@ fun WebViewDownloadDialog(
                                     }
                                     
                                     // Estrai l'URL finale del download
-                                    if (url.contains("sto.romsfast.com") || url.contains("?token=") || url.endsWith(".nsp") || url.endsWith(".xci") || url.endsWith(".zip") || url.endsWith(".7z")) {
+                                    android.util.Log.d("WebViewDownloadDialog", "📥 Download intercettato: $url (mimetype: $mimetype)")
+                                    if (url.contains("sto.romsfast.com") || 
+                                        url.contains("download.nswpediax.site") ||  // NSWpedia link diretti
+                                        url.contains("?token=") || 
+                                        url.endsWith(".nsp") || 
+                                        url.endsWith(".xci") || 
+                                        url.endsWith(".zip") || 
+                                        url.endsWith(".7z") ||
+                                        mimetype?.contains("application/octet-stream") == true ||
+                                        mimetype?.contains("application/x-") == true) {
                                         // URL finale trovato, chiudi il dialog e avvia il download
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido, avvio download: $url")
                                         onDownloadUrlExtracted(url, updatedLink)
                                     } else {
-                                        // Se l'URL non è quello finale, prova comunque
+                                        // Se l'URL non è quello finale, prova comunque (potrebbe essere un redirect)
+                                        android.util.Log.d("WebViewDownloadDialog", "⚠️ URL non riconosciuto come download diretto, provo comunque: $url")
                                         onDownloadUrlExtracted(url, updatedLink)
                                     }
                                 }
