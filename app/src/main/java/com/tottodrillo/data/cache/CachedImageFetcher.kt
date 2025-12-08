@@ -50,7 +50,6 @@ class CachedImageFetcher(
                 if (cachedPath != null) {
                     val cachedFile = File(cachedPath.removePrefix("file://"))
                     if (cachedFile.exists()) {
-                        android.util.Log.d("CachedImageFetcher", "✅ Immagine caricata da cache: $data")
                         val okioPath = cachedFile.absolutePath.toPath()
                         return@withContext SourceResult(
                             source = ImageSource(okioPath, fileSystem = FileSystem.SYSTEM),
@@ -79,7 +78,6 @@ class CachedImageFetcher(
                 // Salva in cache
                 val savedPath = cacheManager.saveImageToCache(data, imageBytes)
                 if (savedPath != null) {
-                    android.util.Log.d("CachedImageFetcher", "✅ Immagine salvata in cache: $data")
                     val cachedFile = File(savedPath.removePrefix("file://"))
                     val okioPath = cachedFile.absolutePath.toPath()
                     return@withContext SourceResult(

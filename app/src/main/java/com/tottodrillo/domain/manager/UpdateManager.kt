@@ -123,13 +123,9 @@ class UpdateManager @Inject constructor(
                 // Verifica che ci sia un APK disponibile
                 val apkAsset = release.assets.find { it.name.endsWith(".apk", ignoreCase = true) }
                 if (apkAsset != null) {
-                    android.util.Log.d("UpdateManager", "✅ Aggiornamento disponibile: ${release.tagName}")
                     return@withContext release
-                } else {
-                    android.util.Log.d("UpdateManager", "⚠️ Release disponibile ma nessun APK trovato")
                 }
-            } else {
-                android.util.Log.d("UpdateManager", "ℹ️ Nessun aggiornamento disponibile (versione corrente: $currentVersionName, release: $releaseVersion)")
+            }
             }
             
             return@withContext null

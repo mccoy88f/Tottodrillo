@@ -224,7 +224,6 @@ internal fun TryImageUrls(
     
     val currentUrl = urls[currentIndex]
     
-    android.util.Log.d("RomCard", "   🖼️ Tentativo ${currentIndex + 1}/${urls.size}: $currentUrl")
     
     SubcomposeAsyncImage(
         model = currentUrl,
@@ -240,7 +239,7 @@ internal fun TryImageUrls(
             }
         },
         error = {
-            android.util.Log.w("RomCard", "   ⚠️ Immagine fallita: $currentUrl, provo prossima...")
+            android.util.Log.w("RomCard", "Immagine fallita: $currentUrl, provo prossima...")
             // Prova la prossima immagine
             TryImageUrls(
                 urls = urls,

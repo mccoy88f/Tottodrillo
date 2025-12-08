@@ -115,7 +115,6 @@ class DownloadWorker(
             
             // Sovrascrivi sempre il file se esiste già
             if (outputFile.exists()) {
-                Log.d("DownloadWorker", "⚠️ File già esistente, eliminazione: ${outputFile.absolutePath}")
                 outputFile.delete()
             }
             
@@ -156,7 +155,6 @@ class DownloadWorker(
                 if (!urlExists) {
                     // Aggiungi una nuova riga per questo URL
                     updatedUrlLines.add(url)
-                    Log.d("DownloadWorker", "✅ URL aggiunto al file .status: ${statusFile.absolutePath} -> $url")
                     
                     // Se c'è un URL originale diverso, aggiungilo anche al file .status
                     // Questo permette di trovare il download anche quando si cerca con l'URL originale
@@ -172,11 +170,9 @@ class DownloadWorker(
                         
                         if (!originalUrlExists) {
                             updatedUrlLines.add(originalUrl)
-                            Log.d("DownloadWorker", "✅ URL originale aggiunto al file .status: $originalUrl")
                         }
                     }
                 } else {
-                    Log.d("DownloadWorker", "ℹ️ URL già presente nel file .status, nessuna modifica: $url")
                 }
                 
                 // Costruisci il contenuto finale: slug (se presente) seguito dalle righe URL
@@ -219,14 +215,12 @@ class DownloadWorker(
         delaySeconds: Int = 0,
         cookies: String? = null // Cookie dal WebView per mantenere la sessione
     ) {
-        Log.d("DownloadWorker", "📥 Avvio download: $url -> ${outputFile.absolutePath}")
+        Log.d("DownloadWorker", "Avvio download: $url")
         
         val requestBuilder = Request.Builder()
         
         // Se abbiamo cookie dal WebView, usali direttamente (priorità più alta)
         if (cookies != null && cookies.isNotEmpty()) {
-            Log.d("DownloadWorker", "🍪 Usando cookie dal WebView: ${cookies.length} caratteri")
-            Log.d("DownloadWorker", "🍪 Cookie estratti: $cookies")
             requestBuilder
                 .header("Cookie", cookies)
                 .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
@@ -245,7 +239,6 @@ class DownloadWorker(
                     "https://nswpedia.com/"
                 }
                 requestBuilder.header("Referer", refererUrl)
-                Log.d("DownloadWorker", "🔗 Aggiunto Referer per NSWpedia: $refererUrl")
             }
         }
         
@@ -263,7 +256,6 @@ class DownloadWorker(
                 
                 okHttpClient.newCall(intermediateRequest).execute().use { intermediateResponse ->
                     if (intermediateResponse.isSuccessful) {
-                        Log.d("DownloadWorker", "✅ Pagina intermedia visitata, cookie ottenuti (delay già gestito nel ViewModel)")
                         // I cookie vengono salvati automaticamente dal CookieJar
                     } else {
                         Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina intermedia: ${intermediateResponse.code}")
@@ -301,7 +293,6 @@ class DownloadWorker(
                 
                 okHttpClient.newCall(pageRequest).execute().use { pageResponse ->
                     if (pageResponse.isSuccessful) {
-                        Log.d("DownloadWorker", "✅ Pagina ROM visitata, cookie ottenuti")
                         // I cookie vengono salvati automaticamente dal CookieJar
                     } else {
                         Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina ROM: ${pageResponse.code}")
@@ -349,7 +340,6 @@ class DownloadWorker(
                         "https://nswpedia.com/"
                     }
                     requestBuilder.header("Referer", refererUrl)
-                    Log.d("DownloadWorker", "🔗 Aggiunto Referer (senza cookie): $refererUrl")
                 }
             }
             // I cookie dal WebView sono già stati aggiunti sopra se presenti
@@ -358,7 +348,7 @@ class DownloadWorker(
         val request = requestBuilder.build()
 
         okHttpClient.newCall(request).execute().use { response ->
-            Log.d("DownloadWorker", "📥 Risposta: ${response.code} ${response.message}")
+            Log.d("DownloadWorker", "Risposta: ${response.code}")
             
             if (!response.isSuccessful) {
                 val errorBody = response.body?.string()?.take(200)
@@ -368,7 +358,6 @@ class DownloadWorker(
 
             val body = response.body ?: throw Exception("Response body vuoto")
             val contentLength = body.contentLength()
-            Log.d("DownloadWorker", "📥 Dimensione file: $contentLength bytes")
             
             body.byteStream().use { input ->
                 FileOutputStream(outputFile).use { output ->
@@ -376,7 +365,6 @@ class DownloadWorker(
                 }
             }
             
-            Log.d("DownloadWorker", "✅ Download completato: ${outputFile.length()} bytes")
         }
     }
 

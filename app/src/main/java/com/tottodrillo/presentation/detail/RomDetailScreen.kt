@@ -158,7 +158,6 @@ fun RomDetailRoute(
         kotlinx.coroutines.delay(500) // Aspetta che la ROM sia caricata
         val currentRom = viewModel.uiState.value.rom
         if (currentRom != null) {
-            android.util.Log.d("RomDetailScreen", "🔍 Controllo immediato estrazioni attive/completate al caricamento schermata")
             // Verifica se ci sono estrazioni attive per i link scaricati
             currentRom.downloadLinks.forEach { link ->
                 val linkStatus = viewModel.uiState.value.linkStatuses[link.url]
@@ -212,7 +211,6 @@ fun RomDetailRoute(
                     
                     // Solo se ci sono download completati con estrazione Idle, verifica
                     if (hasCompletedDownloads) {
-                        android.util.Log.d("RomDetailScreen", "🔍 Verifica se estrazione completata (download completato trovato)")
                             viewModel.refreshRomStatus()
                         }
                     // Se non ci sono download completati, non fare nulla per evitare loop inutili
@@ -444,7 +442,6 @@ fun RomDetailScreen(
                 .verticalScroll(rememberScrollState())
         ) {
             // Cover image carosello (se ci sono più immagini)
-            android.util.Log.d("RomDetailScreen", "🖼️ Immagini ROM: ${rom.coverUrls.size}, URLs: ${rom.coverUrls}")
             if (rom.coverUrls.size > 1) {
                 // Carosello con più immagini
                 ImageCarousel(
@@ -1225,7 +1222,6 @@ private fun ImageCarousel(
     title: String,
     modifier: Modifier = Modifier
 ) {
-    android.util.Log.d("RomDetailScreen", "🎠 ImageCarousel: ${images.size} immagini")
     val pagerState = rememberPagerState(pageCount = { images.size })
     val scope = rememberCoroutineScope()
     
@@ -1235,7 +1231,6 @@ private fun ImageCarousel(
             modifier = Modifier.fillMaxSize()
         ) { page ->
             val imageUrl = images.getOrNull(page)
-            android.util.Log.d("RomDetailScreen", "🎠 Caricamento pagina $page/${images.size}: $imageUrl")
             if (imageUrl == null) {
                 android.util.Log.w("RomDetailScreen", "⚠️ Immagine null per pagina $page")
             }

@@ -401,21 +401,18 @@ class MainActivity : ComponentActivity() {
                             activityScope.launch {
                                 try {
                                     val config = configRepository.downloadConfig.first()
-                                    android.util.Log.d("MainActivity", "🔍 Config ES-DE: enabled=${config.enableEsDeCompatibility}, path=${config.esDeRomsPath}")
                                     
                                     if (config.enableEsDeCompatibility && !config.esDeRomsPath.isNullOrBlank()) {
                                         // Usa automaticamente la cartella ES-DE
                                         // Cerca il motherCode in tutte le sorgenti disponibili
                                         var motherCode: String? = null
                                         val availableSources = platformManager.getAvailableSources()
-                                        android.util.Log.d("MainActivity", "🔍 Cercando mother code per platformCode: $platformCode in sorgenti: $availableSources")
                                         
                                         // Prova prima a cercare in tutte le sorgenti
                                         for (sourceName in availableSources) {
                                             val found = platformManager.getMotherCodeFromSourceCode(platformCode, sourceName)
                                             if (found != null) {
                                                 motherCode = found
-                                                android.util.Log.d("MainActivity", "✅ Mother code trovato in sorgente $sourceName: $motherCode")
                                                 break
                                             }
                                         }
@@ -424,14 +421,12 @@ class MainActivity : ComponentActivity() {
                                         // (ES-DE usa i motherCode come nomi delle cartelle, quindi potrebbe già essere corretto)
                                         if (motherCode == null) {
                                             motherCode = platformCode
-                                            android.util.Log.d("MainActivity", "ℹ️ Mother code non trovato, uso platformCode direttamente: $motherCode")
                                         }
                                         
                                         // Verifica che il path ES-DE sia valido
                                         val esDeBasePath = config.esDeRomsPath
                                         if (esDeBasePath != null && configRepository.isPathValid(esDeBasePath)) {
                                             val esDePath = "$esDeBasePath/$motherCode"
-                                            android.util.Log.d("MainActivity", "✅ ES-DE abilitato: installazione in $esDePath")
                                             downloadsViewModel.startExtraction(archivePath, esDePath, romTitle, romSlug)
                                         } else {
                                             android.util.Log.w("MainActivity", "⚠️ Path ES-DE non valido: $esDeBasePath, uso picker manuale")
@@ -440,7 +435,6 @@ class MainActivity : ComponentActivity() {
                                         }
                                     } else {
                                         // Usa il picker manuale
-                                        android.util.Log.d("MainActivity", "ℹ️ ES-DE non abilitato o path non configurato, uso picker manuale")
                                         pendingExtraction = Triple(archivePath, romTitle, romSlug)
                                         openExtractionFolderLauncher.launch(null)
                                     }
@@ -675,7 +669,6 @@ class MainActivity : ComponentActivity() {
                 
                 val url = sourceInfo.downloadUrl
                 try {
-                    android.util.Log.d("MainActivity", "📥 Scaricando sorgente da: $url")
                     
                     // Scarica il file ZIP
                     val request = Request.Builder()
@@ -703,7 +696,6 @@ class MainActivity : ComponentActivity() {
                     val result = installer.installFromZip(tempFile)
                     result.fold(
                         onSuccess = { metadata ->
-                            android.util.Log.d("MainActivity", "✅ Sorgente installata: ${metadata.name}")
                             // Abilita la sorgente di default
                             sourceManager.setSourceEnabled(metadata.id, true)
                         },

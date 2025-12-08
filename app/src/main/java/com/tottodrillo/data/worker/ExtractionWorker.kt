@@ -122,20 +122,10 @@ class ExtractionWorker(
 
             // Verifica cartella di estrazione
             val extractionDir = File(extractionPath)
-            Log.d(TAG, "🔍 Verifica cartella estrazione:")
-            Log.d(TAG, "   - Path: ${extractionDir.absolutePath}")
-            Log.d(TAG, "   - Path originale: $extractionPath")
-            Log.d(TAG, "   - È SD card: ${extractionPath.startsWith("/storage/") && !extractionPath.startsWith("/storage/emulated/")}")
-            Log.d(TAG, "   - Esiste: ${extractionDir.exists()}")
-            Log.d(TAG, "   - È directory: ${extractionDir.isDirectory}")
-            Log.d(TAG, "   - È scrivibile: ${extractionDir.canWrite()}")
-            Log.d(TAG, "   - È leggibile: ${extractionDir.canRead()}")
-            
             // Se il path è su SD card e non è accessibile, potrebbe essere un problema di permessi
             val isSdCard = extractionPath.startsWith("/storage/") && !extractionPath.startsWith("/storage/emulated/")
             if (isSdCard && !extractionDir.exists()) {
-                Log.w(TAG, "⚠️ Path su SD card non accessibile direttamente. Potrebbe essere necessario usare DocumentFile.")
-                Log.w(TAG, "💡 Suggerimento: Verifica che la cartella sia stata selezionata tramite il file picker.")
+                Log.w(TAG, "Path su SD card non accessibile direttamente. Potrebbe essere necessario usare DocumentFile.")
             }
             
             // Verifica che la cartella padre esista e sia scrivibile
@@ -151,10 +141,6 @@ class ExtractionWorker(
                     workDataOf("error" to errorMsg)
                 )
             }
-            
-            Log.d(TAG, "🔍 Verifica cartella padre:")
-            Log.d(TAG, "   - Path: ${parentDir.absolutePath}")
-            Log.d(TAG, "   - Esiste: ${parentDir.exists()}")
             Log.d(TAG, "   - È directory: ${parentDir.isDirectory}")
             Log.d(TAG, "   - È scrivibile: ${parentDir.canWrite()}")
             
@@ -304,7 +290,6 @@ class ExtractionWorker(
                 // Scrivi tutte le righe nel file
                 if (finalLines.isNotEmpty()) {
                     statusFile.writeText(finalLines.joinToString("\n"))
-                    Log.d(TAG, "✅ File .status aggiornato: ${statusFile.absolutePath} -> Path estrazione: $extractionPath (righe totali: ${finalLines.size})")
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Errore nell'aggiornamento del file .status", e)
@@ -316,7 +301,6 @@ class ExtractionWorker(
                 try {
                     val deleted = archiveFile.delete()
                     if (deleted) {
-                        Log.d(TAG, "✅ Archivio eliminato dopo estrazione completata: ${archiveFile.absolutePath}")
                     } else {
                         Log.w(TAG, "⚠️ Impossibile eliminare archivio: ${archiveFile.absolutePath}")
                     }
@@ -332,7 +316,6 @@ class ExtractionWorker(
                 RESULT_FILES_COUNT to extractedFiles
             )
             
-            Log.d(TAG, "✅ [PASSO 1] ExtractionWorker: Impostando WorkInfo.State.SUCCEEDED con dati: path=$extractionPath, count=$extractedFiles")
             
             Result.success(resultData)
 
@@ -342,7 +325,6 @@ class ExtractionWorker(
             
             // IMPORTANTE: NON eliminare mai il file .zip quando l'installazione fallisce
             // Il file .zip deve rimanere per permettere un nuovo tentativo di installazione
-            Log.d(TAG, "⚠️ Installazione fallita, file .zip preservato: $archivePath")
             
             // IMPORTANTE: Il file .status NON deve mai essere eliminato
             // Salva lo stato di fallimento nel file .status per permettere all'UI di mostrare l'errore
@@ -603,7 +585,6 @@ class ExtractionWorker(
             // Copia il file
             sourceFile.copyTo(destFile, overwrite = true)
             
-            Log.d(TAG, "✅ File copiato: ${sourceFile.absolutePath} -> ${destFile.absolutePath}")
 
             // Aggiorna notifica
             if (notificationsEnabled) {
@@ -786,7 +767,6 @@ class ExtractionWorker(
                 // Il file .status NON deve mai essere eliminato
                 if (finalLines.isNotEmpty()) {
                     statusFile.writeText(finalLines.joinToString("\n"))
-                    Log.d(TAG, "✅ File .status aggiornato con errore (file preservato): ${statusFile.absolutePath} -> ERROR: $errorMsg")
                 } else {
                     Log.w(TAG, "⚠️ Nessuna riga da scrivere nel file .status per: $fileNameToUse")
                 }

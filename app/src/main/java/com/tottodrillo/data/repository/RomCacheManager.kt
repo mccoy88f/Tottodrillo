@@ -77,7 +77,6 @@ class RomCacheManager @Inject constructor(
             val json = gson.toJson(romWithoutLinks)
             cacheFile.writeText(json)
             
-            android.util.Log.d("RomCacheManager", "✅ ROM salvata in cache: ${rom.slug}")
         } catch (e: Exception) {
             android.util.Log.e("RomCacheManager", "❌ Errore salvataggio ROM in cache", e)
         }
@@ -98,7 +97,6 @@ class RomCacheManager @Inject constructor(
             val json = cacheFile.readText()
             val rom = gson.fromJson(json, Rom::class.java)
             
-            android.util.Log.d("RomCacheManager", "✅ ROM caricata da cache: $slug")
             return@withContext rom
         } catch (e: Exception) {
             android.util.Log.e("RomCacheManager", "❌ Errore caricamento ROM da cache", e)
@@ -125,7 +123,6 @@ class RomCacheManager @Inject constructor(
             
             // Restituisci il percorso locale (file://)
             val localPath = "file://${imageFile.absolutePath}"
-            android.util.Log.d("RomCacheManager", "✅ Immagine salvata in cache: $fileName")
             return@withContext localPath
         } catch (e: Exception) {
             android.util.Log.e("RomCacheManager", "❌ Errore salvataggio immagine in cache", e)
@@ -165,7 +162,6 @@ class RomCacheManager @Inject constructor(
             val cacheDir = getCacheDirectory()
             if (cacheDir.exists()) {
                 cacheDir.deleteRecursively()
-                android.util.Log.d("RomCacheManager", "✅ Cache cancellata")
             }
         } catch (e: Exception) {
             android.util.Log.e("RomCacheManager", "❌ Errore cancellazione cache", e)
@@ -182,7 +178,6 @@ class RomCacheManager @Inject constructor(
             val cacheFile = File(dataDir, "$slug.json")
             if (cacheFile.exists()) {
                 cacheFile.delete()
-                android.util.Log.d("RomCacheManager", "✅ Cache ROM cancellata: $slug")
             }
         } catch (e: Exception) {
             android.util.Log.e("RomCacheManager", "❌ Errore cancellazione cache ROM", e)

@@ -232,7 +232,6 @@ class RomDetailViewModel @Inject constructor(
     private fun observeExtractionForLink(link: DownloadLink, workId: UUID) {
         // Se stiamo già osservando questo workId, non cancellare e riavviare
         if (currentExtractionWorkId == workId && currentExtractionJob?.isActive == true) {
-            android.util.Log.d("RomDetailViewModel", "ℹ️ Già osservando estrazione con workId: $workId, salto riavvio")
             return
         }
         
@@ -1101,7 +1100,6 @@ class RomDetailViewModel @Inject constructor(
                     )
                 }
                 
-                android.util.Log.d("RomDetailViewModel", "✅ Dati IGDB importati con successo per: ${updatedRom.title}")
             } catch (e: Exception) {
                 android.util.Log.e("RomDetailViewModel", "❌ Errore importazione dati IGDB", e)
                 _uiState.update {

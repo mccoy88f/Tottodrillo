@@ -159,12 +159,6 @@ class RomRepositoryImpl @Inject constructor(
                 
                 // Raccogli tutte le immagini da tutte le ROM
                 // coverUrl è la box image (obbligatoria), coverUrls contiene box + screen
-                android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Processando ROM: ${firstRom.title}")
-                android.util.Log.d("RomRepositoryImpl", "   Numero ROM aggregate: ${roms.size}")
-                roms.forEachIndexed { index, rom ->
-                    android.util.Log.d("RomRepositoryImpl", "   ROM[$index]: coverUrl=${rom.coverUrl}, coverUrls=${rom.coverUrls}")
-                }
-                
                 var allCoverUrls = roms
                     .flatMap { rom -> 
                         // coverUrls già contiene box (prima) e screen (dopo) nell'ordine corretto
@@ -174,23 +168,17 @@ class RomRepositoryImpl @Inject constructor(
                     .distinct()
                     .filter { it.isNotBlank() } // Doppio filtro per sicurezza
                 
-                android.util.Log.d("RomRepositoryImpl", "   allCoverUrls iniziale: $allCoverUrls")
-                
                 // Se non c'è box image (coverUrl è null), rimuovi eventuali screen placeholder di errore
                 // e aggiungi il placeholder corretto come prima immagine
                 val hasBoxImage = roms.any { it.coverUrl != null }
-                android.util.Log.d("RomRepositoryImpl", "   hasBoxImage: $hasBoxImage")
                 
                 if (!hasBoxImage) {
                     // Se non c'è box image, rimuoviamo tutte le immagini esistenti (potrebbero essere placeholder di errore)
                     // e aggiungiamo solo il placeholder corretto
-                    android.util.Log.d("RomRepositoryImpl", "   ⚠️ Nessuna box image trovata, rimuovo immagini esistenti")
                     allCoverUrls = emptyList()
                     val placeholderImages = getPlaceholderImages(roms)
-                    android.util.Log.d("RomRepositoryImpl", "   📱 Placeholder ottenuti: $placeholderImages")
                     // Aggiungi placeholder all'inizio
                     allCoverUrls = placeholderImages + allCoverUrls
-                    android.util.Log.d("RomRepositoryImpl", "   ✅ allCoverUrls finale: $allCoverUrls")
                 } else {
                     // Anche se c'è box image, aggiungiamo il placeholder come fallback in caso di errore di caricamento
                     val placeholderImages = getPlaceholderImages(roms)
@@ -200,7 +188,6 @@ class RomRepositoryImpl @Inject constructor(
                             allCoverUrls = allCoverUrls + placeholder
                         }
                     }
-                    android.util.Log.d("RomRepositoryImpl", "   ✅ Box image presente, aggiunto placeholder come fallback: $allCoverUrls")
                 }
                 
                 // Unisci tutti i downloadLinks da tutte le ROM
@@ -239,7 +226,6 @@ class RomRepositoryImpl @Inject constructor(
                 val maxPagesToSearch = 10 // Limite massimo di pagine da cercare
                 
                 while (finalRoms.isEmpty() && currentPage <= maxPagesToSearch) {
-                    android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Filtro regioni restituisce risultati vuoti, cercando pagina $currentPage")
                     
                     val nextPageRoms = coroutineScope {
                         enabledSources.map { source ->
@@ -319,7 +305,6 @@ class RomRepositoryImpl @Inject constructor(
                                 sourceId = firstRom.sourceId
                             )
                         }
-                        android.util.Log.d("RomRepositoryImpl", "✅ [searchRoms] Trovati ${finalRoms.size} risultati alla pagina $currentPage")
                         break
                     }
                     
@@ -361,7 +346,6 @@ class RomRepositoryImpl @Inject constructor(
                 finalRoms
             }
             
-            android.util.Log.d("RomRepositoryImpl", "🔍 [searchRoms] Filtro regioni: ${filters.selectedRegions}, ROM prima filtro: ${finalRoms.size}, ROM dopo filtro: ${finalFilteredRoms.size}")
             
             // Ordina alfabeticamente per nome (ignorando maiuscole/minuscole)
             val sortedRoms = finalFilteredRoms.sortedBy { it.title.lowercase() }
@@ -523,7 +507,6 @@ class RomRepositoryImpl @Inject constructor(
     }
 
     override suspend fun getRomBySlug(slug: String, includeDownloadLinks: Boolean): NetworkResult<Rom> {
-        android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Richiesta ROM per slug: $slug (includeDownloadLinks=$includeDownloadLinks)")
         
         val hasSources = sourceManager.hasInstalledSources()
         if (!hasSources) {
@@ -537,7 +520,6 @@ class RomRepositoryImpl @Inject constructor(
         // PRIMA: Controlla se la ROM è in cache (solo dati, senza link)
         val cachedRom = cacheManager.loadRomFromCache(slug)
         if (cachedRom != null) {
-            android.util.Log.d("RomRepositoryImpl", "✅ ROM trovata in cache: $slug")
             
             // Se non servono i link, restituisci direttamente dalla cache
             if (!includeDownloadLinks) {
@@ -562,14 +544,12 @@ class RomRepositoryImpl @Inject constructor(
                 )
             }
             
-            android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Cercando in ${enabledSources.size} sorgenti abilitate")
             
             // Cerca in parallelo in tutte le sorgenti
             val results = coroutineScope {
                 enabledSources.map { source ->
                     async {
                         try {
-                            android.util.Log.d("RomRepositoryImpl", "🔍 [getRomBySlug] Cercando in sorgente: ${source.id}")
                             
                             val sourceDir = File(source.installPath ?: return@async null)
                             val metadata = sourceManager.getSourceMetadata(source.id)
@@ -1095,7 +1075,6 @@ class RomRepositoryImpl @Inject constructor(
         val placeholderUrls = mutableListOf<String>()
         val sourceIds = roms.mapNotNull { it.sourceId }.distinct()
         
-        android.util.Log.d("RomRepositoryImpl", "🔍 [getPlaceholderImages] Cercando placeholder per sourceIds: $sourceIds")
         
         for (sourceId in sourceIds) {
             val metadata = sourceManager.getSourceMetadata(sourceId)
@@ -1119,7 +1098,6 @@ class RomRepositoryImpl @Inject constructor(
                         if (placeholderFile.exists()) {
                             val fileUri = android.net.Uri.fromFile(placeholderFile).toString()
                             placeholderUrls.add(fileUri)
-                            android.util.Log.d("RomRepositoryImpl", "   ✅ Placeholder risolto: $imagePath -> $fileUri")
                         } else {
                             android.util.Log.w("RomRepositoryImpl", "   ⚠️ Placeholder non trovato: ${placeholderFile.absolutePath}")
                         }
@@ -1129,7 +1107,6 @@ class RomRepositoryImpl @Inject constructor(
                 } else {
                     // È già un URL completo, usalo così com'è
                     placeholderUrls.add(imagePath)
-                    android.util.Log.d("RomRepositoryImpl", "   ✅ Placeholder URL completo: $imagePath")
                 }
             }
         }
@@ -1140,7 +1117,6 @@ class RomRepositoryImpl @Inject constructor(
             placeholderUrls.add(appLogoUri)
             android.util.Log.d("RomRepositoryImpl", "📱 Usando logo app come placeholder (nessun placeholder dalle sorgenti): $appLogoUri")
         } else {
-            android.util.Log.d("RomRepositoryImpl", "✅ Placeholder trovati: $placeholderUrls")
         }
         
         return placeholderUrls.distinct()

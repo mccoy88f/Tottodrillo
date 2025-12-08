@@ -42,7 +42,6 @@ class WebViewBackgroundDownloader(
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
-                        Log.d("WebViewBackgroundDownloader", "✅ Pagina caricata: $url")
                         
                         // Dopo che la pagina è caricata, attendi 20 secondi prima di estrarre l'URL finale
                         android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
@@ -85,7 +84,6 @@ class WebViewBackgroundDownloader(
                                 val finalUrl = result?.removeSurrounding("\"")?.takeIf { it != "null" }
                                 
                                 if (finalUrl != null && finalUrl.isNotEmpty()) {
-                                    Log.d("WebViewBackgroundDownloader", "📥 URL finale estratto: $finalUrl")
                                     
                                     // Estrai i cookie dal WebView
                                     val cookieManager = CookieManager.getInstance()
@@ -140,7 +138,6 @@ class WebViewBackgroundDownloader(
                                     }
                                     
                                     val cookies = allCookies.joinToString("; ")
-                                    Log.d("WebViewBackgroundDownloader", "🍪 Cookie estratti: totale=${cookies.length} caratteri")
                                     
                                     // Avvia il download
                                     isResumed = true
@@ -160,7 +157,6 @@ class WebViewBackgroundDownloader(
                 
                 // Intercetta anche il download listener come fallback (se l'utente clicca manualmente)
                 setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-                    Log.d("WebViewBackgroundDownloader", "📥 Download intercettato (fallback): $url")
                     // Questo è un fallback, ma in background non dovrebbe essere necessario
                 }
                 

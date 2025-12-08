@@ -37,7 +37,6 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
         ?: this.boxartUrl?.let { listOf(it) } 
         ?: emptyList()
         coverUrls.addAll(oldCoverUrls)
-        android.util.Log.d("Mappers", "   ⚠️ Usato fallback vecchio formato: $oldCoverUrls")
     }
     
     // coverUrl principale è SOLO la box image (non lo screen)
@@ -45,8 +44,6 @@ fun RomEntry.toDomain(sourceId: String? = null): Rom {
     // IMPORTANTE: non usare screenImage come coverUrl, perché potrebbe essere un placeholder di errore
     // Se boxImage è null ma abbiamo immagini dal fallback (boxart_url), usiamo la prima
     val coverUrl = boxImage ?: coverUrls.firstOrNull()
-    
-    android.util.Log.d("Mappers", "   ✅ Risultato: coverUrl=$coverUrl, coverUrls=$coverUrls")
     
     return Rom(
         slug = this.slug,

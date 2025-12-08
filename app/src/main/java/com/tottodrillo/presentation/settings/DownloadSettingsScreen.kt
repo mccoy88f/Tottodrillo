@@ -349,7 +349,6 @@ fun DownloadSettingsScreen(
                 
                 result.fold(
                     onSuccess = {
-                        android.util.Log.d("DownloadSettingsScreen", "✅ Sorgente aggiornata: ${it.id}")
                         if (notificationManager != null) {
                             val successNotification = NotificationCompat.Builder(context, channelId)
                                 .setContentTitle(completedTitle)

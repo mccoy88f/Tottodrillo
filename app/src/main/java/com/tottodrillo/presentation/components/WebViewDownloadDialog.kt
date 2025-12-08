@@ -169,7 +169,6 @@ fun WebViewDownloadDialog(
                                                 override fun shouldOverrideUrlLoading(view: WebView?, request: android.webkit.WebResourceRequest?): Boolean {
                                                     // Carica l'URL nel popup
                                                     request?.url?.let { popupUrl ->
-                                                        android.util.Log.d("WebViewDownloadDialog", "🔗 Popup naviga a: $popupUrl")
                                                         view?.loadUrl(popupUrl.toString())
                                                     }
                                                     return true // Intercetta la navigazione
@@ -177,7 +176,6 @@ fun WebViewDownloadDialog(
                                                 
                                                 override fun onPageFinished(view: WebView?, url: String?) {
                                                     super.onPageFinished(view, url)
-                                                    android.util.Log.d("WebViewDownloadDialog", "✅ Popup caricato: $url")
                                                     
                                                     // Disabilita annunci anche nel popup
                                                     view?.evaluateJavascript(
@@ -198,7 +196,6 @@ fun WebViewDownloadDialog(
                                             
                                             // Intercetta il download anche dal popup
                                             newWebView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-                                                android.util.Log.d("WebViewDownloadDialog", "📥 Download intercettato dal popup: $url")
                                                 
                                                 // Chiudi il popup e resetta il flag
                                                 try {
@@ -241,7 +238,6 @@ fun WebViewDownloadDialog(
                                                 val popupCookieManager = CookieManager.getInstance()
                                                 popupCookieManager.setAcceptCookie(true)
                                                 val popupCookies = popupCookieManager.getCookie(url) ?: ""
-                                                android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti dal popup per $url: ${if (popupCookies.isNotEmpty()) "presenti" else "nessun cookie"}")
                                                 onDownloadUrlExtracted(url, updatedLink, popupCookies)
                                             }
                                             
@@ -276,7 +272,6 @@ fun WebViewDownloadDialog(
                                         val currentUrl = view?.url
                                         val newUrl = request?.url?.toString()
                                         
-                                        android.util.Log.d("WebViewDownloadDialog", "🔗 Navigazione principale: $currentUrl -> $newUrl (popupOpen: $popupOpen)")
                                         
                                         // Se c'è un popup aperto e la navigazione è verso un URL diverso dall'originale, bloccala
                                         if (popupOpen && newUrl != null && originalUrl != null && newUrl != originalUrl) {
@@ -288,7 +283,6 @@ fun WebViewDownloadDialog(
                                         if (newUrl != null && allPatterns.any { pattern ->
                                             newUrl.contains(pattern) || newUrl.endsWith(pattern)
                                         }) {
-                                            android.util.Log.d("WebViewDownloadDialog", "📥 Link download diretto intercettato (pattern match): $newUrl")
                                             // Estrai i cookie dal WebView per il dominio principale e per l'URL di download
                                             val cookieManager = CookieManager.getInstance()
                                             cookieManager.setAcceptCookie(true)
@@ -342,7 +336,6 @@ fun WebViewDownloadDialog(
                                             }
                                             
                                             val cookies = allCookies.joinToString("; ")
-                                            android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti per $newUrl: totale=${cookies.length} caratteri")
                                             onDownloadUrlExtracted(newUrl, link, cookies)
                                             return true
                                         }
@@ -356,7 +349,6 @@ fun WebViewDownloadDialog(
                                         isLoading = false
                                         error = null
                                         canGoBack = view?.canGoBack() ?: false
-                                        android.util.Log.d("WebViewDownloadDialog", "✅ Pagina principale caricata: $url")
                                         
                                         // Disabilita annunci popup iniettando JavaScript
                                         // Questo previene l'apertura di popup pubblicitari su alcuni siti (es. buzzheavier.com)
@@ -456,13 +448,9 @@ fun WebViewDownloadDialog(
                                     }
                                     
                                     val cookies = allCookies.joinToString("; ")
-                                    android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti: nswpedia.com=${mainDomainCookies.isNotEmpty()} (${mainDomainCookies.length} char), download domain=${downloadDomainCookies.isNotEmpty()} (${downloadDomainCookies.length} char), download URL=${downloadUrlCookies.isNotEmpty()} (${downloadUrlCookies.length} char), totale=${cookies.length} caratteri")
-                                    android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie combinati: $cookies")
                                     // Verifica se contiene cf_clearance (cookie Cloudflare)
-                                    if (cookies.contains("cf_clearance")) {
-                                        android.util.Log.d("WebViewDownloadDialog", "✅ Cookie cf_clearance trovato!")
-                                    } else {
-                                        android.util.Log.w("WebViewDownloadDialog", "⚠️ Cookie cf_clearance NON trovato - potrebbe essere il problema")
+                                    if (!cookies.contains("cf_clearance")) {
+                                        android.util.Log.w("WebViewDownloadDialog", "Cookie cf_clearance NON trovato")
                                     }
                                     
                                     // Estrai il nome del file da contentDisposition se disponibile
@@ -503,7 +491,6 @@ fun WebViewDownloadDialog(
                                     }
                                     
                                     // Estrai l'URL finale del download usando i pattern dalla source
-                                    android.util.Log.d("WebViewDownloadDialog", "📥 Download intercettato: $url (mimetype: $mimetype)")
                                     val matchesPattern = allPatterns.any { pattern ->
                                         url.contains(pattern) || url.endsWith(pattern)
                                     }
@@ -512,11 +499,9 @@ fun WebViewDownloadDialog(
                                     
                                     if (matchesPattern || matchesMimeType) {
                                         // URL finale trovato, passa anche i cookie al callback
-                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido (pattern o mimetype match), avvio download con cookie: $url")
                                         onDownloadUrlExtracted(url, updatedLink, cookies)
                                     } else {
                                         // Se l'URL non è quello finale, prova comunque (potrebbe essere un redirect)
-                                        android.util.Log.d("WebViewDownloadDialog", "⚠️ URL non riconosciuto come download diretto, provo comunque: $url")
                                         onDownloadUrlExtracted(url, updatedLink, cookies)
                                     }
                                 }

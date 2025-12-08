@@ -352,13 +352,11 @@ class SourceInstaller @Inject constructor(
                     try {
                         val pipMain = python.getModule("pip._internal.main")
                         pipMain.callAttr("main")
-                        android.util.Log.d("SourceInstaller", "✅ Dipendenza installata: $requirement")
                     } catch (e: Exception) {
                         // Fallback: prova con pip.__main__
                         try {
                             val pipMain = python.getModule("pip.__main__")
                             pipMain.callAttr("main")
-                            android.util.Log.d("SourceInstaller", "✅ Dipendenza installata (fallback): $requirement")
                         } catch (e2: Exception) {
                             android.util.Log.w("SourceInstaller", "Impossibile installare $requirement automaticamente. Potrebbe essere necessario aggiungerla al build.gradle.kts", e2)
                         }

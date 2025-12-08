@@ -385,7 +385,6 @@ class DownloadManager @Inject constructor(
         val config = configRepository.downloadConfig.first()
         val statusFile = File(config.downloadPath, "$fileName.status")
         val exists = statusFile.exists() && statusFile.isFile
-        android.util.Log.d("DownloadManager", "🔍 Verifica file scaricato: $fileName -> $exists (status file: ${statusFile.absolutePath})")
         return exists
     }
     
@@ -423,7 +422,6 @@ class DownloadManager @Inject constructor(
                 if (urlFound) {
                     // Trovato! Restituisci il nome del file senza .status
                     val fileName = statusFile.name.removeSuffix(".status")
-                    android.util.Log.d("DownloadManager", "✅ File trovato per URL: $fileName")
                     return fileName
                 }
             }
@@ -486,7 +484,6 @@ class DownloadManager @Inject constructor(
                 } else {
                     firstLine.trim()
                 }
-                android.util.Log.d("DownloadManager", "🔍 URL letto dal file .status (prima riga): $url (totale righe: ${lines.size})")
                 url
             } else {
                 null
@@ -528,7 +525,6 @@ class DownloadManager @Inject constructor(
                     if (errorPart.startsWith("ERROR:")) {
                         val errorMsg = errorPart.substringAfter("ERROR:")
                         if (errorMsg.isNotEmpty()) {
-                            android.util.Log.d("DownloadManager", "⚠️ Errore estrazione trovato per URL specifico: $errorMsg")
                             return errorMsg
                         }
                     }
@@ -544,7 +540,6 @@ class DownloadManager @Inject constructor(
                     if (errorPart.startsWith("ERROR:")) {
                         val errorMsg = errorPart.substringAfter("ERROR:")
                         if (errorMsg.isNotEmpty()) {
-                            android.util.Log.d("DownloadManager", "⚠️ Errore estrazione trovato (prima riga): $errorMsg")
                             return errorMsg
                         }
                     }
@@ -566,7 +561,6 @@ class DownloadManager @Inject constructor(
         val config = configRepository.downloadConfig.first()
         val statusFile = File(config.downloadPath, "$fileName.status")
         
-        android.util.Log.d("DownloadManager", "🔍 Verifica estrazione: fileName=$fileName, url=$url -> status file: ${statusFile.absolutePath}, exists: ${statusFile.exists()}")
         
         return if (statusFile.exists() && statusFile.isFile) {
             try {
@@ -592,11 +586,9 @@ class DownloadManager @Inject constructor(
                     if (matchingLine != null) {
                         val extractionPath = matchingLine.substringAfter('\t')
                         if (extractionPath.isNotEmpty()) {
-                            android.util.Log.d("DownloadManager", "✅ Path estrazione trovato per URL specifico: $extractionPath")
                             return extractionPath
                         }
                     }
-                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata per URL specifico: $url")
                     return null
                 } else {
                     // Se non è specificato un URL, restituisci il path della prima riga che ha un path valido (per retrocompatibilità)
@@ -606,11 +598,9 @@ class DownloadManager @Inject constructor(
                     if (firstLineWithPath != null) {
                         val extractionPath = firstLineWithPath.substringAfter('\t')
                         if (extractionPath.isNotEmpty()) {
-                            android.util.Log.d("DownloadManager", "✅ Path estrazione trovato (prima riga): $extractionPath")
                             return extractionPath
                         }
                     }
-                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata (file .status contiene solo URL o errori)")
                     return null
                 }
             } catch (e: Exception) {
@@ -618,7 +608,6 @@ class DownloadManager @Inject constructor(
                 null
             }
         } else {
-            android.util.Log.d("DownloadManager", "ℹ️ File .status non trovato: ${statusFile.absolutePath}")
             null
         }
     }
@@ -685,7 +674,6 @@ class DownloadManager @Inject constructor(
                                 lineUrl == workUrl || lineUrl == url
                             }
                             if (hasUrl) {
-                                android.util.Log.d("DownloadManager", "✅ Trovato work attivo tramite file .status: $workUrl")
                                 return work.id
                             }
                         }
@@ -722,7 +710,6 @@ class DownloadManager @Inject constructor(
      */
     suspend fun checkLinkStatus(link: com.tottodrillo.domain.model.DownloadLink): Pair<com.tottodrillo.domain.model.DownloadStatus, com.tottodrillo.domain.model.ExtractionStatus> {
         val fileName = sanitizeFileName(link.name, link.url)
-        android.util.Log.d("DownloadManager", "🔍 Verifica stato link: ${link.name} -> fileName: $fileName, URL: ${link.url}")
         
         // PRIMA: Verifica se c'è un download attivo per questo URL specifico
         val activeDownload = hasActiveDownloadForUrl(link.url)
@@ -747,22 +734,18 @@ class DownloadManager @Inject constructor(
         var actualFileName: String? = fileName
         if (!isFileDownloaded(fileName)) {
             // Il file con il nome originale non esiste, cerca per URL in tutti i file .status
-            android.util.Log.d("DownloadManager", "🔍 File con nome originale non trovato, cerco per URL: ${link.url}")
             actualFileName = findFileNameByUrl(link.url)
             if (actualFileName == null) {
-                android.util.Log.d("DownloadManager", "ℹ️ Nessun file trovato per URL: ${link.url}")
             return Pair(
                 com.tottodrillo.domain.model.DownloadStatus.Idle,
                 com.tottodrillo.domain.model.ExtractionStatus.Idle
             )
             }
-            android.util.Log.d("DownloadManager", "✅ File trovato con nome diverso: $actualFileName (originale: $fileName)")
         }
         
         // Verifica se l'URL di questo link è presente nel file .status
         // actualFileName non può essere null qui perché abbiamo già controllato sopra
         if (!isUrlInStatusFile(actualFileName!!, link.url)) {
-            android.util.Log.d("DownloadManager", "ℹ️ File trovato ma URL non presente nel file .status: link URL=${link.url}")
             return Pair(
                 com.tottodrillo.domain.model.DownloadStatus.Idle,
                 com.tottodrillo.domain.model.ExtractionStatus.Idle
@@ -803,7 +786,6 @@ class DownloadManager @Inject constructor(
                     android.util.Log.i("DownloadManager", "✅ Estrazione trovata: $extractionPath con $filesCount file")
                     com.tottodrillo.domain.model.ExtractionStatus.Completed(extractionPath, filesCount)
                 } else {
-                    android.util.Log.d("DownloadManager", "ℹ️ Nessuna estrazione trovata per: $fileName")
                     com.tottodrillo.domain.model.ExtractionStatus.Idle
                 }
             }
@@ -817,7 +799,6 @@ class DownloadManager @Inject constructor(
      * Restituisce lo stato per il primo link che corrisponde a un file scaricato
      */
     suspend fun checkRomStatus(romSlug: String, downloadLinks: List<com.tottodrillo.domain.model.DownloadLink>): Pair<com.tottodrillo.domain.model.DownloadStatus, com.tottodrillo.domain.model.ExtractionStatus> {
-        android.util.Log.d("DownloadManager", "🔍 Verifica stato ROM: $romSlug con ${downloadLinks.size} link")
         
         // PRIMA: Verifica se c'è un download attivo per questa ROM
         val activeDownload = hasActiveDownloadForRom(romSlug)
@@ -847,7 +828,6 @@ class DownloadManager @Inject constructor(
         }
         
         // Nessun file trovato e nessun download attivo
-        android.util.Log.d("DownloadManager", "ℹ️ Nessun file scaricato trovato per ROM: $romSlug")
         return Pair(
             com.tottodrillo.domain.model.DownloadStatus.Idle,
             com.tottodrillo.domain.model.ExtractionStatus.Idle
