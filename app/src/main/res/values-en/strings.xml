@@ -59,6 +59,7 @@
     <string name="rom_detail_download">Download</string>
     <string name="rom_detail_downloaded">Downloaded</string>
     <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_waiting">Waiting %1$d s</string>
     <string name="rom_detail_cancel_download">Cancel</string>
     <string name="rom_detail_extract">Extract</string>
     <string name="rom_detail_copy">Copy</string>

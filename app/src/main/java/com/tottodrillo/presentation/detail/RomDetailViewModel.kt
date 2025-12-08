@@ -553,8 +553,9 @@ class RomDetailViewModel @Inject constructor(
 
         when (uiState.value.downloadStatus) {
             is DownloadStatus.InProgress,
-            is DownloadStatus.Pending -> {
-                // Annulla il download corrente
+            is DownloadStatus.Pending,
+            is DownloadStatus.Waiting -> {
+                // Annulla il download corrente o l'attesa
                 currentWorkId?.let { workId ->
                     downloadManager.cancelDownload(workId)
                 }
@@ -571,31 +572,76 @@ class RomDetailViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    // Avvia il download (il delay viene gestito nel DownloadWorker se necessario)
-                viewModelScope.launch {
-                    try {
-                        _uiState.update {
-                            it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                    // Se il link richiede un delay, mostra countdown prima di avviare il download
+                    if (link.delaySeconds != null && link.delaySeconds > 0) {
+                        viewModelScope.launch {
+                            try {
+                                var remainingSeconds = link.delaySeconds
+                                
+                                // Aggiorna lo stato con countdown
+                                _uiState.update {
+                                    it.copy(downloadStatus = DownloadStatus.Waiting(currentRom.title, remainingSeconds))
+                                }
+                                
+                                // Countdown visibile
+                                while (remainingSeconds > 0) {
+                                    kotlinx.coroutines.delay(1000L)
+                                    remainingSeconds--
+                                    _uiState.update {
+                                        it.copy(downloadStatus = DownloadStatus.Waiting(currentRom.title, remainingSeconds))
+                                    }
+                                }
+                                
+                                // Dopo il countdown, avvia il download
+                                _uiState.update {
+                                    it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                                }
+                                
+                                val workId = downloadManager.startDownload(
+                                    romSlug = currentRom.slug,
+                                    romTitle = currentRom.title,
+                                    downloadLink = link
+                                )
+                                currentWorkId = workId
+                                
+                                // Usa la funzione helper per osservare il download
+                                observeDownloadForLink(link, workId)
+                            } catch (e: Exception) {
+                                _uiState.update {
+                                    it.copy(
+                                        downloadStatus = DownloadStatus.Idle,
+                                        error = e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_download_error)
+                                    )
+                                }
+                            }
                         }
-
-                        val workId = downloadManager.startDownload(
-                            romSlug = currentRom.slug,
-                            romTitle = currentRom.title,
-                            downloadLink = link
-                        )
-                        currentWorkId = workId
-
-                        // Usa la funzione helper per osservare il download
-                        observeDownloadForLink(link, workId)
-                    } catch (e: Exception) {
-                        _uiState.update {
-                            it.copy(
-                                error = e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_download_error)
-                            )
+                    } else {
+                        // Nessun delay, avvia direttamente il download
+                        viewModelScope.launch {
+                            try {
+                                _uiState.update {
+                                    it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
+                                }
+                                
+                                val workId = downloadManager.startDownload(
+                                    romSlug = currentRom.slug,
+                                    romTitle = currentRom.title,
+                                    downloadLink = link
+                                )
+                                currentWorkId = workId
+                                
+                                // Usa la funzione helper per osservare il download
+                                observeDownloadForLink(link, workId)
+                            } catch (e: Exception) {
+                                _uiState.update {
+                                    it.copy(
+                                        error = e.message ?: context.getString(com.tottodrillo.R.string.rom_detail_download_error)
+                                    )
+                                }
+                            }
                         }
                     }
                 }
-            }
             }
         }
     }

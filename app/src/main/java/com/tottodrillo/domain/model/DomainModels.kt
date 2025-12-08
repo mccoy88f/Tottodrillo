@@ -127,6 +127,7 @@ data class SearchFilters(
 sealed class DownloadStatus {
     data object Idle : DownloadStatus()
     data class Pending(val romTitle: String) : DownloadStatus()
+    data class Waiting(val romTitle: String, val remainingSeconds: Int) : DownloadStatus() // Attesa con countdown (es. per validazione server)
     data class InProgress(
         val romTitle: String, 
         val progress: Int,

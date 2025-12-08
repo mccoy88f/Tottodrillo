@@ -221,7 +221,8 @@ class DownloadWorker(
         val requestBuilder = Request.Builder()
         
         // Per link con intermediateUrl (es. NSWpedia link diretti), visita la pagina intermedia per ottenere cookie
-        if (intermediateUrl != null && delaySeconds > 0) {
+        // NOTA: Il delay è già stato gestito nel ViewModel con countdown visibile, qui visitiamo solo per i cookie
+        if (intermediateUrl != null) {
             Log.d("DownloadWorker", "🔧 Rilevato intermediateUrl, visito pagina intermedia per cookie: $intermediateUrl")
             try {
                 val intermediateRequest = Request.Builder()
@@ -233,13 +234,8 @@ class DownloadWorker(
                 
                 okHttpClient.newCall(intermediateRequest).execute().use { intermediateResponse ->
                     if (intermediateResponse.isSuccessful) {
-                        Log.d("DownloadWorker", "✅ Pagina intermedia visitata, cookie ottenuti")
+                        Log.d("DownloadWorker", "✅ Pagina intermedia visitata, cookie ottenuti (delay già gestito nel ViewModel)")
                         // I cookie vengono salvati automaticamente dal CookieJar
-                        
-                        // Attendi il delay richiesto (es. 20 secondi per NSWpedia)
-                        Log.d("DownloadWorker", "⏳ Attesa $delaySeconds secondi per validazione download...")
-                        kotlinx.coroutines.delay(delaySeconds * 1000L)
-                        Log.d("DownloadWorker", "✅ Attesa completata, procedo con download")
                     } else {
                         Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina intermedia: ${intermediateResponse.code}")
                     }

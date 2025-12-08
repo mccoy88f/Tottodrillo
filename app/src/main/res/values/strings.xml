@@ -89,6 +89,7 @@
     <string name="rom_detail_download">Download</string>
     <string name="rom_detail_downloaded">Scaricato</string>
     <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_waiting">Attesa %1$d s</string>
     <string name="rom_detail_cancel_download">Interrompi</string>
     <string name="rom_detail_extract">Estrai</string>
     <string name="rom_detail_copy">Copia</string>

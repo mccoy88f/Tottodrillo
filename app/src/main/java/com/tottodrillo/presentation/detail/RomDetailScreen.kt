@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.BrokenImage
 import androidx.compose.material.icons.filled.CheckCircle
@@ -1025,9 +1026,24 @@ private fun DownloadLinkCard(
                     
                 Button(
                     onClick = onDownloadClick,
-                        colors = buttonColors
+                    enabled = downloadStatus !is com.tottodrillo.domain.model.DownloadStatus.Waiting, // Disabilita durante l'attesa
+                    colors = buttonColors
                 ) {
                     when (downloadStatus) {
+                        is com.tottodrillo.domain.model.DownloadStatus.Waiting -> {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.AccessTime,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.size(8.dp))
+                                Text(stringResource(R.string.rom_detail_waiting, downloadStatus.remainingSeconds))
+                            }
+                        }
                         is com.tottodrillo.domain.model.DownloadStatus.InProgress -> {
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
