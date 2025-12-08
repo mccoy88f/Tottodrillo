@@ -167,6 +167,22 @@ class SourceUpdateManager @Inject constructor(
             android.util.Log.e("SourceUpdateManager", "Errore salvataggio cache", e)
         }
     }
+    
+    /**
+     * Invalida la cache delle versioni disponibili
+     * Utile dopo un aggiornamento per forzare il refresh
+     */
+    fun invalidateCache() {
+        try {
+            val cacheFile = File(context.cacheDir, CACHE_FILE)
+            if (cacheFile.exists()) {
+                cacheFile.delete()
+                android.util.Log.d("SourceUpdateManager", "Cache invalidata")
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("SourceUpdateManager", "Errore invalidazione cache", e)
+        }
+    }
 
     /**
      * Carica la risposta dalla cache se valida

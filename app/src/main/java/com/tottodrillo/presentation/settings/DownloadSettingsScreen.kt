@@ -359,6 +359,10 @@ fun DownloadSettingsScreen(
                                 .build()
                             notificationManager.notify(notificationId, successNotification)
                         }
+                        // Delay per assicurarsi che i file siano stati scritti su disco
+                        kotlinx.coroutines.delay(500)
+                        // Invalida la cache degli aggiornamenti per forzare il refresh
+                        sourceUpdateManager?.invalidateCache()
                         onSourcesChanged()
                     },
                     onFailure = { error ->
