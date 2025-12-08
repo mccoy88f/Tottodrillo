@@ -800,39 +800,6 @@ fun RomDetailScreen(
                         }
                         Spacer(modifier = Modifier.height(12.dp))
                     }
-                    
-                    // Link IGDB
-                    if (rom.igdbUrl != null) {
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.surfaceVariant,
-                        modifier = Modifier.clickable {
-                            // Apri il link IGDB
-                            try {
-                                // Usa il WebView già usato per ricerche info
-                                onSearchMobyGames(rom.igdbUrl ?: "")
-                            } catch (e: Exception) {
-                                android.util.Log.e("RomDetailScreen", "Errore apertura link IGDB", e)
-                            }
-                        }
-                    ) {
-                            Row(
-                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(6.dp)
-                            ) {
-                                Text(
-                                    text = "🔗",
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                                Text(
-                                    text = stringResource(R.string.rom_detail_view_on_igdb),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                        Spacer(modifier = Modifier.height(24.dp))
                     } else {
                         Spacer(modifier = Modifier.height(12.dp))
                     }
