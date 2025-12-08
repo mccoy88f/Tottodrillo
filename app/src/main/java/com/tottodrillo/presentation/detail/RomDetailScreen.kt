@@ -312,6 +312,7 @@ fun RomDetailRoute(
                 },
                 isSearchingIgdb = uiState.isSearchingIgdb,
                 igdbImportFailed = uiState.igdbImportFailed,
+                igdbEnabled = uiState.igdbEnabled,
                 isRefreshing = isRefreshing
             )
         }
@@ -379,6 +380,7 @@ fun RomDetailScreen(
     onOpenIgdbUrl: (String) -> Unit = {},
     isSearchingIgdb: Boolean = false,
     igdbImportFailed: Boolean = false,
+    igdbEnabled: Boolean = false,
     isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
@@ -543,8 +545,9 @@ fun RomDetailScreen(
                         else -> MaterialTheme.colorScheme.onPrimaryContainer
                     }
                     
-                    // Pulsante IGDB (stato dinamico)
-                    Surface(
+                    // Pulsante IGDB (stato dinamico) - mostrato solo se IGDB è abilitato e configurato
+                    if (igdbEnabled) {
+                        Surface(
                         shape = RoundedCornerShape(12.dp),
                         color = buttonColor,
                         modifier = Modifier
@@ -592,6 +595,7 @@ fun RomDetailScreen(
                                 color = textColor
                             )
                         }
+                    }
                     }
                     
                     // Link "Cerca su MobyGames/Gamefaqs"

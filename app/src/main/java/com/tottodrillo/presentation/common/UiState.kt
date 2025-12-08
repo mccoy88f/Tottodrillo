@@ -98,7 +98,8 @@ data class RomDetailUiState(
     val showIgdbImportDialog: Boolean = false,
     val selectedIgdbResult: com.tottodrillo.domain.model.IgdbSearchResult? = null,
     val isImportingIgdb: Boolean = false,
-    val igdbImportFailed: Boolean = false // True se l'importazione è fallita o non ci sono risultati
+    val igdbImportFailed: Boolean = false, // True se l'importazione è fallita o non ci sono risultati
+    val igdbEnabled: Boolean = false // True se IGDB è abilitato e configurato
 )
 
 /**

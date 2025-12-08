@@ -76,13 +76,19 @@ class RomDetailViewModel @Inject constructor(
             // Carica il valore iniziale
             val config = configRepository.downloadConfig.first()
             _uiState.update {
-                it.copy(romInfoSearchProvider = config.romInfoSearchProvider)
+                it.copy(
+                    romInfoSearchProvider = config.romInfoSearchProvider,
+                    igdbEnabled = config.igdbEnabled && !config.igdbClientId.isNullOrBlank() && !config.igdbClientSecret.isNullOrBlank()
+                )
             }
             
             // Osserva i cambiamenti
             configRepository.downloadConfig.collect { config ->
                 _uiState.update {
-                    it.copy(romInfoSearchProvider = config.romInfoSearchProvider)
+                    it.copy(
+                        romInfoSearchProvider = config.romInfoSearchProvider,
+                        igdbEnabled = config.igdbEnabled && !config.igdbClientId.isNullOrBlank() && !config.igdbClientSecret.isNullOrBlank()
+                    )
                 }
             }
         }
