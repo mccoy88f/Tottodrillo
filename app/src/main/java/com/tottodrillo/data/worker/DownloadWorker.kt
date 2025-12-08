@@ -35,6 +35,8 @@ class DownloadWorker(
     companion object {
         const val KEY_URL = "download_url"
         const val KEY_ORIGINAL_URL = "original_url" // URL originale del link (se diverso dall'URL finale)
+        const val KEY_INTERMEDIATE_URL = "intermediate_url" // URL pagina intermedia da visitare per cookie (es. NSWpedia)
+        const val KEY_DELAY_SECONDS = "delay_seconds" // Secondi da attendere prima del download
         const val KEY_FILE_NAME = "file_name"
         const val KEY_TARGET_PATH = "target_path"
         const val KEY_ROM_TITLE = "rom_title"
@@ -92,6 +94,8 @@ class DownloadWorker(
     override suspend fun doWork(): Result = withContext(Dispatchers.IO) {
         val url = inputData.getString(KEY_URL) ?: return@withContext Result.failure()
         val originalUrl = inputData.getString(KEY_ORIGINAL_URL) // URL originale (opzionale, per download da WebView)
+        val intermediateUrl = inputData.getString(KEY_INTERMEDIATE_URL) // URL pagina intermedia (opzionale, per cookie)
+        val delaySeconds = inputData.getInt(KEY_DELAY_SECONDS, 0) // Secondi da attendere (0 se non presente)
         val fileName = inputData.getString(KEY_FILE_NAME) ?: return@withContext Result.failure()
         val targetPath = inputData.getString(KEY_TARGET_PATH) ?: return@withContext Result.failure()
         val romTitle = inputData.getString(KEY_ROM_TITLE) ?: "ROM"
@@ -113,7 +117,7 @@ class DownloadWorker(
                 outputFile.delete()
             }
             
-            downloadFile(url, outputFile, romTitle, romSlug)
+            downloadFile(url, outputFile, romTitle, romSlug, intermediateUrl, delaySeconds)
 
             // Crea/aggiorna file .status per confermare il download completato
             // Formato multi-riga:
@@ -204,10 +208,46 @@ class DownloadWorker(
     /**
      * Scarica il file e aggiorna il progresso
      */
-    private suspend fun downloadFile(url: String, outputFile: File, romTitle: String, romSlug: String?) {
+    private suspend fun downloadFile(
+        url: String, 
+        outputFile: File, 
+        romTitle: String, 
+        romSlug: String?,
+        intermediateUrl: String? = null,
+        delaySeconds: Int = 0
+    ) {
         Log.d("DownloadWorker", "📥 Avvio download: $url -> ${outputFile.absolutePath}")
         
         val requestBuilder = Request.Builder()
+        
+        // Per link con intermediateUrl (es. NSWpedia link diretti), visita la pagina intermedia per ottenere cookie
+        if (intermediateUrl != null && delaySeconds > 0) {
+            Log.d("DownloadWorker", "🔧 Rilevato intermediateUrl, visito pagina intermedia per cookie: $intermediateUrl")
+            try {
+                val intermediateRequest = Request.Builder()
+                    .url(intermediateUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+                    .header("Referer", "https://nswpedia.com/")
+                    .build()
+                
+                okHttpClient.newCall(intermediateRequest).execute().use { intermediateResponse ->
+                    if (intermediateResponse.isSuccessful) {
+                        Log.d("DownloadWorker", "✅ Pagina intermedia visitata, cookie ottenuti")
+                        // I cookie vengono salvati automaticamente dal CookieJar
+                        
+                        // Attendi il delay richiesto (es. 20 secondi per NSWpedia)
+                        Log.d("DownloadWorker", "⏳ Attesa $delaySeconds secondi per validazione download...")
+                        kotlinx.coroutines.delay(delaySeconds * 1000L)
+                        Log.d("DownloadWorker", "✅ Attesa completata, procedo con download")
+                    } else {
+                        Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina intermedia: ${intermediateResponse.code}")
+                    }
+                }
+            } catch (e: Exception) {
+                Log.w("DownloadWorker", "⚠️ Errore nel visitare pagina intermedia: ${e.message}")
+            }
+        }
         
         // Per Vimm's Lair, visita prima la pagina ROM per ottenere i cookie di sessione
         if (url.contains("vimm.net") && url.contains("mediaId")) {

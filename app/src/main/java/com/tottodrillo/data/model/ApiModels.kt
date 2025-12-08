@@ -98,7 +98,9 @@ data class RomLink(
     @SerializedName("requires_webview")
     val requiresWebView: Boolean = false, // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
     @SerializedName("delay_seconds")
-    val delaySeconds: Int? = null // Secondi da attendere prima di avviare il download (es. per validazione server)
+    val delaySeconds: Int? = null, // Secondi da attendere prima di avviare il download (es. per validazione server)
+    @SerializedName("intermediate_url")
+    val intermediateUrl: String? = null // URL della pagina intermedia da visitare per ottenere cookie (es. per link diretti NSWpedia)
 )
 
 /**

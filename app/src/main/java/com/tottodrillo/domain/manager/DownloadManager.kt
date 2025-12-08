@@ -86,6 +86,8 @@ class DownloadManager @Inject constructor(
         val inputData = Data.Builder()
             .putString(DownloadWorker.KEY_URL, downloadLink.url)
             .putString(DownloadWorker.KEY_ORIGINAL_URL, originalUrl) // URL originale (se diverso)
+            .putString(DownloadWorker.KEY_INTERMEDIATE_URL, downloadLink.intermediateUrl) // URL pagina intermedia (se presente)
+            .putInt(DownloadWorker.KEY_DELAY_SECONDS, downloadLink.delaySeconds ?: 0) // Delay in secondi (se presente)
             .putString(DownloadWorker.KEY_FILE_NAME, fileName)
             .putString(DownloadWorker.KEY_TARGET_PATH, targetPath)
             .putString(DownloadWorker.KEY_ROM_TITLE, romTitle)

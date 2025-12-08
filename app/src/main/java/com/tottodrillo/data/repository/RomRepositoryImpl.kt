@@ -724,7 +724,8 @@ class RomRepositoryImpl @Inject constructor(
                                             size = link.sizeStr,
                                             sourceId = source.id,
                                             requiresWebView = link.requiresWebView,
-                                            delaySeconds = link.delaySeconds
+                                            delaySeconds = link.delaySeconds,
+                                            intermediateUrl = link.intermediateUrl
                                         )
                                     } ?: emptyList()
                                 },

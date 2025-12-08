@@ -571,18 +571,11 @@ class RomDetailViewModel @Inject constructor(
                         )
                     }
                 } else {
-                    // Avvia il download (con eventuale delay se richiesto)
+                    // Avvia il download (il delay viene gestito nel DownloadWorker se necessario)
                 viewModelScope.launch {
                     try {
                         _uiState.update {
                             it.copy(downloadStatus = DownloadStatus.Pending(currentRom.title))
-                        }
-
-                        // Se il link richiede un delay, attendi prima di avviare il download
-                        // (es. per link diretti NSWpedia che richiedono 20 secondi di validazione)
-                        link.delaySeconds?.let { delay ->
-                            android.util.Log.d("RomDetailViewModel", "⏳ Attesa $delay secondi prima di avviare download per: ${link.name}")
-                            kotlinx.coroutines.delay(delay * 1000L)
                         }
 
                         val workId = downloadManager.startDownload(
