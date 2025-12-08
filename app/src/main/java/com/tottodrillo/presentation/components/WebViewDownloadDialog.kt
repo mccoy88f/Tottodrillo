@@ -21,6 +21,9 @@ import androidx.compose.ui.res.stringResource
 import android.widget.Toast
 import com.tottodrillo.R
 import com.tottodrillo.domain.model.DownloadLink
+import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
+import dagger.hilt.EntryPoints
+import kotlinx.coroutines.launch
 
 /**
  * Dialog WebView headless per gestire download con JavaScript/countdown
@@ -36,6 +39,35 @@ fun WebViewDownloadDialog(
     val context = LocalContext.current
     var isLoading by remember { mutableStateOf(true) }
     var error by remember { mutableStateOf<String?>(null) }
+    
+    // Recupera i pattern di intercettazione dalla source metadata
+    var interceptPatterns by remember { mutableStateOf<List<String>?>(null) }
+    
+    // Pattern di default (generici per ROM)
+    val defaultPatterns = listOf(".nsp", ".xci", ".zip", ".7z")
+    
+    // Carica i pattern dalla source metadata
+    LaunchedEffect(link.sourceId) {
+        if (link.sourceId != null) {
+            try {
+                val entryPoint = EntryPoints.get(context, SourceManagerEntryPoint::class.java)
+                val sourceManager = entryPoint.sourceManager()
+                val metadata = sourceManager.getSourceMetadata(link.sourceId)
+                interceptPatterns = metadata?.downloadInterceptPatterns
+                android.util.Log.d("WebViewDownloadDialog", "📋 Pattern caricati per ${link.sourceId}: ${interceptPatterns}")
+            } catch (e: Exception) {
+                android.util.Log.w("WebViewDownloadDialog", "⚠️ Errore caricamento pattern per ${link.sourceId}: ${e.message}")
+                interceptPatterns = null
+            }
+        } else {
+            interceptPatterns = null
+        }
+    }
+    
+    // Combina pattern dalla source con pattern di default
+    val allPatterns = remember(interceptPatterns) {
+        (interceptPatterns ?: emptyList()) + defaultPatterns
+    }
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -246,17 +278,11 @@ fun WebViewDownloadDialog(
                                             return true // Blocca la navigazione
                                         }
                                         
-                                        // Se è un link di download diretto, intercettalo
-                                        if (newUrl != null && (
-                                            newUrl.contains("sto.romsfast.com") || 
-                                            newUrl.contains("download.nswpediax.site") ||  // NSWpedia link diretti
-                                            newUrl.contains("?token=") || 
-                                            newUrl.endsWith(".nsp") || 
-                                            newUrl.endsWith(".xci") || 
-                                            newUrl.endsWith(".zip") || 
-                                            newUrl.endsWith(".7z")
-                                        )) {
-                                            android.util.Log.d("WebViewDownloadDialog", "📥 Link download diretto intercettato: $newUrl")
+                                        // Se è un link di download diretto, intercettalo usando i pattern dalla source
+                                        if (newUrl != null && allPatterns.any { pattern ->
+                                            newUrl.contains(pattern) || newUrl.endsWith(pattern)
+                                        }) {
+                                            android.util.Log.d("WebViewDownloadDialog", "📥 Link download diretto intercettato (pattern match): $newUrl")
                                             onDownloadUrlExtracted(newUrl, link)
                                             return true
                                         }
@@ -354,19 +380,17 @@ fun WebViewDownloadDialog(
                                         link
                                     }
                                     
-                                    // Estrai l'URL finale del download
+                                    // Estrai l'URL finale del download usando i pattern dalla source
                                     android.util.Log.d("WebViewDownloadDialog", "📥 Download intercettato: $url (mimetype: $mimetype)")
-                                    if (url.contains("sto.romsfast.com") || 
-                                        url.contains("download.nswpediax.site") ||  // NSWpedia link diretti
-                                        url.contains("?token=") || 
-                                        url.endsWith(".nsp") || 
-                                        url.endsWith(".xci") || 
-                                        url.endsWith(".zip") || 
-                                        url.endsWith(".7z") ||
-                                        mimetype?.contains("application/octet-stream") == true ||
-                                        mimetype?.contains("application/x-") == true) {
+                                    val matchesPattern = allPatterns.any { pattern ->
+                                        url.contains(pattern) || url.endsWith(pattern)
+                                    }
+                                    val matchesMimeType = mimetype?.contains("application/octet-stream") == true ||
+                                        mimetype?.contains("application/x-") == true
+                                    
+                                    if (matchesPattern || matchesMimeType) {
                                         // URL finale trovato, chiudi il dialog e avvia il download
-                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido, avvio download: $url")
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido (pattern o mimetype match), avvio download: $url")
                                         onDownloadUrlExtracted(url, updatedLink)
                                     } else {
                                         // Se l'URL non è quello finale, prova comunque (potrebbe essere un redirect)
