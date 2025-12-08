@@ -231,8 +231,8 @@ fun RomDetailRoute(
             com.tottodrillo.presentation.components.WebViewDownloadDialog(
                 url = webViewUrl,
                 link = webViewLink,
-                onDownloadUrlExtracted = { finalUrl, link ->
-                    viewModel.onWebViewDownloadUrlExtracted(finalUrl, link)
+                onDownloadUrlExtracted = { finalUrl, link, cookies ->
+                    viewModel.onWebViewDownloadUrlExtracted(finalUrl, link, cookies)
                 },
                 onDismiss = {
                     viewModel.onCloseWebView()

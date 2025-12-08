@@ -28,7 +28,10 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
 import javax.inject.Inject
+
+private const val DELAY_SECONDS = 20
 
 /**
  * ViewModel per la schermata di dettaglio ROM
@@ -562,14 +565,81 @@ class RomDetailViewModel @Inject constructor(
                 _uiState.update { it.copy(downloadStatus = DownloadStatus.Idle) }
             }
             else -> {
-                // Se il link richiede WebView, apri il WebView headless
+                // Se il link richiede WebView, prova prima in background (sperimentale)
                 if (link.requiresWebView) {
-                    _uiState.update {
-                        it.copy(
-                            showWebView = true,
-                            webViewUrl = link.url,
-                            webViewLink = link
-                        )
+                    // PROVA: Gestisci download in background senza mostrare dialog
+                    // Se fallisce, useremo il dialog normale
+                    viewModelScope.launch {
+                        try {
+                            // Avvia countdown visibile
+                            var remainingSeconds = DELAY_SECONDS
+                            val currentLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                            currentLinkStatuses[link.url] = Pair(
+                                DownloadStatus.Waiting(currentRom.title, remainingSeconds),
+                                currentLinkStatuses[link.url]?.second ?: ExtractionStatus.Idle
+                            )
+                            _uiState.update {
+                                it.copy(
+                                    downloadStatus = DownloadStatus.Waiting(currentRom.title, remainingSeconds),
+                                    linkStatuses = currentLinkStatuses
+                                )
+                            }
+                            
+                            // Aggiorna countdown ogni secondo
+                            val countdownJob = launch {
+                                while (remainingSeconds > 0) {
+                                    delay(1000)
+                                    remainingSeconds--
+                                    val updatedLinkStatuses = _uiState.value.linkStatuses.toMutableMap()
+                                    updatedLinkStatuses[link.url] = Pair(
+                                        DownloadStatus.Waiting(currentRom.title, remainingSeconds),
+                                        updatedLinkStatuses[link.url]?.second ?: ExtractionStatus.Idle
+                                    )
+                                    _uiState.update {
+                                        it.copy(
+                                            downloadStatus = DownloadStatus.Waiting(currentRom.title, remainingSeconds),
+                                            linkStatuses = updatedLinkStatuses
+                                        )
+                                    }
+                                }
+                            }
+                            
+                            val backgroundDownloader = com.tottodrillo.presentation.components.WebViewBackgroundDownloader(context)
+                            val result = backgroundDownloader.handleDownloadInBackground(
+                                url = link.url,
+                                link = link
+                            ) { finalUrl, cookies ->
+                                // URL e cookie pronti, avvia il download
+                                countdownJob.cancel()
+                                onWebViewDownloadUrlExtracted(finalUrl, link, cookies)
+                            }
+                            
+                            countdownJob.cancel()
+                            
+                            if (result.isFailure) {
+                                // Se fallisce, usa il dialog normale
+                                android.util.Log.w("RomDetailViewModel", "⚠️ Download in background fallito, uso dialog normale: ${result.exceptionOrNull()?.message}")
+                                _uiState.update {
+                                    it.copy(
+                                        showWebView = true,
+                                        webViewUrl = link.url,
+                                        webViewLink = link,
+                                        downloadStatus = DownloadStatus.Idle
+                                    )
+                                }
+                            }
+                        } catch (e: Exception) {
+                            android.util.Log.e("RomDetailViewModel", "❌ Errore download in background, uso dialog normale", e)
+                            // Se fallisce, usa il dialog normale
+                            _uiState.update {
+                                it.copy(
+                                    showWebView = true,
+                                    webViewUrl = link.url,
+                                    webViewLink = link,
+                                    downloadStatus = DownloadStatus.Idle
+                                )
+                            }
+                        }
                     }
                 } else {
                     // Avvia direttamente il download (il WebView gestirà la challenge Cloudflare se necessario)
@@ -602,9 +672,9 @@ class RomDetailViewModel @Inject constructor(
     }
     
     /**
-     * Gestisce l'URL finale estratto dal WebView
+     * Gestisce l'URL finale estratto dal WebView con i cookie della sessione
      */
-    fun onWebViewDownloadUrlExtracted(finalUrl: String, link: DownloadLink) {
+    fun onWebViewDownloadUrlExtracted(finalUrl: String, link: DownloadLink, cookies: String) {
         val currentRom = _uiState.value.rom ?: return
         
         // Chiudi il WebView
@@ -640,7 +710,8 @@ class RomDetailViewModel @Inject constructor(
                     romSlug = currentRom.slug,
                     romTitle = currentRom.title,
                     downloadLink = finalLink,
-                    originalUrl = link.url // Passa l'URL originale per salvare anche quello nel file .status
+                    originalUrl = link.url, // Passa l'URL originale per salvare anche quello nel file .status
+                    cookies = cookies // Passa i cookie dal WebView per mantenere la sessione
                 )
                 currentWorkId = workId
 

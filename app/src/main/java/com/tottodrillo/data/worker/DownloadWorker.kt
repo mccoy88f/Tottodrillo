@@ -37,6 +37,7 @@ class DownloadWorker(
         const val KEY_ORIGINAL_URL = "original_url" // URL originale del link (se diverso dall'URL finale)
         const val KEY_INTERMEDIATE_URL = "intermediate_url" // URL pagina intermedia da visitare per cookie (es. NSWpedia)
         const val KEY_DELAY_SECONDS = "delay_seconds" // Secondi da attendere prima del download
+        const val KEY_COOKIES = "cookies" // Cookie dal WebView per mantenere la sessione (es. Cloudflare)
         const val KEY_FILE_NAME = "file_name"
         const val KEY_TARGET_PATH = "target_path"
         const val KEY_ROM_TITLE = "rom_title"
@@ -96,6 +97,7 @@ class DownloadWorker(
         val originalUrl = inputData.getString(KEY_ORIGINAL_URL) // URL originale (opzionale, per download da WebView)
         val intermediateUrl = inputData.getString(KEY_INTERMEDIATE_URL) // URL pagina intermedia (opzionale, per cookie)
         val delaySeconds = inputData.getInt(KEY_DELAY_SECONDS, 0) // Secondi da attendere (0 se non presente)
+        val cookies = inputData.getString(KEY_COOKIES) // Cookie dal WebView (opzionale, per mantenere sessione)
         val fileName = inputData.getString(KEY_FILE_NAME) ?: return@withContext Result.failure()
         val targetPath = inputData.getString(KEY_TARGET_PATH) ?: return@withContext Result.failure()
         val romTitle = inputData.getString(KEY_ROM_TITLE) ?: "ROM"
@@ -117,7 +119,7 @@ class DownloadWorker(
                 outputFile.delete()
             }
             
-            downloadFile(url, outputFile, romTitle, romSlug, intermediateUrl, delaySeconds)
+            downloadFile(url, outputFile, romTitle, romSlug, intermediateUrl, delaySeconds, cookies)
 
             // Crea/aggiorna file .status per confermare il download completato
             // Formato multi-riga:
@@ -214,11 +216,38 @@ class DownloadWorker(
         romTitle: String, 
         romSlug: String?,
         intermediateUrl: String? = null,
-        delaySeconds: Int = 0
+        delaySeconds: Int = 0,
+        cookies: String? = null // Cookie dal WebView per mantenere la sessione
     ) {
         Log.d("DownloadWorker", "📥 Avvio download: $url -> ${outputFile.absolutePath}")
         
         val requestBuilder = Request.Builder()
+        
+        // Se abbiamo cookie dal WebView, usali direttamente (priorità più alta)
+        if (cookies != null && cookies.isNotEmpty()) {
+            Log.d("DownloadWorker", "🍪 Usando cookie dal WebView: ${cookies.length} caratteri")
+            Log.d("DownloadWorker", "🍪 Cookie estratti: $cookies")
+            requestBuilder
+                .header("Cookie", cookies)
+                .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+                .header("Accept", "*/*")
+                .header("Accept-Language", "en-US,en;q=0.9")
+                .header("Accept-Encoding", "gzip, deflate, br")
+                .header("Connection", "keep-alive")
+                .header("Upgrade-Insecure-Requests", "1")
+            
+            // Aggiungi Referer se è un link NSWpedia
+            // Usa intermediateUrl come Referer se disponibile (più accurato), altrimenti usa il dominio principale
+            if (url.contains("nswpedia") || url.contains("download.nswpediax.site")) {
+                val refererUrl = if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
+                    intermediateUrl
+                } else {
+                    "https://nswpedia.com/"
+                }
+                requestBuilder.header("Referer", refererUrl)
+                Log.d("DownloadWorker", "🔗 Aggiunto Referer per NSWpedia: $refererUrl")
+            }
+        }
         
         // Per link con intermediateUrl (es. NSWpedia link diretti), visita la pagina intermedia per ottenere cookie
         // NOTA: Il delay è già stato gestito nel ViewModel con countdown visibile, qui visitiamo solo per i cookie
@@ -303,8 +332,27 @@ class DownloadWorker(
                 .header("Referer", romPageUrl)
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            // I cookie dal WebView sono già stati aggiunti sopra se presenti
         } else {
             requestBuilder.url(url)
+            // Se non abbiamo cookie dal WebView, aggiungi header di default
+            if (cookies == null || cookies.isEmpty()) {
+                requestBuilder
+                    .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
+                    .header("Accept", "*/*")
+                
+                // Aggiungi Referer anche se non abbiamo cookie (potrebbe essere necessario)
+                if (url.contains("nswpedia") || url.contains("download.nswpediax.site")) {
+                    val refererUrl = if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
+                        intermediateUrl
+                    } else {
+                        "https://nswpedia.com/"
+                    }
+                    requestBuilder.header("Referer", refererUrl)
+                    Log.d("DownloadWorker", "🔗 Aggiunto Referer (senza cookie): $refererUrl")
+                }
+            }
+            // I cookie dal WebView sono già stati aggiunti sopra se presenti
         }
         
         val request = requestBuilder.build()

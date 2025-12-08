@@ -46,7 +46,8 @@ class DownloadManager @Inject constructor(
         romTitle: String,
         downloadLink: DownloadLink,
         customPath: String? = null,
-        originalUrl: String? = null // URL originale del link (se diverso dall'URL del downloadLink, es. per WebView)
+        originalUrl: String? = null, // URL originale del link (se diverso dall'URL del downloadLink, es. per WebView)
+        cookies: String? = null // Cookie dal WebView per mantenere la sessione (es. per Cloudflare)
     ): UUID {
         val config = configRepository.downloadConfig.first()
         val targetPath = customPath ?: config.downloadPath
@@ -93,6 +94,7 @@ class DownloadManager @Inject constructor(
             .putString(DownloadWorker.KEY_ROM_TITLE, romTitle)
             .putString(DownloadWorker.KEY_TASK_ID, taskId)
             .putString("rom_slug", romSlug)
+            .putString(DownloadWorker.KEY_COOKIES, cookies) // Cookie dal WebView (se presente)
             .build()
 
         // Crea download work request

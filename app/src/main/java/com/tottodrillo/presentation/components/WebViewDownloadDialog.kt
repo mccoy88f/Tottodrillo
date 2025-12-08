@@ -4,6 +4,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.WebChromeClient
 import android.webkit.DownloadListener
+import android.webkit.CookieManager
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -33,7 +34,7 @@ import kotlinx.coroutines.launch
 fun WebViewDownloadDialog(
     url: String,
     link: DownloadLink,
-    onDownloadUrlExtracted: (String, DownloadLink) -> Unit,
+    onDownloadUrlExtracted: (String, DownloadLink, String) -> Unit, // Aggiunto parametro cookies
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
@@ -236,7 +237,12 @@ fun WebViewDownloadDialog(
                                                     link
                                                 }
                                                 
-                                                onDownloadUrlExtracted(url, updatedLink)
+                                                // Estrai i cookie dal popup WebView
+                                                val popupCookieManager = CookieManager.getInstance()
+                                                popupCookieManager.setAcceptCookie(true)
+                                                val popupCookies = popupCookieManager.getCookie(url) ?: ""
+                                                android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti dal popup per $url: ${if (popupCookies.isNotEmpty()) "presenti" else "nessun cookie"}")
+                                                onDownloadUrlExtracted(url, updatedLink, popupCookies)
                                             }
                                             
                                             // Aggiungi il popup al parent (invisibile)
@@ -283,7 +289,61 @@ fun WebViewDownloadDialog(
                                             newUrl.contains(pattern) || newUrl.endsWith(pattern)
                                         }) {
                                             android.util.Log.d("WebViewDownloadDialog", "📥 Link download diretto intercettato (pattern match): $newUrl")
-                                            onDownloadUrlExtracted(newUrl, link)
+                                            // Estrai i cookie dal WebView per il dominio principale e per l'URL di download
+                                            val cookieManager = CookieManager.getInstance()
+                                            cookieManager.setAcceptCookie(true)
+                                            
+                                            // Estrai cookie dal dominio principale (nswpedia.com) per Cloudflare
+                                            val mainDomainCookies = cookieManager.getCookie("https://nswpedia.com") ?: ""
+                                            
+                                            // Estrai cookie dall'URL di download specifico
+                                            val downloadUrlCookies = cookieManager.getCookie(newUrl) ?: ""
+                                            
+                                            // Estrai anche cookie dal dominio di download (download.nswpediax.site)
+                                            val downloadDomainCookies = try {
+                                                val urlObj = java.net.URL(newUrl)
+                                                val downloadDomain = "${urlObj.protocol}://${urlObj.host}"
+                                                cookieManager.getCookie(downloadDomain) ?: ""
+                                            } catch (e: Exception) {
+                                                ""
+                                            }
+                                            
+                                            // Combina i cookie (rimuovi duplicati mantenendo l'ordine: dominio principale ha priorità)
+                                            val allCookies = mutableSetOf<String>()
+                                            
+                                            // Prima aggiungi i cookie del dominio principale (Cloudflare)
+                                            if (mainDomainCookies.isNotEmpty()) {
+                                                mainDomainCookies.split(";").forEach { cookie ->
+                                                    val trimmed = cookie.trim()
+                                                    if (trimmed.isNotEmpty()) {
+                                                        allCookies.add(trimmed)
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Poi aggiungi i cookie del dominio di download
+                                            if (downloadDomainCookies.isNotEmpty()) {
+                                                downloadDomainCookies.split(";").forEach { cookie ->
+                                                    val trimmed = cookie.trim()
+                                                    if (trimmed.isNotEmpty()) {
+                                                        allCookies.add(trimmed)
+                                                    }
+                                                }
+                                            }
+                                            
+                                            // Infine aggiungi i cookie specifici dell'URL
+                                            if (downloadUrlCookies.isNotEmpty()) {
+                                                downloadUrlCookies.split(";").forEach { cookie ->
+                                                    val trimmed = cookie.trim()
+                                                    if (trimmed.isNotEmpty()) {
+                                                        allCookies.add(trimmed)
+                                                    }
+                                                }
+                                            }
+                                            
+                                            val cookies = allCookies.joinToString("; ")
+                                            android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti per $newUrl: totale=${cookies.length} caratteri")
+                                            onDownloadUrlExtracted(newUrl, link, cookies)
                                             return true
                                         }
                                         
@@ -343,6 +403,68 @@ fun WebViewDownloadDialog(
 
                                 // Intercetta il download quando parte
                                 setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                    // Estrai i cookie dal WebView per il dominio principale e per l'URL di download
+                                    val cookieManager = CookieManager.getInstance()
+                                    cookieManager.setAcceptCookie(true)
+                                    
+                                    // Estrai cookie dal dominio principale (nswpedia.com) per Cloudflare
+                                    val mainDomainCookies = cookieManager.getCookie("https://nswpedia.com") ?: ""
+                                    
+                                    // Estrai cookie dall'URL di download specifico
+                                    val downloadUrlCookies = cookieManager.getCookie(url) ?: ""
+                                    
+                                    // Estrai anche cookie dal dominio di download (download.nswpediax.site)
+                                    val downloadDomainCookies = try {
+                                        val urlObj = java.net.URL(url)
+                                        val downloadDomain = "${urlObj.protocol}://${urlObj.host}"
+                                        cookieManager.getCookie(downloadDomain) ?: ""
+                                    } catch (e: Exception) {
+                                        ""
+                                    }
+                                    
+                                    // Combina i cookie (rimuovi duplicati mantenendo l'ordine: dominio principale ha priorità)
+                                    val allCookies = mutableSetOf<String>()
+                                    
+                                    // Prima aggiungi i cookie del dominio principale (Cloudflare)
+                                    if (mainDomainCookies.isNotEmpty()) {
+                                        mainDomainCookies.split(";").forEach { cookie ->
+                                            val trimmed = cookie.trim()
+                                            if (trimmed.isNotEmpty()) {
+                                                allCookies.add(trimmed)
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Poi aggiungi i cookie del dominio di download
+                                    if (downloadDomainCookies.isNotEmpty()) {
+                                        downloadDomainCookies.split(";").forEach { cookie ->
+                                            val trimmed = cookie.trim()
+                                            if (trimmed.isNotEmpty()) {
+                                                allCookies.add(trimmed)
+                                            }
+                                        }
+                                    }
+                                    
+                                    // Infine aggiungi i cookie specifici dell'URL
+                                    if (downloadUrlCookies.isNotEmpty()) {
+                                        downloadUrlCookies.split(";").forEach { cookie ->
+                                            val trimmed = cookie.trim()
+                                            if (trimmed.isNotEmpty()) {
+                                                allCookies.add(trimmed)
+                                            }
+                                        }
+                                    }
+                                    
+                                    val cookies = allCookies.joinToString("; ")
+                                    android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie estratti: nswpedia.com=${mainDomainCookies.isNotEmpty()} (${mainDomainCookies.length} char), download domain=${downloadDomainCookies.isNotEmpty()} (${downloadDomainCookies.length} char), download URL=${downloadUrlCookies.isNotEmpty()} (${downloadUrlCookies.length} char), totale=${cookies.length} caratteri")
+                                    android.util.Log.d("WebViewDownloadDialog", "🍪 Cookie combinati: $cookies")
+                                    // Verifica se contiene cf_clearance (cookie Cloudflare)
+                                    if (cookies.contains("cf_clearance")) {
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ Cookie cf_clearance trovato!")
+                                    } else {
+                                        android.util.Log.w("WebViewDownloadDialog", "⚠️ Cookie cf_clearance NON trovato - potrebbe essere il problema")
+                                    }
+                                    
                                     // Estrai il nome del file da contentDisposition se disponibile
                                     var extractedFileName: String? = null
                                     if (contentDisposition != null) {
@@ -372,7 +494,7 @@ fun WebViewDownloadDialog(
                                         }
                                     }
                                     
-                                    // Crea un nuovo link con il nome del file estratto se disponibile
+                                    // Crea un nuovo link con il nome del file estratto se disponibile e i cookie
                                     val fileName = extractedFileName // Estrai in una val locale per evitare smart cast issues
                                     val updatedLink = if (fileName != null) {
                                         link.copy(name = fileName)
@@ -389,13 +511,13 @@ fun WebViewDownloadDialog(
                                         mimetype?.contains("application/x-") == true
                                     
                                     if (matchesPattern || matchesMimeType) {
-                                        // URL finale trovato, chiudi il dialog e avvia il download
-                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido (pattern o mimetype match), avvio download: $url")
-                                        onDownloadUrlExtracted(url, updatedLink)
+                                        // URL finale trovato, passa anche i cookie al callback
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ URL download valido (pattern o mimetype match), avvio download con cookie: $url")
+                                        onDownloadUrlExtracted(url, updatedLink, cookies)
                                     } else {
                                         // Se l'URL non è quello finale, prova comunque (potrebbe essere un redirect)
                                         android.util.Log.d("WebViewDownloadDialog", "⚠️ URL non riconosciuto come download diretto, provo comunque: $url")
-                                        onDownloadUrlExtracted(url, updatedLink)
+                                        onDownloadUrlExtracted(url, updatedLink, cookies)
                                     }
                                 }
 
