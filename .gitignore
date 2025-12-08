@@ -226,3 +226,6 @@ npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Release notes
+RELEASE_NOTES*.md
+
