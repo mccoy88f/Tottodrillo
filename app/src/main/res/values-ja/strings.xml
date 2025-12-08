@@ -231,7 +231,7 @@
     <!-- IGDB Settings -->
     <string name="settings_igdb_title">IGDB統合</string>
     <string name="settings_igdb_enable">IGDB統合を有効化</string>
-    <string name="settings_igdb_enable_desc">IGDBからのメタデータインポートを有効化（Client IDとSecretが必要）</string>
+    <string name="settings_igdb_enable_desc">メタデータインポートを有効化（Client IDとSecretが必要）IGDBから</string>
     <string name="settings_igdb_client_id">IGDB Client ID</string>
     <string name="settings_igdb_client_secret">IGDB Client Secret</string>
     <string name="settings_igdb_hint">これらのパラメータがない場合、こちらで無料で作成できます: https://api-docs.igdb.com/#getting-started</string>

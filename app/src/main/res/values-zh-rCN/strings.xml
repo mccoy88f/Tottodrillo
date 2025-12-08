@@ -231,7 +231,7 @@
     <!-- IGDB Settings -->
     <string name="settings_igdb_title">IGDB集成</string>
     <string name="settings_igdb_enable">启用IGDB集成</string>
-    <string name="settings_igdb_enable_desc">启用从IGDB导入元数据（需要Client ID和Secret）</string>
+    <string name="settings_igdb_enable_desc">启用导入元数据（需要Client ID和Secret）从IGDB</string>
     <string name="settings_igdb_client_id">IGDB Client ID</string>
     <string name="settings_igdb_client_secret">IGDB Client Secret</string>
     <string name="settings_igdb_hint">如果您没有这些参数，请在此处免费创建: https://api-docs.igdb.com/#getting-started</string>

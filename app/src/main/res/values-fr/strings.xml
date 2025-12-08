@@ -231,7 +231,7 @@
     <!-- IGDB Settings -->
     <string name="settings_igdb_title">Intégration IGDB</string>
     <string name="settings_igdb_enable">Activer l\'intégration IGDB</string>
-    <string name="settings_igdb_enable_desc">Activer l\'importation de métadonnées depuis IGDB (nécessite Client ID et Secret)</string>
+    <string name="settings_igdb_enable_desc">Activer l\'importation de métadonnées (nécessite Client ID et Secret) depuis IGDB</string>
     <string name="settings_igdb_client_id">Client ID IGDB</string>
     <string name="settings_igdb_client_secret">Client Secret IGDB</string>
     <string name="settings_igdb_hint">Si vous n\'avez pas ces paramètres, créez-les gratuitement ici : https://api-docs.igdb.com/#getting-started</string>
