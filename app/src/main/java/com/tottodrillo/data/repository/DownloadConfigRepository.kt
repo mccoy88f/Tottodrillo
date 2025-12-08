@@ -36,6 +36,9 @@ class DownloadConfigRepository @Inject constructor(
         val ES_DE_ROMS_PATH = stringPreferencesKey("es_de_roms_path")
         val FIRST_LAUNCH_COMPLETED = booleanPreferencesKey("first_launch_completed")
         val ROM_INFO_SEARCH_PROVIDER = stringPreferencesKey("rom_info_search_provider")
+        val IGDB_ENABLED = booleanPreferencesKey("igdb_enabled")
+        val IGDB_CLIENT_ID = stringPreferencesKey("igdb_client_id")
+        val IGDB_CLIENT_SECRET = stringPreferencesKey("igdb_client_secret")
     }
 
     /**
@@ -50,7 +53,10 @@ class DownloadConfigRepository @Inject constructor(
             notificationsEnabled = preferences[NOTIFICATIONS_ENABLED] ?: true,
             enableEsDeCompatibility = preferences[ENABLE_ES_DE_COMPATIBILITY] ?: false,
             esDeRomsPath = preferences[ES_DE_ROMS_PATH],
-            romInfoSearchProvider = preferences[ROM_INFO_SEARCH_PROVIDER] ?: "gamefaqs"
+            romInfoSearchProvider = preferences[ROM_INFO_SEARCH_PROVIDER] ?: "gamefaqs",
+            igdbEnabled = preferences[IGDB_ENABLED] ?: false,
+            igdbClientId = preferences[IGDB_CLIENT_ID],
+            igdbClientSecret = preferences[IGDB_CLIENT_SECRET]
         )
     }
 
@@ -135,6 +141,32 @@ class DownloadConfigRepository @Inject constructor(
         }
         
         return tottodrilloFolder.absolutePath
+    }
+
+    suspend fun setIgdbEnabled(enabled: Boolean) {
+        appContext.dataStore.edit { preferences ->
+            preferences[IGDB_ENABLED] = enabled
+        }
+    }
+
+    suspend fun setIgdbClientId(clientId: String?) {
+        appContext.dataStore.edit { preferences ->
+            if (clientId.isNullOrBlank()) {
+                preferences.remove(IGDB_CLIENT_ID)
+            } else {
+                preferences[IGDB_CLIENT_ID] = clientId
+            }
+        }
+    }
+
+    suspend fun setIgdbClientSecret(clientSecret: String?) {
+        appContext.dataStore.edit { preferences ->
+            if (clientSecret.isNullOrBlank()) {
+                preferences.remove(IGDB_CLIENT_SECRET)
+            } else {
+                preferences[IGDB_CLIENT_SECRET] = clientSecret
+            }
+        }
     }
 
     /**

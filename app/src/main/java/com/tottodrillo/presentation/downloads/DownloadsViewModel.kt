@@ -110,6 +110,25 @@ class DownloadsViewModel @Inject constructor(
         downloadManager.cancelAllDownloads()
     }
 
+    // IGDB settings
+    fun setIgdbEnabled(enabled: Boolean) {
+        viewModelScope.launch {
+            configRepository.setIgdbEnabled(enabled)
+        }
+    }
+
+    fun setIgdbClientId(clientId: String) {
+        viewModelScope.launch {
+            configRepository.setIgdbClientId(clientId)
+        }
+    }
+
+    fun setIgdbClientSecret(clientSecret: String) {
+        viewModelScope.launch {
+            configRepository.setIgdbClientSecret(clientSecret)
+        }
+    }
+
     /**
      * Avvia estrazione manuale
      */

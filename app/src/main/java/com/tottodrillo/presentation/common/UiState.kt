@@ -91,7 +91,14 @@ data class RomDetailUiState(
     val showMobyGamesWebView: Boolean = false,
     val mobyGamesSearchUrl: String? = null,
     val romInfoSearchTitle: String? = null,
-    val romInfoSearchProvider: String = "gamefaqs" // Provider selezionato per la ricerca info ROMs
+    val romInfoSearchProvider: String = "gamefaqs", // Provider selezionato per la ricerca info ROMs
+    // IGDB import
+    val isSearchingIgdb: Boolean = false,
+    val igdbSearchResults: List<com.tottodrillo.domain.model.IgdbSearchResult> = emptyList(),
+    val showIgdbImportDialog: Boolean = false,
+    val selectedIgdbResult: com.tottodrillo.domain.model.IgdbSearchResult? = null,
+    val isImportingIgdb: Boolean = false,
+    val igdbImportFailed: Boolean = false // True se l'importazione è fallita o non ci sono risultati
 )
 
 /**

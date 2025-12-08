@@ -197,6 +197,43 @@
     <!-- ROM detail -->
     <string name="rom_detail_image_item">%1$s - Immagine %2$d</string>
     
+    <!-- IGDB Import -->
+    <string name="igdb_import_button">Importa dati IGDB</string>
+    <string name="igdb_import_title">Importa dati da IGDB</string>
+    <string name="igdb_import_comparison_title">Titolo</string>
+    <string name="igdb_import_comparison_platform">Piattaforma</string>
+    <string name="igdb_import_comparison_region">Regione</string>
+    <string name="igdb_import_current">Attuale:</string>
+    <string name="igdb_import_igdb">IGDB:</string>
+    <string name="igdb_import_confirm">Importa</string>
+    <string name="igdb_import_cancel">Annulla</string>
+    <string name="igdb_import_no_region_info">N/A</string>
+    <string name="igdb_search_results_title">Seleziona risultato IGDB</string>
+    <string name="igdb_searching">Ricerca in corso…</string>
+    <string name="igdb_search_cancel">Annulla</string>
+    <string name="igdb_import_failed">Importazione fallita</string>
+    
+    <!-- ROM Detail Info -->
+    <string name="rom_detail_info">Informazioni</string>
+    <string name="rom_detail_year">Anno</string>
+    <string name="rom_detail_genres">Generi</string>
+    <string name="rom_detail_developer">Sviluppatore</string>
+    <string name="rom_detail_publisher">Editore</string>
+    <string name="rom_detail_rating">Valutazione</string>
+    <string name="rom_detail_summary">Descrizione</string>
+    <string name="rom_detail_storyline">Trama</string>
+    <string name="rom_detail_view_on_igdb">Vedi su IGDB</string>
+    
+    <!-- IGDB Settings -->
+    <string name="settings_igdb_title">Integrazione IGDB</string>
+    <string name="settings_igdb_enable">Attiva integrazione IGDB</string>
+    <string name="settings_igdb_enable_desc">Abilita import metadati da IGDB (richiede Client ID e Secret)</string>
+    <string name="settings_igdb_client_id">Client ID IGDB</string>
+    <string name="settings_igdb_client_secret">Client Secret IGDB</string>
+    <string name="settings_igdb_hint">Se non hai questi parametri, creali gratuitamente qui: https://api-docs.igdb.com/#getting-started</string>
+    <string name="settings_igdb_save">Salva credenziali</string>
+    <string name="igdb_preferred_platform">Piattaforma corrispondente</string>
+
     <!-- Common Actions -->
     <string name="action_open">Apri</string>
     <string name="action_delete">Elimina</string>

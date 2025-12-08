@@ -60,6 +60,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -103,6 +106,14 @@ fun DownloadSettingsScreen(
     val config by viewModel.downloadConfig.collectAsState()
     val showClearHistoryDialog by viewModel.showClearHistoryDialog.collectAsState()
     val context = LocalContext.current
+    var igdbClientId by rememberSaveable { mutableStateOf(config.igdbClientId ?: "") }
+    var igdbClientSecret by rememberSaveable { mutableStateOf(config.igdbClientSecret ?: "") }
+
+    // Sincronizza i campi locale quando cambia la config (es. dopo riapertura schermata)
+    LaunchedEffect(config.igdbClientId, config.igdbClientSecret) {
+        igdbClientId = config.igdbClientId ?: ""
+        igdbClientSecret = config.igdbClientSecret ?: ""
+    }
     
     // Ottieni SourceManager e RomRepository tramite EntryPoint
     val sourceManager = remember {
@@ -466,6 +477,69 @@ fun DownloadSettingsScreen(
                 selectedProvider = config.romInfoSearchProvider,
                 onProviderSelected = viewModel::updateRomInfoSearchProvider
             )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // IGDB settings
+            Text(
+                text = stringResource(R.string.settings_igdb_title),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold
+            )
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            SettingItem(
+                title = stringResource(R.string.settings_igdb_enable),
+                description = stringResource(R.string.settings_igdb_enable_desc),
+                checked = config.igdbEnabled,
+                onCheckedChange = { enabled ->
+                    igdbClientId = config.igdbClientId ?: ""
+                    igdbClientSecret = config.igdbClientSecret ?: ""
+                    viewModel.setIgdbEnabled(enabled)
+                }
+            )
+
+            if (config.igdbEnabled) {
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = igdbClientId,
+                    onValueChange = {
+                        igdbClientId = it
+                        viewModel.setIgdbClientId(it)
+                    },
+                    label = { Text(stringResource(R.string.settings_igdb_client_id)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                OutlinedTextField(
+                    value = igdbClientSecret,
+                    onValueChange = {
+                        igdbClientSecret = it
+                        viewModel.setIgdbClientSecret(it)
+                    },
+                    label = { Text(stringResource(R.string.settings_igdb_client_secret)) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = stringResource(R.string.settings_igdb_hint),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.clickable {
+                        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://api-docs.igdb.com/#getting-started"))
+                        context.startActivity(intent)
+                    },
+                    textDecoration = TextDecoration.Underline
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

@@ -56,7 +56,7 @@ object NetworkModule {
     ): com.tottodrillo.data.repository.RomCacheManager {
         return com.tottodrillo.data.repository.RomCacheManager(context, configRepository, gson)
     }
-    
+
     @Provides
     @Singleton
     fun provideSourceUpdateManager(
@@ -66,6 +66,17 @@ object NetworkModule {
         sourceManager: com.tottodrillo.domain.manager.SourceManager
     ): com.tottodrillo.domain.manager.SourceUpdateManager {
         return com.tottodrillo.domain.manager.SourceUpdateManager(context, okHttpClient, gson, sourceManager)
+    }
+    
+    @Provides
+    @Singleton
+    fun provideIgdbManager(
+        @ApplicationContext context: Context,
+        okHttpClient: OkHttpClient,
+        gson: Gson,
+        downloadConfigRepository: com.tottodrillo.data.repository.DownloadConfigRepository
+    ): com.tottodrillo.domain.manager.IgdbManager {
+        return com.tottodrillo.domain.manager.IgdbManager(context, okHttpClient, gson, downloadConfigRepository)
     }
 
     @Provides

@@ -885,7 +885,7 @@ class MainActivity : ComponentActivity() {
                                             totalBytes.toInt(),
                                             release.name
                                         )
-                                    }
+                    }
                                 }
                             } else {
                                 // Se non conosciamo la dimensione totale, aggiorna ogni 100KB

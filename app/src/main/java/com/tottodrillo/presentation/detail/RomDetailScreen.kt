@@ -51,6 +51,9 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import android.util.Log
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -59,6 +62,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.platform.LocalContext
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.tottodrillo.R
 import coil.compose.SubcomposeAsyncImage
@@ -69,7 +73,8 @@ import com.tottodrillo.presentation.components.EmptyState
 import com.tottodrillo.presentation.components.LoadingIndicator
 import com.tottodrillo.presentation.components.TryImageUrls
 import com.tottodrillo.presentation.components.MobyGamesWebViewDialog
-import com.tottodrillo.presentation.components.MobyGamesWebViewDialog
+import com.tottodrillo.presentation.components.IgdbImportDialog
+import com.tottodrillo.presentation.components.IgdbSearchResultsDialog
 
 /**
  * Entry point composable per la schermata di dettaglio ROM.
@@ -249,6 +254,17 @@ fun RomDetailRoute(
             )
         }
     }
+    
+    // Dialog selezione risultato IGDB (più risultati)
+    if (uiState.igdbSearchResults.isNotEmpty() && rom != null) {
+        IgdbSearchResultsDialog(
+            results = uiState.igdbSearchResults,
+            isSearching = uiState.isSearchingIgdb,
+            preferredPlatformCode = rom.platform.code,
+            onSelectResult = { result -> viewModel.importIgdbResult(result) },
+            onDismiss = { viewModel.dismissIgdbResults() }
+        )
+    }
 
     when {
         uiState.isLoading && rom == null -> {
@@ -288,6 +304,14 @@ fun RomDetailRoute(
                 onSearchMobyGames = { query ->
                     viewModel.openMobyGamesSearch(query)
                 },
+                onImportFromIgdb = {
+                    viewModel.searchIgdb()
+                },
+                onOpenIgdbUrl = { url ->
+                    viewModel.openIgdbWebView(url)
+                },
+                isSearchingIgdb = uiState.isSearchingIgdb,
+                igdbImportFailed = uiState.igdbImportFailed,
                 isRefreshing = isRefreshing
             )
         }
@@ -301,6 +325,33 @@ fun RomDetailRoute(
 private fun extractGameTitleForMobyGames(title: String): String {
     // Rimuovi tutto tra parentesi (incluse le parentesi stesse)
     return title.replace(Regex("\\([^)]*\\)"), "").trim()
+}
+
+/**
+ * Composable per mostrare una riga di informazione (label: valore)
+ */
+@Composable
+private fun InfoRow(
+    label: String,
+    value: String
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.bodyMedium,
+            fontWeight = FontWeight.Medium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f)
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
 }
 
 /**
@@ -324,9 +375,16 @@ fun RomDetailScreen(
     onOpenExtractionFolder: (String) -> Unit = {},
     onRefresh: () -> Unit = {},
     onSearchMobyGames: (String) -> Unit = {},
+    onImportFromIgdb: () -> Unit = {},
+    onOpenIgdbUrl: (String) -> Unit = {},
+    isSearchingIgdb: Boolean = false,
+    igdbImportFailed: Boolean = false,
     isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
+    val context = LocalContext.current
+    var summaryExpanded by rememberSaveable { mutableStateOf(false) }
+    var storylineExpanded by rememberSaveable { mutableStateOf(false) }
         Scaffold(
             topBar = {
             TopAppBar(
@@ -466,34 +524,107 @@ fun RomDetailScreen(
 
                 Spacer(modifier = Modifier.height(8.dp))
 
-                // Link "Cerca su MobyGames/Gamefaqs" con sfondo tipo regioni
-                val searchButtonText = when (romInfoSearchProvider) {
-                    "gamefaqs" -> stringResource(R.string.rom_detail_search_gamefaqs)
-                    "mobygames" -> stringResource(R.string.rom_detail_search_mobygames)
-                    else -> stringResource(R.string.rom_detail_search_gamefaqs)
-                }
-                Surface(
-                    shape = RoundedCornerShape(12.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    modifier = Modifier.clickable { 
-                        val query = extractGameTitleForMobyGames(rom.title)
-                        onSearchMobyGames(query)
-                    }
+                // Link "Cerca su MobyGames/Gamefaqs" e "Importa da IGDB"
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    Row(
-                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(6.dp)
+                    val hasIgdbData = rom.igdbUrl != null || rom.igdbSummary != null || rom.igdbGenres.isNotEmpty()
+                    
+                    // Determina il colore del pulsante
+                    val buttonColor = when {
+                        hasIgdbData -> MaterialTheme.colorScheme.primary // Verde (successo)
+                        igdbImportFailed -> MaterialTheme.colorScheme.errorContainer // Rosso (errore)
+                        else -> MaterialTheme.colorScheme.primaryContainer // Normale
+                    }
+                    val textColor = when {
+                        hasIgdbData -> MaterialTheme.colorScheme.onPrimary
+                        igdbImportFailed -> MaterialTheme.colorScheme.onErrorContainer
+                        else -> MaterialTheme.colorScheme.onPrimaryContainer
+                    }
+                    
+                    // Pulsante IGDB (stato dinamico)
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = buttonColor,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable(enabled = !isSearchingIgdb) { 
+                                if (hasIgdbData) {
+                                    val url = rom.igdbUrl ?: ""
+                                    if (url.isNotBlank()) {
+                                        onOpenIgdbUrl(url)
+                                    }
+                                } else {
+                                    onImportFromIgdb()
+                                }
+                            }
                     ) {
-                        Text(
-                            text = "🔗",
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        Text(
-                            text = searchButtonText,
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            if (!hasIgdbData && isSearchingIgdb) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                    color = textColor
+                                )
+                            } else {
+                                Text(
+                                    text = when {
+                                        hasIgdbData -> "🔗"
+                                        igdbImportFailed -> "❌"
+                                        else -> "🎮"
+                                    },
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = textColor
+                                )
+                            }
+                            Text(
+                                text = when {
+                                    hasIgdbData -> stringResource(R.string.rom_detail_view_on_igdb)
+                                    igdbImportFailed -> stringResource(R.string.igdb_import_failed)
+                                    else -> stringResource(R.string.igdb_import_button)
+                                },
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = textColor
+                            )
+                        }
+                    }
+                    
+                    // Link "Cerca su MobyGames/Gamefaqs"
+                    val searchButtonText = when (romInfoSearchProvider) {
+                        "gamefaqs" -> stringResource(R.string.rom_detail_search_gamefaqs)
+                        "mobygames" -> stringResource(R.string.rom_detail_search_mobygames)
+                        else -> stringResource(R.string.rom_detail_search_gamefaqs)
+                    }
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier
+                            .weight(1f)
+                            .clickable { 
+                                val query = extractGameTitleForMobyGames(rom.title)
+                                onSearchMobyGames(query)
+                            }
+                    ) {
+                        Row(
+                            modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Text(
+                                text = "🔗",
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = searchButtonText,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
                     }
                 }
 
@@ -536,6 +667,173 @@ fun RomDetailScreen(
                     }
 
                     Spacer(modifier = Modifier.height(24.dp))
+                }
+
+                // Informazioni IGDB (se importate)
+                if (rom.igdbSummary != null || rom.igdbStoryline != null || rom.igdbYear != null || 
+                    rom.igdbGenres.isNotEmpty() || rom.igdbDeveloper != null || rom.igdbPublisher != null || 
+                    rom.igdbRating != null) {
+                    Text(
+                        text = stringResource(R.string.rom_detail_info),
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold
+                    )
+                    Spacer(modifier = Modifier.height(12.dp))
+                    
+                    // Anno di rilascio
+                    if (rom.igdbYear != null) {
+                        InfoRow(
+                            label = stringResource(R.string.rom_detail_year),
+                            value = rom.igdbYear.toString()
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // Generi
+                    if (rom.igdbGenres.isNotEmpty()) {
+                        InfoRow(
+                            label = stringResource(R.string.rom_detail_genres),
+                            value = rom.igdbGenres.joinToString(", ")
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // Developer
+                    if (rom.igdbDeveloper != null) {
+                        InfoRow(
+                            label = stringResource(R.string.rom_detail_developer),
+                            value = rom.igdbDeveloper
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // Publisher
+                    if (rom.igdbPublisher != null) {
+                        InfoRow(
+                            label = stringResource(R.string.rom_detail_publisher),
+                            value = rom.igdbPublisher
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // Rating
+                    if (rom.igdbRating != null) {
+                        InfoRow(
+                            label = stringResource(R.string.rom_detail_rating),
+                            value = String.format("%.1f/100", rom.igdbRating)
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+                    
+                    // Summary (fisarmonica)
+                    if (rom.igdbSummary != null) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.clickable { summaryExpanded = !summaryExpanded }
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.rom_detail_summary),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = if (summaryExpanded) "▲" else "▼",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (summaryExpanded) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = rom.igdbSummary,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    
+                    // Storyline (fisarmonica)
+                    if (rom.igdbStoryline != null) {
+                        Surface(
+                            shape = RoundedCornerShape(10.dp),
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.clickable { storylineExpanded = !storylineExpanded }
+                        ) {
+                            Column(modifier = Modifier.padding(12.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.rom_detail_storyline),
+                                        style = MaterialTheme.typography.titleSmall,
+                                        fontWeight = FontWeight.SemiBold
+                                    )
+                                    Text(
+                                        text = if (storylineExpanded) "▲" else "▼",
+                                        style = MaterialTheme.typography.bodySmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                                if (storylineExpanded) {
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = rom.igdbStoryline,
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
+                    
+                    // Link IGDB
+                    if (rom.igdbUrl != null) {
+                    Surface(
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.surfaceVariant,
+                        modifier = Modifier.clickable {
+                            // Apri il link IGDB
+                            try {
+                                // Usa il WebView già usato per ricerche info
+                                onSearchMobyGames(rom.igdbUrl ?: "")
+                            } catch (e: Exception) {
+                                android.util.Log.e("RomDetailScreen", "Errore apertura link IGDB", e)
+                            }
+                        }
+                    ) {
+                            Row(
+                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(6.dp)
+                            ) {
+                                Text(
+                                    text = "🔗",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = stringResource(R.string.rom_detail_view_on_igdb),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(24.dp))
+                    } else {
+                        Spacer(modifier = Modifier.height(12.dp))
+                    }
                 }
 
                 // Download links

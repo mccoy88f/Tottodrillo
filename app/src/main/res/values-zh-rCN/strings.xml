@@ -197,5 +197,42 @@
     <string name="sources_updates_available">%1$d个更新可用</string>
     <string name="sources_update_auto">自动更新</string>
     <string name="sources_changelog">更新日志</string>
+    
+    <!-- IGDB Import -->
+    <string name="igdb_import_button">导入IGDB数据</string>
+    <string name="igdb_import_title">从IGDB导入数据</string>
+    <string name="igdb_import_comparison_title">标题</string>
+    <string name="igdb_import_comparison_platform">平台</string>
+    <string name="igdb_import_comparison_region">地区</string>
+    <string name="igdb_import_current">当前:</string>
+    <string name="igdb_import_igdb">IGDB:</string>
+    <string name="igdb_import_confirm">导入</string>
+    <string name="igdb_import_cancel">取消</string>
+    <string name="igdb_import_no_region_info">N/A</string>
+    <string name="igdb_search_results_title">选择IGDB结果</string>
+    <string name="igdb_searching">搜索中…</string>
+    <string name="igdb_search_cancel">取消</string>
+    <string name="igdb_import_failed">导入失败</string>
+    
+    <!-- ROM Detail Info -->
+    <string name="rom_detail_info">信息</string>
+    <string name="rom_detail_year">年份</string>
+    <string name="rom_detail_genres">类型</string>
+    <string name="rom_detail_developer">开发商</string>
+    <string name="rom_detail_publisher">发行商</string>
+    <string name="rom_detail_rating">评分</string>
+    <string name="rom_detail_summary">描述</string>
+    <string name="rom_detail_storyline">剧情</string>
+    <string name="rom_detail_view_on_igdb">在IGDB上查看</string>
+    
+    <!-- IGDB Settings -->
+    <string name="settings_igdb_title">IGDB集成</string>
+    <string name="settings_igdb_enable">启用IGDB集成</string>
+    <string name="settings_igdb_enable_desc">启用从IGDB导入元数据（需要Client ID和Secret）</string>
+    <string name="settings_igdb_client_id">IGDB Client ID</string>
+    <string name="settings_igdb_client_secret">IGDB Client Secret</string>
+    <string name="settings_igdb_hint">如果您没有这些参数，请在此处免费创建: https://api-docs.igdb.com/#getting-started</string>
+    <string name="settings_igdb_save">保存凭据</string>
+    <string name="igdb_preferred_platform">匹配平台</string>
 </resources>
 

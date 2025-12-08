@@ -197,5 +197,42 @@
     <string name="sources_updates_available">%1$d mises à jour disponibles</string>
     <string name="sources_update_auto">Mettre à jour automatiquement</string>
     <string name="sources_changelog">Journal des modifications</string>
+    
+    <!-- IGDB Import -->
+    <string name="igdb_import_button">Importer données IGDB</string>
+    <string name="igdb_import_title">Importer des données depuis IGDB</string>
+    <string name="igdb_import_comparison_title">Titre</string>
+    <string name="igdb_import_comparison_platform">Plateforme</string>
+    <string name="igdb_import_comparison_region">Région</string>
+    <string name="igdb_import_current">Actuel :</string>
+    <string name="igdb_import_igdb">IGDB :</string>
+    <string name="igdb_import_confirm">Importer</string>
+    <string name="igdb_import_cancel">Annuler</string>
+    <string name="igdb_import_no_region_info">N/A</string>
+    <string name="igdb_search_results_title">Sélectionner résultat IGDB</string>
+    <string name="igdb_searching">Recherche en cours…</string>
+    <string name="igdb_search_cancel">Annuler</string>
+    <string name="igdb_import_failed">Importation échouée</string>
+    
+    <!-- ROM Detail Info -->
+    <string name="rom_detail_info">Informations</string>
+    <string name="rom_detail_year">Année</string>
+    <string name="rom_detail_genres">Genres</string>
+    <string name="rom_detail_developer">Développeur</string>
+    <string name="rom_detail_publisher">Éditeur</string>
+    <string name="rom_detail_rating">Note</string>
+    <string name="rom_detail_summary">Description</string>
+    <string name="rom_detail_storyline">Intrigue</string>
+    <string name="rom_detail_view_on_igdb">Voir sur IGDB</string>
+    
+    <!-- IGDB Settings -->
+    <string name="settings_igdb_title">Intégration IGDB</string>
+    <string name="settings_igdb_enable">Activer l\'intégration IGDB</string>
+    <string name="settings_igdb_enable_desc">Activer l\'importation de métadonnées depuis IGDB (nécessite Client ID et Secret)</string>
+    <string name="settings_igdb_client_id">Client ID IGDB</string>
+    <string name="settings_igdb_client_secret">Client Secret IGDB</string>
+    <string name="settings_igdb_hint">Si vous n\'avez pas ces paramètres, créez-les gratuitement ici : https://api-docs.igdb.com/#getting-started</string>
+    <string name="settings_igdb_save">Enregistrer les identifiants</string>
+    <string name="igdb_preferred_platform">Plateforme correspondante</string>
 </resources>
 

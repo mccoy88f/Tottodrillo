@@ -11,7 +11,10 @@ data class DownloadConfig(
     val notificationsEnabled: Boolean = true,
     val enableEsDeCompatibility: Boolean = false,
     val esDeRomsPath: String? = null,
-    val romInfoSearchProvider: String = "gamefaqs" // "gamefaqs" o "mobygames"
+    val romInfoSearchProvider: String = "gamefaqs", // "gamefaqs" o "mobygames"
+    val igdbEnabled: Boolean = false,
+    val igdbClientId: String? = null,
+    val igdbClientSecret: String? = null
 )
 
 /**

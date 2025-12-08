@@ -38,6 +38,9 @@ class RomDetailViewModel @Inject constructor(
     private val repository: RomRepository,
     private val downloadManager: DownloadManager,
     private val configRepository: DownloadConfigRepository,
+    private val igdbManager: com.tottodrillo.domain.manager.IgdbManager,
+    private val romCacheManager: com.tottodrillo.data.repository.RomCacheManager,
+    private val platformManager: com.tottodrillo.domain.manager.PlatformManager,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -423,7 +426,8 @@ class RomDetailViewModel @Inject constructor(
                             isFavorite = rom.isFavorite,
                             isLoading = false,
                             isLoadingLinks = true, // Inizia il caricamento dei link
-                            error = null
+                            error = null,
+                            igdbImportFailed = false // Reset errore quando si carica una nuova ROM
                         )
                     }
                     
@@ -887,6 +891,174 @@ class RomDetailViewModel @Inject constructor(
                 showMobyGamesWebView = false,
                 mobyGamesSearchUrl = null,
                 romInfoSearchTitle = null
+            )
+        }
+    }
+    
+    /**
+     * Cerca giochi su IGDB per la ROM corrente
+     */
+    fun searchIgdb() {
+        val currentRom = _uiState.value.rom ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearchingIgdb = true, igdbSearchResults = emptyList()) }
+            
+            try {
+                // Normalizza il titolo per la ricerca (rimuovi parentesi, regioni, anno)
+                val normalizedTitle = normalizeTitleForSearch(currentRom.title)
+                
+                // Ottieni termini di ricerca piattaforma IGDB
+                val platformSearchTerms = com.tottodrillo.domain.manager.IgdbPlatformMapper
+                    .mapTottodrilloToIgdbSearchTerms(currentRom.platform.code)
+                
+                // Prova prima con filtro piattaforma (lista termini), poi senza
+                var results = igdbManager.searchGames(normalizedTitle, platformSearchTerms)
+                
+                // Se non trova risultati con filtro, prova senza
+                if (results.isEmpty()) {
+                    results = igdbManager.searchGames(normalizedTitle)
+                }
+
+                // Ordina risultati mettendo in cima quelli che matchano la piattaforma della ROM
+                val preferredSorted = results.sortedByDescending { result ->
+                    matchesPlatform(currentRom.platform.code, result)
+                }
+                
+                if (results.isEmpty()) {
+                    android.util.Log.d("RomDetailViewModel", "Nessun risultato IGDB trovato per: $normalizedTitle")
+                    // Nessun risultato: mostra errore
+                    _uiState.update {
+                        it.copy(
+                            isSearchingIgdb = false,
+                            igdbSearchResults = emptyList(),
+                            igdbImportFailed = true
+                        )
+                    }
+                } else {
+                    android.util.Log.d("RomDetailViewModel", "Trovati ${results.size} risultati IGDB")
+                    
+                    // Se c'è un solo risultato, importa direttamente senza mostrare il dialog
+                    if (preferredSorted.size == 1) {
+                        _uiState.update {
+                            it.copy(
+                                isSearchingIgdb = false,
+                                igdbSearchResults = emptyList(), // Non mostrare dialog
+                                showIgdbImportDialog = false,
+                                selectedIgdbResult = null,
+                                igdbImportFailed = false // Reset errore
+                            )
+                        }
+                        importIgdbResult(preferredSorted.first())
+                    } else {
+                        // Più risultati: mostra il dialog di selezione
+                        _uiState.update {
+                            it.copy(
+                                isSearchingIgdb = false,
+                                igdbSearchResults = preferredSorted,
+                                showIgdbImportDialog = false,
+                                selectedIgdbResult = null,
+                                igdbImportFailed = false // Reset errore
+                            )
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                android.util.Log.e("RomDetailViewModel", "Errore ricerca IGDB", e)
+                _uiState.update {
+                    it.copy(
+                        isSearchingIgdb = false,
+                        igdbSearchResults = emptyList(),
+                        igdbImportFailed = true
+                    )
+                }
+            } finally {
+                // Safety: assicurati che il flag di ricerca si resetti
+                _uiState.update { it.copy(isSearchingIgdb = false) }
+            }
+        }
+    }
+
+    private fun matchesPlatform(targetCode: String, result: com.tottodrillo.domain.model.IgdbSearchResult): Boolean {
+        return result.platforms.any { platform ->
+            com.tottodrillo.domain.manager.IgdbPlatformMapper.mapIgdbToTottodrillo(platform.name) == targetCode
+        }
+    }
+    
+    /**
+     * Normalizza il titolo per la ricerca IGDB (rimuove parentesi, regioni, anno)
+     */
+    private fun normalizeTitleForSearch(title: String): String {
+        // Rimuovi pattern comuni: (USA), (EUR), (JPN), (2023), etc.
+        return title
+            .replace(Regex("\\([^)]*\\)"), "") // Rimuovi tutto tra parentesi
+            .replace(Regex("\\[[^\\]]*\\]"), "") // Rimuovi tutto tra quadre
+            .trim()
+    }
+    
+    /**
+     * Seleziona un risultato IGDB per l'importazione
+     */
+    /**
+     * Seleziona un risultato IGDB e importa subito (senza conferma extra)
+     */
+    fun importIgdbResult(result: com.tottodrillo.domain.model.IgdbSearchResult) {
+        val currentRom = _uiState.value.rom ?: return
+        
+        viewModelScope.launch {
+            _uiState.update { it.copy(isImportingIgdb = true, showIgdbImportDialog = false, selectedIgdbResult = null) }
+            
+            try {
+                val updatedRom = com.tottodrillo.data.mapper.IgdbMapper.mapIgdbToRom(currentRom, result)
+                
+                romCacheManager.saveRomToCache(updatedRom)
+                
+                _uiState.update {
+                    it.copy(
+                        rom = updatedRom,
+                        isImportingIgdb = false,
+                        igdbSearchResults = emptyList(),
+                        selectedIgdbResult = null,
+                        igdbImportFailed = false // Successo: reset errore
+                    )
+                }
+                
+                android.util.Log.d("RomDetailViewModel", "✅ Dati IGDB importati con successo per: ${updatedRom.title}")
+            } catch (e: Exception) {
+                android.util.Log.e("RomDetailViewModel", "❌ Errore importazione dati IGDB", e)
+                _uiState.update {
+                    it.copy(
+                        isImportingIgdb = false,
+                        igdbImportFailed = true // Errore: mostra rosso
+                    )
+                }
+            }
+        }
+    }
+
+    /**
+     * Mostra il WebView con un URL (riusa il dialog già esistente)
+     */
+    fun openIgdbWebView(url: String) {
+        _uiState.update {
+            it.copy(
+                showMobyGamesWebView = true,
+                mobyGamesSearchUrl = url,
+                romInfoSearchTitle = "IGDB"
+            )
+        }
+    }
+
+    /**
+     * Chiude/azzera i risultati IGDB
+     */
+    fun dismissIgdbResults() {
+        _uiState.update {
+            it.copy(
+                igdbSearchResults = emptyList(),
+                isSearchingIgdb = false,
+                showIgdbImportDialog = false,
+                selectedIgdbResult = null
             )
         }
     }

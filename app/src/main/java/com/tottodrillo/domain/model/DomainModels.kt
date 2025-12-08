@@ -13,7 +13,17 @@ data class Rom(
     val regions: List<RegionInfo>,
     val downloadLinks: List<DownloadLink>,
     val isFavorite: Boolean = false,
-    val sourceId: String? = null // ID della sorgente principale (prima che arriva)
+    val sourceId: String? = null, // ID della sorgente principale (prima che arriva)
+    // Dati IGDB (opzionali, importati da IGDB)
+    val igdbSummary: String? = null, // Summary/descrizione da IGDB
+    val igdbStoryline: String? = null, // Storyline da IGDB
+    val igdbYear: Int? = null, // Anno di rilascio da IGDB
+    val igdbGenres: List<String> = emptyList(), // Generi da IGDB
+    val igdbDeveloper: String? = null, // Developer da IGDB
+    val igdbPublisher: String? = null, // Publisher da IGDB
+    val igdbRating: Double? = null, // Rating da IGDB (0-100)
+    val igdbScreenshots: List<String> = emptyList(), // Screenshots da IGDB (max 3)
+    val igdbUrl: String? = null // URL IGDB del gioco
 )
 
 /**
