@@ -126,7 +126,6 @@ class UpdateManager @Inject constructor(
                     return@withContext release
                 }
             }
-            }
             
             return@withContext null
         } catch (e: Exception) {
