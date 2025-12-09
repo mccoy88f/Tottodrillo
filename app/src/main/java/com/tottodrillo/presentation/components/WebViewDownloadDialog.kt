@@ -417,7 +417,7 @@ fun WebViewDownloadDialog(
                                     // Estrai cookie dall'URL di download specifico
                                     val downloadUrlCookies = cookieManager.getCookie(url) ?: ""
                                     
-                                    // Estrai anche cookie dal dominio di download (download.nswpediax.site)
+                                    // Estrai anche cookie dal dominio di download (es. download.nswpediax.site per NSWpedia)
                                     val downloadDomainCookies = try {
                                         val urlObj = java.net.URL(url)
                                         val downloadDomain = "${urlObj.protocol}://${urlObj.host}"

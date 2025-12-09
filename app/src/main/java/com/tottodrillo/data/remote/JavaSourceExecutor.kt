@@ -111,7 +111,11 @@ class JavaSourceExecutor(
         /**
          * Crea un JavaSourceExecutor caricando dinamicamente la classe dalla sorgente
          */
-        fun create(metadata: SourceMetadata, sourceDir: File): JavaSourceExecutor {
+        fun create(
+            metadata: SourceMetadata,
+            sourceDir: File,
+            sourceServices: com.tottodrillo.domain.service.SourceServices? = null
+        ): JavaSourceExecutor {
             val mainClass = metadata.mainClass
                 ?: throw IllegalArgumentException("mainClass è richiesto per sorgenti Java")
             
@@ -138,19 +142,45 @@ class JavaSourceExecutor(
             // Carica la classe principale
             val clazz = classLoader.loadClass(mainClass)
             
-            // Cerca un costruttore che accetta (SourceMetadata, File)
+            // Cerca un costruttore che accetta (SourceMetadata, File, SourceServices)
+            // o (SourceMetadata, File) o senza parametri (retrocompatibilità)
             val constructor = try {
-                clazz.getConstructor(SourceMetadata::class.java, File::class.java)
-            } catch (e: NoSuchMethodException) {
-                // Prova con costruttore senza parametri
-                clazz.getConstructor()
+                // Prova con SourceServices se disponibile
+                if (sourceServices != null) {
+                    try {
+                        clazz.getConstructor(
+                            SourceMetadata::class.java,
+                            File::class.java,
+                            com.tottodrillo.domain.service.SourceServices::class.java
+                        )
+                    } catch (e: NoSuchMethodException) {
+                        // Fallback a costruttore senza SourceServices
+                        try {
+                            clazz.getConstructor(SourceMetadata::class.java, File::class.java)
+                        } catch (e2: NoSuchMethodException) {
+                            clazz.getConstructor()
+                        }
+                    }
+                } else {
+                    try {
+                        clazz.getConstructor(SourceMetadata::class.java, File::class.java)
+                    } catch (e: NoSuchMethodException) {
+                        clazz.getConstructor()
+                    }
+                }
+            } catch (e: Exception) {
+                throw IllegalStateException("Impossibile trovare costruttore valido per $mainClass", e)
             }
             
             // Crea istanza
-            val instance = if (constructor.parameterCount == 2) {
-                constructor.newInstance(metadata, sourceDir)
-            } else {
-                constructor.newInstance()
+            val instance = when (constructor.parameterCount) {
+                3 -> if (sourceServices != null) {
+                    constructor.newInstance(metadata, sourceDir, sourceServices)
+                } else {
+                    throw IllegalStateException("Costruttore richiede SourceServices ma non fornito")
+                }
+                2 -> constructor.newInstance(metadata, sourceDir)
+                else -> constructor.newInstance()
             }
             
             return JavaSourceExecutor(metadata, sourceDir, instance)

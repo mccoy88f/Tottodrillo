@@ -33,7 +33,15 @@ data class SourceMetadata(
     val dependencies: List<String>? = null, // Dipendenze per sorgenti Java (JAR files) o Python (requirements.txt)
     val imageRefererPattern: String? = null, // Pattern per costruire il Referer header per le immagini (es. "https://example.com/vault/{id}")
     val defaultImage: String? = null, // URL dell'immagine placeholder da usare quando una ROM non ha immagini
-    val downloadInterceptPatterns: List<String>? = null // Pattern per intercettare download nel WebView (es. ["download.example.com", ".nsp", ".xci"])
+    val downloadInterceptPatterns: List<String>? = null, // Pattern per intercettare download nel WebView (es. ["download.example.com", ".nsp", ".xci"])
+    
+    // Richieste funzionalità avanzate (opzionali, retrocompatibili)
+    val requiresCloudflareBypass: Boolean = false, // Se la sorgente richiede bypass Cloudflare
+    val cloudflareBypassConfig: CloudflareBypassConfig? = null, // Configurazione per bypass Cloudflare
+    val requiresCustomCookieManager: Boolean = false, // Se la sorgente richiede gestione cookie personalizzata
+    val requiresSslTrustAll: Boolean = false, // Se la sorgente richiede accettare certificati SSL non validi
+    val webViewConfig: WebViewConfig? = null, // Configurazione per WebView (se richiesto)
+    val httpClientConfig: HttpClientConfig? = null // Configurazione per HTTP Client personalizzato
 )
 
 /**

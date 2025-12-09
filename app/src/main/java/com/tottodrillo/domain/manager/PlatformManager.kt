@@ -201,18 +201,6 @@ class PlatformManager @Inject constructor(
     }
     
     /**
-     * Metodi di compatibilità per CrocDB (deprecati, usa i metodi generici)
-     */
-    @Deprecated("Usa getSourceCode invece", ReplaceWith("getSourceCode(motherCode, \"crocdb\")"))
-    suspend fun getCrocdbCode(motherCode: String): String? = getSourceCode(motherCode, "crocdb")
-    
-    @Deprecated("Usa getSourceCodes invece", ReplaceWith("getSourceCodes(motherCode, \"crocdb\")"))
-    suspend fun getCrocdbCodes(motherCode: String): List<String> = getSourceCodes(motherCode, "crocdb")
-    
-    @Deprecated("Usa getMotherCodeFromSourceCode invece", ReplaceWith("getMotherCodeFromSourceCode(crocDbCode, \"crocdb\")"))
-    suspend fun getMotherCodeFromCrocDbCode(crocDbCode: String): String? = getMotherCodeFromSourceCode(crocDbCode, "crocdb")
-    
-    /**
      * Pulisce la cache
      */
     fun clearCache() {

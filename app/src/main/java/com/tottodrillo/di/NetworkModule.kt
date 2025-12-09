@@ -139,6 +139,16 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
+    
+    @Provides
+    @Singleton
+    fun provideSourceServices(
+        @ApplicationContext context: Context,
+        sourceManager: com.tottodrillo.domain.manager.SourceManager,
+        okHttpClient: OkHttpClient
+    ): com.tottodrillo.domain.service.SourceServices {
+        return com.tottodrillo.data.service.SourceServicesImpl(context, sourceManager, okHttpClient)
+    }
 
     /**
      * @deprecated Usa SourceManager e SourceApiClient invece.

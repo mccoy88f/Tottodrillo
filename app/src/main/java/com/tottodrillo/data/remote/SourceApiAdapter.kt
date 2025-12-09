@@ -150,9 +150,29 @@ class SourceApiAdapter(
             metadata: SourceMetadata,
             sourceDir: File,
             okHttpClient: okhttp3.OkHttpClient,
-            gson: Gson
+            gson: Gson,
+            sourceServices: com.tottodrillo.domain.service.SourceServices? = null
         ): SourceApiAdapter {
-            val client = SourceApiClient.create(metadata, sourceDir, okHttpClient, gson)
+            // Se la sorgente richiede configurazione HTTP personalizzata, usala
+            val httpClient = if (sourceServices != null && metadata.httpClientConfig != null) {
+                sourceServices.createHttpClient(metadata.id, metadata.httpClientConfig)
+            } else if (sourceServices != null && (metadata.requiresSslTrustAll || metadata.requiresCustomCookieManager)) {
+                // Crea configurazione di default basata sui flag
+                val config = com.tottodrillo.domain.model.HttpClientConfig(
+                    requiresSslTrustAll = metadata.requiresSslTrustAll,
+                    requiresCookieJar = metadata.requiresCustomCookieManager
+                )
+                sourceServices.createHttpClient(metadata.id, config)
+            } else {
+                // Usa il client base con eventuale Referer interceptor
+                if (sourceServices != null) {
+                    sourceServices.getBaseHttpClient(metadata.id)
+                } else {
+                    okHttpClient
+                }
+            }
+            
+            val client = SourceApiClient.create(metadata, sourceDir, httpClient, gson)
             return SourceApiAdapter(client, metadata, gson)
         }
     }

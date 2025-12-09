@@ -32,7 +32,8 @@ import java.io.OutputStream
 class PythonSourceExecutor(
     private val metadata: SourceMetadata,
     private val sourceDir: File,
-    private val gson: Gson
+    private val gson: Gson,
+    private val sourceServices: com.tottodrillo.domain.service.SourceServices? = null
 ) : SourceExecutor {
     
     private val pythonScript = metadata.pythonScript
@@ -143,6 +144,13 @@ class PythonSourceExecutor(
             val paramsWithSourceDir = params.toMutableMap()
             paramsWithSourceDir["source_dir"] = sourceDir.absolutePath
             
+            // Passa informazioni su SourceServices (se disponibile) come flag
+            // Gli script Python possono richiedere servizi tramite configurazione nel metadata
+            if (sourceServices != null) {
+                paramsWithSourceDir["has_source_services"] = true
+                paramsWithSourceDir["source_id"] = metadata.id
+            }
+            
             // Chiama la funzione execute con i parametri JSON
             val paramsJson = gson.toJson(paramsWithSourceDir)
             val result = module.callAttr("execute", paramsJson)
@@ -157,8 +165,13 @@ class PythonSourceExecutor(
         /**
          * Crea un PythonSourceExecutor
          */
-        fun create(metadata: SourceMetadata, sourceDir: File, gson: Gson): PythonSourceExecutor {
-            return PythonSourceExecutor(metadata, sourceDir, gson)
+        fun create(
+            metadata: SourceMetadata,
+            sourceDir: File,
+            gson: Gson,
+            sourceServices: com.tottodrillo.domain.service.SourceServices? = null
+        ): PythonSourceExecutor {
+            return PythonSourceExecutor(metadata, sourceDir, gson, sourceServices)
         }
     }
 }

@@ -30,8 +30,8 @@
 -keep class * implements com.google.gson.JsonDeserializer
 
 # Keep data models
--keep class com.crocdb.friends.data.model.** { *; }
--keep class com.crocdb.friends.domain.model.** { *; }
+-keep class com.tottodrillo.data.model.** { *; }
+-keep class com.tottodrillo.domain.model.** { *; }
 
 # WorkManager
 -keep class * extends androidx.work.Worker

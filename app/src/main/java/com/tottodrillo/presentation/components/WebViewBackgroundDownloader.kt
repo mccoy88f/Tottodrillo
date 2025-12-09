@@ -1,21 +1,22 @@
 package com.tottodrillo.presentation.components
 
 import android.content.Context
-import android.webkit.CookieManager
-import android.webkit.WebView
-import android.webkit.WebViewClient
-import android.webkit.DownloadListener
 import android.util.Log
 import com.tottodrillo.domain.model.DownloadLink
+import com.tottodrillo.domain.model.WebViewConfig
+import com.tottodrillo.domain.service.SourceServices
+import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
+import dagger.hilt.EntryPoints
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
 /**
  * Helper per gestire download da WebView in background (senza mostrare dialog)
- * Carica la pagina, attende (se necessario), estrae URL finale e cookie, poi avvia il download
+ * Usa SourceServices per estrarre URL e cookie dalla pagina WebView
  */
 class WebViewBackgroundDownloader(
-    private val context: Context
+    private val context: Context,
+    private val sourceServices: SourceServices? = null
 ) {
     /**
      * Gestisce il download in background: carica la pagina, attende (se necessario), estrae URL e cookie
@@ -28,156 +29,45 @@ class WebViewBackgroundDownloader(
         onDownloadReady: (finalUrl: String, cookies: String, originalUrl: String?) -> Unit
     ): Result<Unit> = suspendCancellableCoroutine { continuation ->
         try {
-            val webView = WebView(context).apply {
-                settings.javaScriptEnabled = true
-                settings.domStorageEnabled = true
-                settings.loadWithOverviewMode = true
-                settings.useWideViewPort = true
-                visibility = android.view.View.GONE // Invisibile
+            // Se SourceServices è disponibile, usalo per estrarre URL e cookie
+            if (sourceServices != null && link.sourceId != null) {
+                // Recupera i pattern dalla sorgente se disponibili
+                val interceptPatterns = try {
+                    val entryPoint = EntryPoints.get(context, SourceManagerEntryPoint::class.java)
+                    val sourceManager = entryPoint.sourceManager()
+                    val metadata = sourceManager.getSourceMetadata(link.sourceId)
+                    metadata?.downloadInterceptPatterns
+                } catch (e: Exception) {
+                    Log.w("WebViewBackgroundDownloader", "⚠️ Errore nel recupero pattern dalla sorgente: ${e.message}")
+                    null
+                }
                 
-                var isResumed = false // Flag per evitare doppio resume
+                val webViewConfig = WebViewConfig(
+                    delaySeconds = delaySeconds,
+                    extractUrlScript = null, // Usa script di default
+                    interceptPatterns = interceptPatterns, // Pattern dalla sorgente o null (userà default in SourceServicesImpl)
+                    requiresCookieExtraction = true
+                )
                 
-                webViewClient = object : WebViewClient() {
-                    override fun onPageFinished(view: WebView?, url: String?) {
-                        super.onPageFinished(view, url)
-                        
-                        // Dopo che la pagina è caricata, attendi (se necessario) prima di estrarre l'URL finale
-                        // Il delay è specificato dalla source (es. per challenge Cloudflare o altre validazioni server)
-                        // Se delaySeconds = 0, il download viene intercettato immediatamente quando parte
-                        val delayMs = if (delaySeconds > 0) delaySeconds * 1000L else 0L
-                        android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
-                            // Estrai l'URL finale dalla pagina usando JavaScript
-                            view?.evaluateJavascript(
-                                """
-                                (function() {
-                                    try {
-                                        // Cerca il link di download nella pagina
-                                        var downloadLink = document.querySelector('#download-link');
-                                        if (downloadLink) {
-                                            return downloadLink.href;
-                                        }
-                                        // Prova anche altri selettori comuni
-                                        var downloadBtn = document.querySelector('a[href*="download.nswpediax.site"]');
-                                        if (downloadBtn) {
-                                            return downloadBtn.href;
-                                        }
-                                        // Cerca qualsiasi link che contenga .nsp o .xci
-                                        var links = document.querySelectorAll('a[href]');
-                                        for (var i = 0; i < links.length; i++) {
-                                            var href = links[i].href;
-                                            if (href && (href.includes('.nsp') || href.includes('.xci'))) {
-                                                return href;
-                                            }
-                                        }
-                                        return null;
-                                    } catch(e) {
-                                        return null;
-                                    }
-                                })();
-                                """.trimIndent()
-                            ) { result ->
-                                // Evita doppio resume
-                                if (isResumed) {
-                                    Log.w("WebViewBackgroundDownloader", "⚠️ Continuation già resumata, ignoro callback duplicato")
-                                    return@evaluateJavascript
-                                }
-                                
-                                val finalUrl = result?.removeSurrounding("\"")?.takeIf { it != "null" }
-                                
-                                if (finalUrl != null && finalUrl.isNotEmpty()) {
-                                    
-                                    // Estrai i cookie dal WebView
-                                    val cookieManager = CookieManager.getInstance()
-                                    cookieManager.setAcceptCookie(true)
-                                    
-                                    // Estrai cookie dal dominio principale (estratto dall'URL originale)
-                                    val mainDomainCookies = try {
-                                        val originalUrlObj = java.net.URL(url)
-                                        val mainDomain = "${originalUrlObj.protocol}://${originalUrlObj.host}"
-                                        cookieManager.getCookie(mainDomain) ?: ""
-                                    } catch (e: Exception) {
-                                        ""
-                                    }
-                                    
-                                    // Estrai cookie dall'URL di download specifico
-                                    val downloadUrlCookies = cookieManager.getCookie(finalUrl) ?: ""
-                                    
-                                    // Estrai anche cookie dal dominio di download
-                                    val downloadDomainCookies = try {
-                                        val urlObj = java.net.URL(finalUrl)
-                                        val downloadDomain = "${urlObj.protocol}://${urlObj.host}"
-                                        cookieManager.getCookie(downloadDomain) ?: ""
-                                    } catch (e: Exception) {
-                                        ""
-                                    }
-                                    
-                                    // Combina i cookie (rimuovi duplicati mantenendo l'ordine: dominio principale ha priorità)
-                                    val allCookies = mutableSetOf<String>()
-                                    
-                                    // Prima aggiungi i cookie del dominio principale (Cloudflare)
-                                    if (mainDomainCookies.isNotEmpty()) {
-                                        mainDomainCookies.split(";").forEach { cookie ->
-                                            val trimmed = cookie.trim()
-                                            if (trimmed.isNotEmpty()) {
-                                                allCookies.add(trimmed)
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Poi aggiungi i cookie del dominio di download
-                                    if (downloadDomainCookies.isNotEmpty()) {
-                                        downloadDomainCookies.split(";").forEach { cookie ->
-                                            val trimmed = cookie.trim()
-                                            if (trimmed.isNotEmpty()) {
-                                                allCookies.add(trimmed)
-                                            }
-                                        }
-                                    }
-                                    
-                                    // Infine aggiungi i cookie specifici dell'URL
-                                    if (downloadUrlCookies.isNotEmpty()) {
-                                        downloadUrlCookies.split(";").forEach { cookie ->
-                                            val trimmed = cookie.trim()
-                                            if (trimmed.isNotEmpty()) {
-                                                allCookies.add(trimmed)
-                                            }
-                                        }
-                                    }
-                                    
-                                    val cookies = allCookies.joinToString("; ")
-                                    
-                                    // Avvia il download passando anche l'URL originale (pagina intermedia)
-                                    isResumed = true
-                                    onDownloadReady(finalUrl, cookies, url) // url è l'URL originale della pagina intermedia
-                                    continuation.resume(Result.success(Unit))
-                                } else {
-                                    if (!isResumed) {
-                                        Log.w("WebViewBackgroundDownloader", "⚠️ URL finale non trovato nella pagina${if (delaySeconds > 0) " dopo ${delaySeconds}s" else ""}")
-                                        isResumed = true
-                                        continuation.resume(Result.failure(Exception("URL finale non trovato nella pagina${if (delaySeconds > 0) " dopo l'attesa" else ""}")))
-                                    }
-                                }
-                            }
-                        }, delayMs)
+                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
+                    val result = sourceServices.extractUrlFromWebView(url, link.sourceId!!, webViewConfig)
+                    
+                    if (result.success && result.finalUrl != null) {
+                        onDownloadReady(
+                            result.finalUrl!!,
+                            result.cookies ?: "",
+                            result.originalUrl
+                        )
+                        continuation.resume(Result.success(Unit))
+                    } else {
+                        Log.w("WebViewBackgroundDownloader", "⚠️ Estrazione URL fallita: ${result.error}")
+                        continuation.resume(Result.failure(Exception(result.error ?: "Errore sconosciuto")))
                     }
                 }
-                
-                // Intercetta anche il download listener come fallback (se l'utente clicca manualmente)
-                setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
-                    // Questo è un fallback, ma in background non dovrebbe essere necessario
-                }
-                
-                // Carica l'URL
-                loadUrl(url)
-            }
-            
-            // Cleanup quando la coroutine viene cancellata
-            continuation.invokeOnCancellation {
-                try {
-                    (webView.parent as? android.view.ViewGroup)?.removeView(webView)
-                } catch (e: Exception) {
-                    // Ignora errori di cleanup
-                }
+            } else {
+                // Fallback: usa implementazione legacy se SourceServices non è disponibile
+                Log.w("WebViewBackgroundDownloader", "⚠️ SourceServices non disponibile, uso implementazione legacy")
+                continuation.resume(Result.failure(Exception("SourceServices non disponibile. Assicurati di passare SourceServices al costruttore.")))
             }
         } catch (e: Exception) {
             Log.e("WebViewBackgroundDownloader", "❌ Errore nel gestire download in background", e)

@@ -43,6 +43,7 @@ class RomDetailViewModel @Inject constructor(
     private val igdbManager: com.tottodrillo.domain.manager.IgdbManager,
     private val romCacheManager: com.tottodrillo.data.repository.RomCacheManager,
     private val platformManager: com.tottodrillo.domain.manager.PlatformManager,
+    private val sourceServices: com.tottodrillo.domain.service.SourceServices,
     @ApplicationContext private val context: Context,
     savedStateHandle: SavedStateHandle
 ) : ViewModel() {
@@ -668,7 +669,7 @@ class RomDetailViewModel @Inject constructor(
                                     }
                                 }
                                 
-                                val backgroundDownloader = com.tottodrillo.presentation.components.WebViewBackgroundDownloader(context)
+                                val backgroundDownloader = com.tottodrillo.presentation.components.WebViewBackgroundDownloader(context, sourceServices)
                                 val result = backgroundDownloader.handleDownloadInBackground(
                                     url = link.url,
                                     link = link,

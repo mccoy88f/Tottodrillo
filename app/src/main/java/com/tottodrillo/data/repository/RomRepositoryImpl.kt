@@ -45,7 +45,8 @@ class RomRepositoryImpl @Inject constructor(
     private val sourceManager: com.tottodrillo.domain.manager.SourceManager,
     private val okHttpClient: OkHttpClient,
     private val gson: Gson,
-    private val cacheManager: RomCacheManager
+    private val cacheManager: RomCacheManager,
+    private val sourceServices: com.tottodrillo.domain.service.SourceServices
 ) : RomRepository {
 
     // Cache in memoria per le piattaforme (evita chiamate ripetute)
@@ -116,7 +117,8 @@ class RomRepositoryImpl @Inject constructor(
                                 metadata,
                                 sourceDir,
                                 okHttpClient,
-                                gson
+                                gson,
+                                sourceServices
                             )
                             
                             // Normalizza i codici piattaforma a minuscolo per il mapping corretto

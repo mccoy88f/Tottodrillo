@@ -47,7 +47,8 @@ interface SourceExecutor {
             metadata: SourceMetadata,
             sourceDir: File,
             okHttpClient: okhttp3.OkHttpClient? = null,
-            gson: com.google.gson.Gson? = null
+            gson: com.google.gson.Gson? = null,
+            sourceServices: com.tottodrillo.domain.service.SourceServices? = null
         ): SourceExecutor {
             // Retrocompatibilità: se type è null o vuoto, assume "api" (comportamento predefinito)
             val type = metadata.type.takeIf { !it.isNullOrBlank() } ?: "api"
@@ -64,14 +65,14 @@ interface SourceExecutor {
                     require(okHttpClient != null && gson != null) {
                         "OkHttpClient e Gson sono richiesti per sorgenti API"
                     }
-                    SourceApiAdapter.create(metadata, sourceDir, okHttpClient, gson)
+                    SourceApiAdapter.create(metadata, sourceDir, okHttpClient, gson, sourceServices)
                 }
                 SourceType.JAVA -> {
-                    JavaSourceExecutor.create(metadata, sourceDir)
+                    JavaSourceExecutor.create(metadata, sourceDir, sourceServices)
                 }
                 SourceType.PYTHON -> {
                     require(gson != null) { "Gson è richiesto per sorgenti Python" }
-                    PythonSourceExecutor.create(metadata, sourceDir, gson)
+                    PythonSourceExecutor.create(metadata, sourceDir, gson, sourceServices)
                 }
             }
         }
