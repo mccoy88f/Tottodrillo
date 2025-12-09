@@ -118,7 +118,7 @@ class DownloadWorker(
                 outputFile.delete()
             }
             
-            downloadFile(url, outputFile, romTitle, romSlug, intermediateUrl, delaySeconds, cookies)
+            downloadFile(url, outputFile, romTitle, romSlug, intermediateUrl, delaySeconds, cookies, originalUrl)
 
             // Crea/aggiorna file .status per confermare il download completato
             // Formato multi-riga:
@@ -213,7 +213,8 @@ class DownloadWorker(
         romSlug: String?,
         intermediateUrl: String? = null,
         delaySeconds: Int = 0,
-        cookies: String? = null // Cookie dal WebView per mantenere la sessione
+        cookies: String? = null, // Cookie dal WebView per mantenere la sessione
+        originalUrl: String? = null // URL originale della pagina intermedia (per Referer)
     ) {
         Log.d("DownloadWorker", "Avvio download: $url")
         

@@ -25,7 +25,7 @@ class WebViewBackgroundDownloader(
         url: String,
         link: DownloadLink,
         delaySeconds: Int = 0,
-        onDownloadReady: (finalUrl: String, cookies: String, originalUrl: String) -> Unit
+        onDownloadReady: (finalUrl: String, cookies: String, originalUrl: String?) -> Unit
     ): Result<Unit> = suspendCancellableCoroutine { continuation ->
         try {
             val webView = WebView(context).apply {
