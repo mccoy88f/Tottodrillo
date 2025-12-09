@@ -25,7 +25,7 @@ class WebViewBackgroundDownloader(
         url: String,
         link: DownloadLink,
         delaySeconds: Int = 0,
-        onDownloadReady: (finalUrl: String, cookies: String) -> Unit
+        onDownloadReady: (finalUrl: String, cookies: String, originalUrl: String) -> Unit
     ): Result<Unit> = suspendCancellableCoroutine { continuation ->
         try {
             val webView = WebView(context).apply {
@@ -146,9 +146,9 @@ class WebViewBackgroundDownloader(
                                     
                                     val cookies = allCookies.joinToString("; ")
                                     
-                                    // Avvia il download
+                                    // Avvia il download passando anche l'URL originale (pagina intermedia)
                                     isResumed = true
-                                    onDownloadReady(finalUrl, cookies)
+                                    onDownloadReady(finalUrl, cookies, url) // url è l'URL originale della pagina intermedia
                                     continuation.resume(Result.success(Unit))
                                 } else {
                                     if (!isResumed) {

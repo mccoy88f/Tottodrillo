@@ -230,15 +230,19 @@ class DownloadWorker(
                 .header("Connection", "keep-alive")
                 .header("Upgrade-Insecure-Requests", "1")
             
-            // Aggiungi Referer: per NSWpedia usa sempre nswpedia.com, altrimenti usa intermediateUrl o dominio originale
+            // Aggiungi Referer: usa originalUrl (pagina intermedia) se disponibile, altrimenti usa intermediateUrl o dominio
             val refererForCookies = when {
-                // Per NSWpedia, usa sempre il dominio principale
-                url.contains("download.nswpediax.site") || url.contains("nswpedia") -> {
-                    "https://nswpedia.com/"
+                // Se c'è originalUrl (pagina intermedia da WebView), usalo (priorità massima)
+                originalUrl != null && originalUrl.isNotEmpty() -> {
+                    originalUrl
                 }
                 // Se c'è intermediateUrl, usalo
                 intermediateUrl != null && intermediateUrl.isNotEmpty() -> {
                     intermediateUrl
+                }
+                // Per NSWpedia, usa sempre il dominio principale come fallback
+                url.contains("download.nswpediax.site") || url.contains("nswpedia") -> {
+                    "https://nswpedia.com/"
                 }
                 // Altrimenti estrai il dominio principale dall'URL
                 else -> {
@@ -377,19 +381,28 @@ class DownloadWorker(
         } else {
             requestBuilder.url(url)
             
-            // Per URL NSWpedia (download.nswpediax.site), usa nswpedia.com come Referer
-            val refererUrl = if (url.contains("download.nswpediax.site") || url.contains("nswpedia")) {
-                // Per NSWpedia, il Referer deve essere il dominio principale, non quello di download
-                "https://nswpedia.com/"
-            } else if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
-                intermediateUrl
-            } else {
-                // Estrai il dominio principale dall'URL per usarlo come Referer
-                try {
-                    val urlObj = java.net.URL(url)
-                    "${urlObj.protocol}://${urlObj.host}/"
-                } catch (e: Exception) {
-                    null
+            // Usa originalUrl (pagina intermedia) come Referer se disponibile, altrimenti usa intermediateUrl o dominio
+            val refererUrl = when {
+                // Se c'è originalUrl (pagina intermedia da WebView), usalo (priorità massima)
+                originalUrl != null && originalUrl.isNotEmpty() -> {
+                    originalUrl
+                }
+                // Se c'è intermediateUrl, usalo
+                intermediateUrl != null && intermediateUrl.isNotEmpty() -> {
+                    intermediateUrl
+                }
+                // Per NSWpedia, usa sempre il dominio principale come fallback
+                url.contains("download.nswpediax.site") || url.contains("nswpedia") -> {
+                    "https://nswpedia.com/"
+                }
+                // Altrimenti estrai il dominio principale dall'URL per usarlo come Referer
+                else -> {
+                    try {
+                        val urlObj = java.net.URL(url)
+                        "${urlObj.protocol}://${urlObj.host}/"
+                    } catch (e: Exception) {
+                        null
+                    }
                 }
             }
             

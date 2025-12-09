@@ -673,10 +673,11 @@ class RomDetailViewModel @Inject constructor(
                                     url = link.url,
                                     link = link,
                                     delaySeconds = delaySeconds
-                                ) { finalUrl, cookies ->
+                                ) { finalUrl, cookies, originalUrl ->
                                     // URL e cookie pronti, avvia il download
+                                    // originalUrl è l'URL della pagina intermedia (quella con Cloudflare)
                                     countdownJob.cancel()
-                                    onWebViewDownloadUrlExtracted(finalUrl, link, cookies)
+                                    onWebViewDownloadUrlExtracted(finalUrl, link, cookies, originalUrl)
                                 }
                                 
                                 countdownJob.cancel()
@@ -750,7 +751,7 @@ class RomDetailViewModel @Inject constructor(
     /**
      * Gestisce l'URL finale estratto dal WebView con i cookie della sessione
      */
-    fun onWebViewDownloadUrlExtracted(finalUrl: String, link: DownloadLink, cookies: String) {
+    fun onWebViewDownloadUrlExtracted(finalUrl: String, link: DownloadLink, cookies: String, originalUrl: String? = null) {
         val currentRom = _uiState.value.rom ?: return
         
         // Chiudi il WebView
@@ -782,11 +783,14 @@ class RomDetailViewModel @Inject constructor(
                 // Crea un nuovo link con l'URL finale e il nome del file aggiornato (se modificato dal WebView)
                 val finalLink = link.copy(url = finalUrl, requiresWebView = false)
                 
+                // originalUrl è l'URL della pagina intermedia (quella con Cloudflare), da usare come Referer
+                val intermediateUrlForReferer = originalUrl ?: link.url
+                
                 val workId = downloadManager.startDownload(
                     romSlug = currentRom.slug,
                     romTitle = currentRom.title,
                     downloadLink = finalLink,
-                    originalUrl = link.url, // Passa l'URL originale per salvare anche quello nel file .status
+                    originalUrl = intermediateUrlForReferer, // URL della pagina intermedia per Referer
                     cookies = cookies // Passa i cookie dal WebView per mantenere la sessione
                 )
                 currentWorkId = workId
