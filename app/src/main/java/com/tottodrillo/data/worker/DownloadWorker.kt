@@ -230,19 +230,30 @@ class DownloadWorker(
                 .header("Connection", "keep-alive")
                 .header("Upgrade-Insecure-Requests", "1")
             
-            // Aggiungi Referer se è disponibile un intermediateUrl
-            // Usa intermediateUrl come Referer se disponibile (più accurato), altrimenti estrai il dominio dall'URL
-            if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
-                requestBuilder.header("Referer", intermediateUrl)
-            } else {
-                // Estrai il dominio principale dall'URL per usarlo come Referer
-                try {
-                    val urlObj = java.net.URL(url)
-                    val baseUrl = "${urlObj.protocol}://${urlObj.host}/"
-                    requestBuilder.header("Referer", baseUrl)
-                } catch (e: Exception) {
-                    // Ignora se non riesce a estrarre il dominio
+            // Aggiungi Referer: per NSWpedia usa sempre nswpedia.com, altrimenti usa intermediateUrl o dominio originale
+            val refererForCookies = when {
+                // Per NSWpedia, usa sempre il dominio principale
+                url.contains("download.nswpediax.site") || url.contains("nswpedia") -> {
+                    "https://nswpedia.com/"
                 }
+                // Se c'è intermediateUrl, usalo
+                intermediateUrl != null && intermediateUrl.isNotEmpty() -> {
+                    intermediateUrl
+                }
+                // Altrimenti estrai il dominio principale dall'URL
+                else -> {
+                    try {
+                        val urlObj = java.net.URL(url)
+                        "${urlObj.protocol}://${urlObj.host}/"
+                    } catch (e: Exception) {
+                        null
+                    }
+                }
+            }
+            
+            if (refererForCookies != null) {
+                requestBuilder.header("Referer", refererForCookies)
+                Log.d("DownloadWorker", "   Referer impostato (con cookie): $refererForCookies")
             }
         }
         
@@ -365,27 +376,41 @@ class DownloadWorker(
             Log.d("DownloadWorker", "   Referer impostato: $intermediateUrl")
         } else {
             requestBuilder.url(url)
+            
+            // Per URL NSWpedia (download.nswpediax.site), usa nswpedia.com come Referer
+            val refererUrl = if (url.contains("download.nswpediax.site") || url.contains("nswpedia")) {
+                // Per NSWpedia, il Referer deve essere il dominio principale, non quello di download
+                "https://nswpedia.com/"
+            } else if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
+                intermediateUrl
+            } else {
+                // Estrai il dominio principale dall'URL per usarlo come Referer
+                try {
+                    val urlObj = java.net.URL(url)
+                    "${urlObj.protocol}://${urlObj.host}/"
+                } catch (e: Exception) {
+                    null
+                }
+            }
+            
             // Se non abbiamo cookie dal WebView, aggiungi header di default
             if (cookies == null || cookies.isEmpty()) {
                 requestBuilder
                     .header("User-Agent", "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36")
                     .header("Accept", "*/*")
                 
-                // Aggiungi Referer anche se non abbiamo cookie (potrebbe essere necessario)
-                if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
-                    requestBuilder.header("Referer", intermediateUrl)
-                } else {
-                    // Estrai il dominio principale dall'URL per usarlo come Referer
-                    try {
-                        val urlObj = java.net.URL(url)
-                        val baseUrl = "${urlObj.protocol}://${urlObj.host}/"
-                        requestBuilder.header("Referer", baseUrl)
-                    } catch (e: Exception) {
-                        // Ignora se non riesce a estrarre il dominio
-                    }
+                // Aggiungi Referer
+                if (refererUrl != null) {
+                    requestBuilder.header("Referer", refererUrl)
+                    Log.d("DownloadWorker", "   Referer impostato: $refererUrl")
+                }
+            } else {
+                // Anche se abbiamo cookie, assicuriamoci che il Referer sia corretto
+                if (refererUrl != null) {
+                    requestBuilder.header("Referer", refererUrl)
+                    Log.d("DownloadWorker", "   Referer impostato (con cookie): $refererUrl")
                 }
             }
-            // I cookie dal WebView sono già stati aggiunti sopra se presenti
         }
         
         val request = requestBuilder.build()
