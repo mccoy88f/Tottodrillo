@@ -51,7 +51,7 @@ class SourceInstaller @Inject constructor(
                 // Se il file è in una sottocartella, sposta tutto nella root di tempDir
                 val metadataDir = metadataFile.parentFile
                 if (metadataDir != null && metadataDir != tempDir) {
-                    // Il file è in una sottocartella (es. crocdb/source.json)
+                    // Il file è in una sottocartella
                     // Sposta tutti i file dalla sottocartella alla root
                     metadataDir.listFiles()?.forEach { file ->
                         val targetFile = File(tempDir, file.name)

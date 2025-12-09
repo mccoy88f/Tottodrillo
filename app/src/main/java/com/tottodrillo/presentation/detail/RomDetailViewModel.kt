@@ -629,8 +629,8 @@ class RomDetailViewModel @Inject constructor(
             else -> {
                 // Se il link richiede WebView, gestisci in base al delay specificato dalla source
                 if (link.requiresWebView) {
-                    // Se c'è un delay > 0, usa il background downloader (es. link diretti NSWpedia con Cloudflare)
-                    // Se delaySeconds è null o 0, apri il WebView dialog visibile (es. link non diretti NSWpedia)
+                    // Se c'è un delay > 0, usa il background downloader (per challenge Cloudflare o altre validazioni server)
+                    // Se delaySeconds è null o 0, apri il WebView dialog visibile
                     if (link.delaySeconds != null && link.delaySeconds!! > 0) {
                         val delaySeconds = link.delaySeconds!!
                         viewModelScope.launch {
@@ -707,7 +707,7 @@ class RomDetailViewModel @Inject constructor(
                             }
                     }
                 } else {
-                        // Se non c'è delay, apri direttamente il WebView dialog (es. link non diretti NSWpedia)
+                        // Se non c'è delay, apri direttamente il WebView dialog
                         _uiState.update {
                             it.copy(
                                 showWebView = true,

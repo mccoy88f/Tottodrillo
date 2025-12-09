@@ -55,7 +55,7 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
     }
     
     /**
-     * Configura ImageLoader globale per Coil con supporto SVG e CookieJar per Vimm's Lair
+     * Configura ImageLoader globale per Coil con supporto SVG e CookieJar per sorgenti che richiedono cookie
      */
     override fun newImageLoader(): ImageLoader {
         // Nota: SourceManager viene iniettato da Hilt, ma potrebbe non essere disponibile
@@ -71,15 +71,16 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
             }
             
             override fun loadForRequest(url: HttpUrl): List<Cookie> {
-                // Per Vimm's Lair, se stiamo caricando un'immagine, visita prima la pagina ROM
-                // per ottenere i cookie di sessione (solo una volta per ROM)
-                if (url.host.contains("vimm.net") && url.encodedPath.contains("/image.php")) {
+                // Per sorgenti che richiedono cookie di sessione per le immagini, visita prima la pagina ROM
+                // per ottenere i cookie (solo una volta per ROM)
+                if (url.encodedPath.contains("/image.php")) {
                     // Estrai l'ID della ROM dall'URL dell'immagine
                     val romId = url.queryParameter("id")
                     if (romId != null && !visitedRomPages.contains(romId)) {
                         visitedRomPages.add(romId)
-                        // Visita la pagina ROM per ottenere i cookie (usa un client separato per evitare loop)
-                        val romPageUrl = "https://vimm.net/vault/$romId".toHttpUrl()
+                        // Costruisci l'URL della pagina ROM estraendo il dominio base
+                        val baseUrl = "${url.scheme}://${url.host}"
+                        val romPageUrl = "$baseUrl/vault/$romId".toHttpUrl()
                         try {
                             // Usa un client temporaneo con gestione SSL per visitare la pagina ROM
                             // Nota: In produzione, dovresti usare certificati validi
@@ -116,7 +117,7 @@ class TottodrilloApp : Application(), ImageLoaderFactory {
             }
         }
         
-        // Configura SSL per accettare certificati (necessario per Vimm's Lair)
+        // Configura SSL per accettare certificati (necessario per alcune sorgenti con certificati self-signed)
         // Nota: In produzione, dovresti usare certificati validi
         val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(
             object : javax.net.ssl.X509TrustManager {

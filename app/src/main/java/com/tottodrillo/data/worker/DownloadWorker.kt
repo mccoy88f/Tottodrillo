@@ -35,7 +35,7 @@ class DownloadWorker(
     companion object {
         const val KEY_URL = "download_url"
         const val KEY_ORIGINAL_URL = "original_url" // URL originale del link (se diverso dall'URL finale)
-        const val KEY_INTERMEDIATE_URL = "intermediate_url" // URL pagina intermedia da visitare per cookie (es. NSWpedia)
+        const val KEY_INTERMEDIATE_URL = "intermediate_url" // URL pagina intermedia da visitare per cookie
         const val KEY_DELAY_SECONDS = "delay_seconds" // Secondi da attendere prima del download
         const val KEY_COOKIES = "cookies" // Cookie dal WebView per mantenere la sessione (es. Cloudflare)
         const val KEY_FILE_NAME = "file_name"
@@ -69,7 +69,7 @@ class DownloadWorker(
         }
     }
 
-    // Configura SSL per accettare certificati (necessario per Vimm's Lair)
+    // Configura SSL per accettare certificati (necessario per alcune sorgenti con certificati self-signed)
     // Nota: In produzione, dovresti usare certificati validi
     private val trustAllCerts = arrayOf<javax.net.ssl.TrustManager>(
         object : javax.net.ssl.X509TrustManager {
@@ -230,28 +230,44 @@ class DownloadWorker(
                 .header("Connection", "keep-alive")
                 .header("Upgrade-Insecure-Requests", "1")
             
-            // Aggiungi Referer se è un link NSWpedia
-            // Usa intermediateUrl come Referer se disponibile (più accurato), altrimenti usa il dominio principale
-            if (url.contains("nswpedia") || url.contains("download.nswpediax.site")) {
-                val refererUrl = if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
-                    intermediateUrl
-                } else {
-                    "https://nswpedia.com/"
+            // Aggiungi Referer se è disponibile un intermediateUrl
+            // Usa intermediateUrl come Referer se disponibile (più accurato), altrimenti estrai il dominio dall'URL
+            if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
+                requestBuilder.header("Referer", intermediateUrl)
+            } else {
+                // Estrai il dominio principale dall'URL per usarlo come Referer
+                try {
+                    val urlObj = java.net.URL(url)
+                    val baseUrl = "${urlObj.protocol}://${urlObj.host}/"
+                    requestBuilder.header("Referer", baseUrl)
+                } catch (e: Exception) {
+                    // Ignora se non riesce a estrarre il dominio
                 }
-                requestBuilder.header("Referer", refererUrl)
             }
         }
         
-        // Per link con intermediateUrl (es. NSWpedia link diretti), visita la pagina intermedia per ottenere cookie
+        // Per link con intermediateUrl, visita la pagina intermedia per ottenere cookie
         // NOTA: Il delay è già stato gestito nel ViewModel con countdown visibile, qui visitiamo solo per i cookie
         if (intermediateUrl != null) {
             Log.d("DownloadWorker", "🔧 Rilevato intermediateUrl, visito pagina intermedia per cookie: $intermediateUrl")
             try {
+                // Estrai il dominio principale dall'intermediateUrl per usarlo come Referer
+                val refererUrl = try {
+                    val urlObj = java.net.URL(intermediateUrl)
+                    "${urlObj.protocol}://${urlObj.host}/"
+                } catch (e: Exception) {
+                    ""
+                }
+                
                 val intermediateRequest = Request.Builder()
                     .url(intermediateUrl)
                     .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36")
                     .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-                    .header("Referer", "https://nswpedia.com/")
+                    .apply {
+                        if (refererUrl.isNotEmpty()) {
+                            header("Referer", refererUrl)
+                        }
+                    }
                     .build()
                 
                 okHttpClient.newCall(intermediateRequest).execute().use { intermediateResponse ->
@@ -266,64 +282,87 @@ class DownloadWorker(
             }
         }
         
-        // Per Vimm's Lair, visita prima la pagina ROM per ottenere i cookie di sessione
-        if (url.contains("vimm.net") && url.contains("mediaId")) {
-            Log.d("DownloadWorker", "🔧 Rilevato URL Vimm's Lair, visito pagina ROM per cookie")
+        // Per URL con mediaId (Vimm's Lair), usa intermediateUrl se disponibile (stesso sistema di NSWpedia)
+        // Se intermediateUrl è presente, viene già gestito sopra nel blocco "Per link con intermediateUrl"
+        // Se non presente, mantieni la logica legacy per retrocompatibilità
+        if (url.contains("mediaId") && intermediateUrl == null) {
+            Log.d("DownloadWorker", "🔧 Rilevato URL con mediaId senza intermediateUrl (legacy), uso logica fallback")
+            Log.d("DownloadWorker", "   URL download: $url")
+            Log.d("DownloadWorker", "   romSlug ricevuto: $romSlug")
             
             // Estrai mediaId e alt dall'URL
             val mediaId = url.substringAfter("mediaId=").substringBefore("&")
             val alt = if (url.contains("alt=")) url.substringAfter("alt=").substringBefore("&") else null
+            Log.d("DownloadWorker", "   mediaId estratto: $mediaId")
             
-            // Costruisci l'URL della pagina ROM
+            // Costruisci l'URL della pagina ROM come fallback (se romSlug disponibile)
             val romPageUrl = if (romSlug != null && romSlug.isNotEmpty()) {
-                "https://vimm.net/vault/$romSlug"
-            } else {
-                // Se non abbiamo lo slug, prova a estrarre l'ID dall'URL originale
-                // Questo è un fallback, idealmente dovremmo sempre avere lo slug
-                "https://vimm.net/vault/"
-            }
-            
-            // Visita la pagina ROM per ottenere i cookie di sessione
-            val cookieStore = okHttpClient.cookieJar
-            try {
-                val pageRequest = Request.Builder()
-                    .url(romPageUrl)
-                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
-                    .build()
-                
-                okHttpClient.newCall(pageRequest).execute().use { pageResponse ->
-                    if (pageResponse.isSuccessful) {
-                        // I cookie vengono salvati automaticamente dal CookieJar
+                if (romSlug.startsWith("/vault/")) {
+                    "https://vimm.net$romSlug"
+                } else if (romSlug.startsWith("vault/")) {
+                    "https://vimm.net/$romSlug"
+                } else if (romSlug.all { it.isDigit() }) {
+                    "https://vimm.net/vault/$romSlug"
+                } else {
+                    val idMatch = Regex("vault-?(\\d+)").find(romSlug)
+                    if (idMatch != null) {
+                        "https://vimm.net/vault/${idMatch.groupValues[1]}"
                     } else {
-                        Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina ROM: ${pageResponse.code}")
+                        "https://vimm.net/vault/$romSlug"
                     }
                 }
-            } catch (e: Exception) {
-                Log.w("DownloadWorker", "⚠️ Errore nel visitare pagina ROM: ${e.message}")
-            }
-            
-            // Costruisci l'URL di download nel formato corretto
-            // Il dominio può essere dl2 o dl3 a seconda della ROM (estratto dal form)
-            val downloadUrl = if (url.contains("dl2.vimm.net") || url.contains("dl3.vimm.net")) {
-                // URL già nel formato corretto
-                url
             } else {
-                // Usa dl2 come default (più comune), l'URL dovrebbe già contenere il dominio corretto
-                // Se non presente, prova dl2
-                val baseUrl = "https://dl2.vimm.net/?mediaId=$mediaId"
-                if (alt != null) {
-                    "$baseUrl&alt=$alt"
-                } else {
-                    baseUrl
-                }
+                null
             }
             
+            if (romPageUrl != null) {
+                Log.d("DownloadWorker", "   ⚠️ Usando fallback: visita pagina ROM: $romPageUrl")
+                // Visita la pagina ROM per ottenere i cookie (fallback)
+                try {
+                    val pageRequest = Request.Builder()
+                        .url(romPageUrl)
+                        .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                        .build()
+                    
+                    okHttpClient.newCall(pageRequest).execute().use { pageResponse ->
+                        if (pageResponse.isSuccessful) {
+                            Log.d("DownloadWorker", "✅ Pagina ROM visitata (fallback): $romPageUrl")
+                        } else {
+                            Log.w("DownloadWorker", "⚠️ Impossibile visitare pagina ROM (fallback): ${pageResponse.code}")
+                        }
+                    }
+                } catch (e: Exception) {
+                    Log.w("DownloadWorker", "⚠️ Errore nel visitare pagina ROM (fallback): ${e.message}")
+                }
+                
+                // Costruisci l'URL di download
+                val downloadUrl = if (url.contains("dl2.vimm.net") || url.contains("dl3.vimm.net")) {
+                    url
+                } else {
+                    val baseUrl = "https://dl2.vimm.net/?mediaId=$mediaId"
+                    if (alt != null) "$baseUrl&alt=$alt" else baseUrl
+                }
+                
+                requestBuilder
+                    .url(downloadUrl)
+                    .header("Referer", romPageUrl)
+                    .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                    .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
+            } else {
+                // Se non abbiamo romPageUrl, usa l'URL originale
+                requestBuilder.url(url)
+            }
+        } else if (url.contains("mediaId") && intermediateUrl != null) {
+            // Se abbiamo intermediateUrl per URL con mediaId (Vimm's Lair con nuovo sistema)
+            // La pagina ROM è già stata visitata sopra nel blocco "Per link con intermediateUrl"
+            // Qui impostiamo solo l'URL di download e il Referer
             requestBuilder
-                .url(downloadUrl)
-                .header("Referer", romPageUrl)
+                .url(url)
+                .header("Referer", intermediateUrl)  // Usa intermediateUrl come Referer (pagina ROM originale)
                 .header("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
                 .header("Accept", "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8")
-            // I cookie dal WebView sono già stati aggiunti sopra se presenti
+            Log.d("DownloadWorker", "✅ URL con mediaId usa intermediateUrl (sistema NSWpedia): $intermediateUrl")
+            Log.d("DownloadWorker", "   Referer impostato: $intermediateUrl")
         } else {
             requestBuilder.url(url)
             // Se non abbiamo cookie dal WebView, aggiungi header di default
@@ -333,13 +372,17 @@ class DownloadWorker(
                     .header("Accept", "*/*")
                 
                 // Aggiungi Referer anche se non abbiamo cookie (potrebbe essere necessario)
-                if (url.contains("nswpedia") || url.contains("download.nswpediax.site")) {
-                    val refererUrl = if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
-                        intermediateUrl
-                    } else {
-                        "https://nswpedia.com/"
+                if (intermediateUrl != null && intermediateUrl.isNotEmpty()) {
+                    requestBuilder.header("Referer", intermediateUrl)
+                } else {
+                    // Estrai il dominio principale dall'URL per usarlo come Referer
+                    try {
+                        val urlObj = java.net.URL(url)
+                        val baseUrl = "${urlObj.protocol}://${urlObj.host}/"
+                        requestBuilder.header("Referer", baseUrl)
+                    } catch (e: Exception) {
+                        // Ignora se non riesce a estrarre il dominio
                     }
-                    requestBuilder.header("Referer", refererUrl)
                 }
             }
             // I cookie dal WebView sono già stati aggiunti sopra se presenti

@@ -44,7 +44,7 @@ This README is also available in other languages:
 - **Dynamic Source Installation**: Install new ROM sources via ZIP packages without updating the app
 - **Multiple Source Types**: Support for API, Java/Kotlin, and Python sources
 - **Source Management**: Enable/disable, install, uninstall, and update sources from settings
-- **Default Sources**: Automatic installation of CrocDB and Vimm's Lair on first launch
+- **Default Sources**: Automatic installation of default sources on first launch
 - **Source Filtering**: Filter search results by selected sources
 - **Automatic Refresh**: UI updates automatically when sources are enabled/disabled
 - **Platform Mapping**: Each source includes its own platform mapping for seamless integration
@@ -80,7 +80,7 @@ This README is also available in other languages:
   - WiFi-only downloads to save mobile data
   - Available space verification before download
   - Configurable notifications
-- **Session Management**: Automatic cookie handling for sources that require it (e.g., Vimm's Lair)
+- **Session Management**: Automatic cookie handling for sources that require it
 
 ### 💾 ROM Management
 - **Favorites** with file-based persistence
@@ -113,7 +113,7 @@ This README is also available in other languages:
   - Install new sources from ZIP files
   - Update existing sources
   - Uninstall sources
-  - Install default sources (CrocDB and Vimm's Lair)
+  - Install default sources
 - **ROM Info Search**:
   - Choose search provider (Gamefaqs or MobyGames)
   - Gamefaqs is the default provider
@@ -238,9 +238,9 @@ cd Tottodrillo
 
 ### Configuration
 
-No API key is required. The app uses public APIs from installed sources:
-- **CrocDB**: Base URL: `https://api.crocdb.net/`
-- **Vimm's Lair**: Web scraping via Python (included as default source)
+No API key is required. The app uses public APIs from installed sources. Each source can be either:
+- **API-based**: HTTP REST API endpoints
+- **Python-based**: Web scraping via Python scripts
 
 ## 📦 Build
 
@@ -264,7 +264,7 @@ The APK will be generated in: `app/build/outputs/apk/`
 - **Version Management**: Update sources with newer versions (preserves enabled state)
 - **Enable/Disable**: Toggle sources on/off without uninstalling
 - **Uninstallation**: Remove sources completely
-- **Default Sources**: Automatic installation of CrocDB and Vimm's Lair on first launch
+- **Default Sources**: Automatic installation of default sources on first launch
 - **Cache Management**: Automatic cache invalidation when sources change
 - **Platform Mapping**: Each source defines its own platform code mapping
 
@@ -301,7 +301,7 @@ The APK will be generated in: `app/build/outputs/apk/`
 
 Tottodrillo supports three types of sources:
 
-1. **API Sources**: HTTP REST API endpoints (like CrocDB)
+1. **API Sources**: HTTP REST API endpoints
 2. **Java/Kotlin Sources**: Local Java/Kotlin code execution
 3. **Python Sources**: Local Python script execution (using Chaquopy)
 
@@ -361,9 +361,7 @@ This project is released under the MIT License. See the [LICENSE](LICENSE) file 
 ## 🙏 Acknowledgments
 
 ### APIs & Database
-- [CrocDB](https://crocdb.net) for public APIs and ROM database
-- [cavv-dev](https://github.com/cavv-dev) for the ROM database and API
-- [Vimm's Lair](https://vimm.net) for ROM preservation
+- Various public ROM databases and sources
 
 ### Platform Logos
 Platform SVG logos are provided by:

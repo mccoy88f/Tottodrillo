@@ -31,7 +31,7 @@ data class MotherPlatform(
 )
 
 /**
- * Modello per crocdb.sourcesetting
+ * Modello per source setting
  */
 data class SourceSetting(
     @SerializedName("source_name")

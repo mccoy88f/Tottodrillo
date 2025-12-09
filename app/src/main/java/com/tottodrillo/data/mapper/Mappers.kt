@@ -96,7 +96,7 @@ fun Map.Entry<String, String>.toRegionInfo(): RegionInfo =
 
 /**
  * Normalizza il nome di una regione in un codice standardizzato
- * Gestisce i casi in cui le sorgenti restituiscono nomi invece di codici (es. Vimm's Lair)
+ * Gestisce i casi in cui le sorgenti restituiscono nomi invece di codici
  */
 private fun normalizeRegionNameToCode(regionName: String, sourceId: String?): String {
     // Se è già un codice standardizzato (2-3 lettere maiuscole), restituiscilo

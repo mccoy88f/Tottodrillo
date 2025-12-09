@@ -3,7 +3,7 @@ package com.tottodrillo.data.model
 import com.google.gson.annotations.SerializedName
 
 /**
- * Risposta standard API CrocDB
+ * Risposta standard API
  */
 data class ApiResponse<T>(
     @SerializedName("info")
@@ -100,7 +100,7 @@ data class RomLink(
     @SerializedName("delay_seconds")
     val delaySeconds: Int? = null, // Secondi da attendere prima di avviare il download (es. per validazione server)
     @SerializedName("intermediate_url")
-    val intermediateUrl: String? = null // URL della pagina intermedia da visitare per ottenere cookie (es. per link diretti NSWpedia)
+    val intermediateUrl: String? = null // URL della pagina intermedia da visitare per ottenere cookie
 )
 
 /**

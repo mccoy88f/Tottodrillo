@@ -287,13 +287,19 @@ fun WebViewDownloadDialog(
                                             val cookieManager = CookieManager.getInstance()
                                             cookieManager.setAcceptCookie(true)
                                             
-                                            // Estrai cookie dal dominio principale (nswpedia.com) per Cloudflare
-                                            val mainDomainCookies = cookieManager.getCookie("https://nswpedia.com") ?: ""
+                                            // Estrai cookie dal dominio principale (estratto dall'URL originale)
+                                            val mainDomainCookies = try {
+                                                val originalUrlObj = java.net.URL(url)
+                                                val mainDomain = "${originalUrlObj.protocol}://${originalUrlObj.host}"
+                                                cookieManager.getCookie(mainDomain) ?: ""
+                                            } catch (e: Exception) {
+                                                ""
+                                            }
                                             
                                             // Estrai cookie dall'URL di download specifico
                                             val downloadUrlCookies = cookieManager.getCookie(newUrl) ?: ""
                                             
-                                            // Estrai anche cookie dal dominio di download (download.nswpediax.site)
+                                            // Estrai anche cookie dal dominio di download
                                             val downloadDomainCookies = try {
                                                 val urlObj = java.net.URL(newUrl)
                                                 val downloadDomain = "${urlObj.protocol}://${urlObj.host}"
@@ -399,8 +405,14 @@ fun WebViewDownloadDialog(
                                     val cookieManager = CookieManager.getInstance()
                                     cookieManager.setAcceptCookie(true)
                                     
-                                    // Estrai cookie dal dominio principale (nswpedia.com) per Cloudflare
-                                    val mainDomainCookies = cookieManager.getCookie("https://nswpedia.com") ?: ""
+                                    // Estrai cookie dal dominio principale (estratto dall'URL originale)
+                                    val mainDomainCookies = try {
+                                        val originalUrlObj = java.net.URL(url)
+                                        val mainDomain = "${originalUrlObj.protocol}://${originalUrlObj.host}"
+                                        cookieManager.getCookie(mainDomain) ?: ""
+                                    } catch (e: Exception) {
+                                        ""
+                                    }
                                     
                                     // Estrai cookie dall'URL di download specifico
                                     val downloadUrlCookies = cookieManager.getCookie(url) ?: ""

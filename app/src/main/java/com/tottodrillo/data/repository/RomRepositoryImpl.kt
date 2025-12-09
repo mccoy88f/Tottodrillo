@@ -942,26 +942,16 @@ class RomRepositoryImpl @Inject constructor(
      * Prova vari pattern comuni per le sorgenti
      */
     private fun extractSlugFromUrlOrFileName(url: String, fileName: String): String? {
-        // Pattern comuni per estrarre lo slug:
-        // 1. Vimm's Lair: https://vimm.net/vault/{slug}
-        // 2. SwitchRoms: https://switchroms.io/roms/{slug}
-        // 3. CrocDB: potrebbe essere nell'URL o nel nome del file
-        
-        // Prova Vimm's Lair
-        val vimmPattern = Regex("vimm\\.net/vault/([^/?]+)")
-        vimmPattern.find(url)?.let {
+        // Pattern comuni per estrarre lo slug da URL di varie sorgenti
+        // Prova pattern generico per URL con /vault/{slug}
+        val vaultPattern = Regex("/(?:vault|roms)/([^/?]+)")
+        vaultPattern.find(url)?.let {
             return it.groupValues[1]
         }
         
-        // Prova SwitchRoms
-        val switchRomsPattern = Regex("switchroms\\.io/roms/([^/?]+)")
-        switchRomsPattern.find(url)?.let {
-            return it.groupValues[1]
-        }
-        
-        // Prova CrocDB (potrebbe avere slug nell'URL)
-        val crocdbPattern = Regex("crocdb\\.net/.*?/([^/?]+)")
-        crocdbPattern.find(url)?.let {
+        // Prova pattern generico per URL con percorso dopo il dominio
+        val genericPattern = Regex("://[^/]+/([^/?]+)")
+        genericPattern.find(url)?.let {
             return it.groupValues[1]
         }
         

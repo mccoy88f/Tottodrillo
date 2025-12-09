@@ -86,7 +86,7 @@ data class DownloadLink(
     val sourceId: String? = null, // ID della sorgente che ha fornito questo link
     val requiresWebView: Boolean = false, // Se true, l'URL richiede un WebView per gestire JavaScript/countdown
     val delaySeconds: Int? = null, // Secondi da attendere prima di avviare il download (es. per validazione server)
-    val intermediateUrl: String? = null // URL della pagina intermedia da visitare per ottenere cookie (es. per link diretti NSWpedia)
+    val intermediateUrl: String? = null // URL della pagina intermedia da visitare per ottenere cookie
 )
 
 /**

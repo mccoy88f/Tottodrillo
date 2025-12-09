@@ -14,7 +14,7 @@ import retrofit2.http.Query
 
 /**
  * API Service
- * Base URL: https://api.crocdb.net
+ * API Service per sorgenti API-based
  */
 interface ApiService {
 
