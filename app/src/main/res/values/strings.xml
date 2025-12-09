@@ -1,0 +1,267 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Tottodrillo</string>
+    
+    <!-- Navigation -->
+    <string name="nav_home">Home</string>
+    <string name="nav_search">Cerca</string>
+    <string name="nav_explore">Esplora</string>
+    <string name="nav_downloads">Downloads</string>
+    <string name="nav_favorites">Preferiti</string>
+    <string name="nav_settings">Impostazioni</string>
+    
+    <!-- Common -->
+    <string name="search">Cerca</string>
+    <string name="cancel">Annulla</string>
+    <string name="ok">OK</string>
+    <string name="back">Indietro</string>
+    <string name="close">Chiudi</string>
+    <string name="loading">Caricamento…</string>
+    <string name="error">Errore</string>
+    <string name="retry">Riprova</string>
+    <string name="refresh">Ricarica</string>
+    <string name="favorite">Preferito</string>
+    <string name="settings">Impostazioni</string>
+    
+    <!-- Home -->
+    <string name="home_welcome">Esplora il mondo</string>
+    <string name="home_subtitle">del retro gaming</string>
+    <string name="home_featured">In Evidenza</string>
+    <string name="home_featured_mobygames">In evidenza (by MobyGames)</string>
+    <string name="home_popular_platforms">Piattaforme Popolari</string>
+    <string name="home_recent">Recenti</string>
+    <string name="home_downloaded">Scaricate/Installate</string>
+    <string name="home_favorites">Preferiti</string>
+    <string name="see_all">Vedi tutti</string>
+    
+    <!-- Search -->
+    <string name="search_hint">Cerca ROM per titolo…</string>
+    <string name="search_no_results">Nessun risultato per \"%1$s\"</string>
+    <string name="search_filters">Filtri</string>
+    <string name="search_clear_filters">Cancella filtri</string>
+    <string name="search_platforms">Piattaforme</string>
+    <string name="search_regions">Regioni</string>
+    <string name="search_sources">Sorgenti</string>
+    
+    <!-- Downloads -->
+    <string name="downloads_title">Downloads</string>
+    <string name="downloads_active">Download attivi</string>
+    <string name="downloads_completed">Completati</string>
+    <string name="downloads_failed">Falliti</string>
+    <string name="downloads_empty">Nessun download attivo</string>
+    <string name="download_cancel">Annulla download</string>
+    <string name="download_retry">Riprova</string>
+    
+    <!-- Settings -->
+    <string name="settings_download_path">Percorso Download</string>
+    <string name="settings_download_folder">Cartella di download</string>
+    <string name="settings_available_space">Spazio disponibile: %1$s</string>
+    <string name="settings_sources">Sorgenti</string>
+    <string name="settings_main_source">Sorgente principale</string>
+    <string name="settings_version_label">Versione %1$s</string>
+    <string name="settings_author_label">Autore: %1$s</string>
+    <string name="settings_support_message">Se ti piace questo progetto, sostienilo con ora!</string>
+    <string name="settings_auto_extract">Estrazione automatica</string>
+    <string name="settings_auto_extract_desc">Estrai automaticamente file ZIP dopo il download</string>
+    <string name="settings_delete_archives">Elimina archivi</string>
+    <string name="settings_delete_archives_desc">Elimina archivi ZIP dopo l\'estrazione</string>
+    <string name="settings_wifi_only">Solo WiFi</string>
+    <string name="settings_wifi_only_desc">Scarica solo quando connesso a WiFi</string>
+    <string name="settings_notifications">Notifiche</string>
+    <string name="settings_notifications_desc">Mostra notifiche per download, installazioni e aggiornamenti</string>
+    <string name="settings_rom_info_search">Ricerca info sulle ROMs</string>
+    <string name="settings_rom_info_search_gamefaqs">Gamefaqs</string>
+    <string name="settings_rom_info_search_mobygames">MobyGames</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_title">Dettaglio ROM</string>
+    <string name="rom_detail_search_mobygames">Cerca su MobyGames</string>
+    <string name="rom_detail_search_gamefaqs">Cerca su Gamefaqs</string>
+    <string name="mobygames_search_title">Cerca su MobyGames</string>
+    <string name="mobygames_search_error">Errore nel caricamento della pagina</string>
+    <string name="rom_info_search_title">Ricerca info ROM</string>
+    <string name="rom_info_search_title_gamefaqs">Cerca su Gamefaqs</string>
+    <string name="rom_info_search_title_mobygames">Cerca su MobyGames</string>
+    <string name="rom_info_search_error">Errore nel caricamento della pagina</string>
+    <string name="rom_detail_platform">Piattaforma</string>
+    <string name="rom_detail_region">Regione</string>
+    <string name="rom_detail_release_date">Data di Rilascio</string>
+    <string name="rom_detail_download">Download</string>
+    <string name="rom_detail_downloaded">Scaricato</string>
+    <string name="rom_detail_download_progress">%1$d%%</string>
+    <string name="rom_detail_waiting">Attesa %1$d s</string>
+    <string name="rom_detail_cancel_download">Interrompi</string>
+    <string name="rom_detail_extract">Estrai</string>
+    <string name="rom_detail_copy">Copia</string>
+    <string name="rom_detail_extract_archive">Estrai archivio</string>
+    <string name="rom_detail_copy_file">Copia file</string>
+    <string name="rom_detail_extraction_progress">%1$d%%</string>
+    <string name="rom_detail_extraction_completed">Estrazione completata</string>
+    <string name="rom_detail_extraction_failed">Estrazione fallita</string>
+    <string name="rom_detail_open_folder">Apri cartella estrazione</string>
+    <string name="rom_detail_retry_extraction">Riprova estrazione</string>
+    <string name="rom_detail_no_download_links">Nessun link di download disponibile</string>
+    <string name="rom_detail_loading_links">Caricamento link di download…</string>
+    <string name="rom_detail_no_download_links_desc">Questa ROM potrebbe non avere link di download disponibili per questa sorgente.</string>
+    <string name="rom_detail_downloading">Download in corso…</string>
+    <string name="rom_detail_installing">Installazione in corso…</string>
+    
+    <!-- Notifications -->
+    <string name="notif_download_progress">Download in corso</string>
+    <string name="notif_download_completed">Download completato</string>
+    <string name="notif_download_failed">Download fallito</string>
+    <string name="notif_extracting">Estrazione in corso…</string>
+    <string name="notif_extraction_completed">Estrazione completata</string>
+    <string name="notif_installation_progress">Installazione in corso</string>
+    <string name="notif_installation_completed">Installazione completata</string>
+    <string name="notif_installation_failed">Installazione fallita</string>
+    <string name="notif_cancel_download">Interrompi download</string>
+    <string name="notif_cancel_installation">Interrompi installazione</string>
+    <string name="notif_update_download_progress">Download aggiornamento in corso</string>
+    <string name="notif_update_download_completed">Download aggiornamento completato</string>
+    <string name="notif_update_download_failed">Download aggiornamento fallito</string>
+    <string name="notif_source_update_download_progress">Download aggiornamento sorgente in corso</string>
+    <string name="notif_source_update_download_completed">Aggiornamento sorgente completato</string>
+    <string name="notif_source_update_download_failed">Aggiornamento sorgente fallito</string>
+    
+    <!-- WebView Download Dialog -->
+    <string name="webview_download_title">Avvio download manuale</string>
+    <string name="webview_popup_closed">Popup chiuso. Ora puoi ricliccare su download</string>
+    
+    <!-- ROM Detail -->
+    <string name="rom_detail_extraction_path">Percorso: %1$s\nApri manualmente con un file manager</string>
+    <string name="rom_detail_invalid_slug">Slug ROM non valido</string>
+    <string name="rom_detail_download_error">Errore nell\'avvio del download</string>
+    <string name="rom_detail_extraction_error">Errore nell\'avvio dell\'estrazione</string>
+    <string name="rom_detail_open_folder_chooser">Apri cartella</string>
+    
+    <!-- Explore -->
+    <string name="explore_title">Esplora Piattaforme</string>
+    <string name="explore_no_platforms">Nessuna piattaforma disponibile</string>
+    
+    <!-- Settings -->
+    <string name="settings_title">Impostazioni</string>
+    <string name="settings_download_path_desc">Seleziona la cartella dove salvare i file scaricati</string>
+    <string name="settings_delete_after_extraction">Cancella file originale dopo l\'installazione</string>
+    <string name="settings_delete_after_extraction_desc">Elimina il file scaricato dopo l\'installazione completata</string>
+    <string name="settings_installation">Installazione</string>
+    <string name="settings_clear_history">Cancella storico download ed installazioni</string>
+    <string name="settings_clear_history_desc">Elimina tutti i file .status nella cartella di download predefinita</string>
+    <string name="settings_clear_history_confirm">Cancella</string>
+    <string name="settings_clear_history_dialog_title">Cancella storico download ed estrazioni</string>
+    <string name="settings_clear_history_dialog_message">Questa azione eliminerà tutti i file .status nella cartella di download predefinita. Questa operazione non può essere annullata.</string>
+    <string name="settings_clear_history_dialog_confirm">Cancella</string>
+    <string name="settings_clear_history_dialog_cancel">Annulla</string>
+    <string name="settings_esde_compatibility">Abilita compatibilità con ES-DE</string>
+    <string name="settings_esde_compatibility_desc">Installa automaticamente le ROM nelle sottocartelle ES-DE</string>
+    <string name="settings_esde_folder">Cartella ROMs di ES-DE</string>
+    <string name="settings_esde_folder_not_selected">Non selezionata</string>
+    <string name="settings_network">Rete</string>
+    <string name="settings_storage_permission">Permessi Storage</string>
+    <string name="settings_storage_permission_desc">Consenti accesso completo ai file per download ed estrazioni su qualsiasi cartella</string>
+    <string name="settings_storage_permission_granted">Permesso concesso</string>
+    <string name="settings_storage_permission_denied">Permesso negato</string>
+    <string name="settings_storage_permission_request">Richiedi permesso</string>
+    <string name="storage_permission_rationale">Per scaricare ed estrarre ROM su qualsiasi cartella (inclusa SD card), è necessario concedere l\'accesso completo ai file. Questo permesso è richiesto solo su Android 11 e versioni successive.</string>
+    <string name="storage_permission_required">Permesso di accesso ai file richiesto</string>
+    <string name="storage_permission_required_message">Per procedere con il download, è necessario concedere l\'accesso completo ai file nelle impostazioni.</string>
+    <string name="storage_permission_open_settings">Apri Impostazioni</string>
+    <string name="settings_app_info">Informazioni App</string>
+    <string name="settings_version">Versione</string>
+    <string name="settings_author">Autore</string>
+    <string name="settings_github">GitHub</string>
+    <string name="settings_support_me">Supportami</string>
+    <string name="settings_buy_me_coffee">Offrimi una birra</string>
+    <string name="settings_paypal">PayPal</string>
+    
+    <!-- Sources -->
+    <string name="no_enabled_sources_title">Nessuna sorgente abilitata</string>
+    <string name="no_enabled_sources_body">Hai delle sorgenti installate ma tutte sono disabilitate. Vai nelle Impostazioni e abilita almeno una sorgente per utilizzare l\'app.</string>
+    <string name="no_enabled_sources_cta">Vai alle Impostazioni</string>
+    <string name="sources_list_empty">Nessuna sorgente installata</string>
+    <string name="sources_list_error">Impossibile caricare le sorgenti</string>
+    <string name="sources_version_label">Versione: %1$s</string>
+    <string name="sources_install_new">Installa nuova sorgente</string>
+    <string name="sources_update">Aggiorna</string>
+    <string name="sources_uninstall">Disinstalla</string>
+    <string name="sources_update_available">Aggiornamento disponibile</string>
+    <string name="sources_update_success">Sorgente aggiornata con successo</string>
+    <string name="sources_uninstall_success">Sorgente disinstallata con successo</string>
+    <string name="sources_uninstall_error">Errore durante la disinstallazione</string>
+    <string name="sources_install_default">Installa sorgenti predefinite</string>
+    <string name="sources_install_custom">Installa sorgente personalizzata</string>
+    <string name="sources_installing_default">Installazione in corso…</string>
+    <string name="sources_install_info">Puoi scaricare sorgenti ufficiali dal sito del progetto</string>
+    <string name="sources_no_sources_info">Per utilizzare l\'app, devi installare almeno una sorgente. Le sorgenti sono pacchetti ZIP che contengono la configurazione per accedere a database di ROM.</string>
+    <string name="sources_check_updates">Verifica aggiornamenti</string>
+    <string name="sources_updates_available">%1$d aggiornamenti disponibili</string>
+    <string name="sources_update_auto">Aggiorna automaticamente</string>
+    <string name="sources_changelog">Changelog</string>
+    
+    <!-- ROM detail -->
+    <string name="rom_detail_image_item">%1$s - Immagine %2$d</string>
+    
+    <!-- IGDB Import -->
+    <string name="igdb_import_button">Importa dati IGDB</string>
+    <string name="igdb_import_title">Importa dati da IGDB</string>
+    <string name="igdb_import_comparison_title">Titolo</string>
+    <string name="igdb_import_comparison_platform">Piattaforma</string>
+    <string name="igdb_import_comparison_region">Regione</string>
+    <string name="igdb_import_current">Attuale:</string>
+    <string name="igdb_import_igdb">IGDB:</string>
+    <string name="igdb_import_confirm">Importa</string>
+    <string name="igdb_import_cancel">Annulla</string>
+    <string name="igdb_import_no_region_info">N/A</string>
+    <string name="igdb_search_results_title">Seleziona risultato IGDB</string>
+    <string name="igdb_searching">Ricerca in corso…</string>
+    <string name="igdb_search_cancel">Annulla</string>
+    <string name="igdb_import_failed">Importazione fallita</string>
+    
+    <!-- ROM Detail Info -->
+    <string name="rom_detail_info">Informazioni</string>
+    <string name="rom_detail_year">Anno</string>
+    <string name="rom_detail_genres">Generi</string>
+    <string name="rom_detail_developer">Sviluppatore</string>
+    <string name="rom_detail_publisher">Editore</string>
+    <string name="rom_detail_rating">Valutazione</string>
+    <string name="rom_detail_summary">Descrizione</string>
+    <string name="rom_detail_storyline">Trama</string>
+    <string name="rom_detail_view_on_igdb">Vedi su IGDB</string>
+    
+    <!-- IGDB Settings -->
+    <string name="settings_igdb_title">Integrazione IGDB</string>
+    <string name="settings_igdb_enable">Attiva integrazione IGDB</string>
+    <string name="settings_igdb_enable_desc">Abilita import metadati (richiede Client ID e Secret) da IGDB</string>
+    <string name="settings_igdb_client_id">Client ID IGDB</string>
+    <string name="settings_igdb_client_secret">Client Secret IGDB</string>
+    <string name="settings_igdb_hint">Se non hai questi parametri, creali gratuitamente qui: https://api-docs.igdb.com/#getting-started</string>
+    <string name="settings_igdb_save">Salva credenziali</string>
+    <string name="igdb_preferred_platform">Piattaforma corrispondente</string>
+
+    <!-- Common Actions -->
+    <string name="action_open">Apri</string>
+    <string name="action_delete">Elimina</string>
+    <string name="action_share">Condividi</string>
+    <string name="action_select">Seleziona</string>
+    
+    <!-- Errors -->
+    <string name="error_loading">Errore nel caricamento</string>
+    <string name="error_network">Errore di rete</string>
+    <string name="error_unknown">Errore sconosciuto</string>
+    <string name="error_download_failed">Download fallito</string>
+    <string name="error_extraction_failed">Estrazione fallita</string>
+    <string name="error_no_storage">Spazio di archiviazione insufficiente</string>
+    
+    <!-- Empty States -->
+    <string name="empty_no_results">Nessun risultato trovato</string>
+    <string name="empty_no_favorites">Nessun preferito ancora</string>
+    <string name="empty_no_recent">Nessuna ROM recente</string>
+    <string name="empty_no_downloads">Nessun download</string>
+    
+    <!-- Storage Permission Dialog -->
+    <string name="permission_dialog_title">Permesso di accesso ai file</string>
+    <string name="permission_dialog_message">Per scaricare e installare ROM su qualsiasi cartella (inclusa la SD card), Tottodrillo necessita del permesso di accesso completo ai file.</string>
+    <string name="permission_dialog_reason">Questo permesso permette di:\n• Scaricare ROM in qualsiasi cartella\n• Installare ROM su SD card esterna\n• Gestire file su cartelle personalizzate\n\nIl permesso è richiesto solo su Android 11 e versioni successive.</string>
+    <string name="permission_dialog_confirm">Concedi permesso</string>
+    <string name="permission_dialog_later">Più tardi</string>
+</resources>
