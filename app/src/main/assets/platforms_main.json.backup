@@ -1,0 +1,1265 @@
+{
+  "platforms": [
+    {
+      "mother_code": "3do",
+      "name": "3DO Interactive Multiplayer",
+      "image": "logos/3do.svg",
+      "description": null,
+      "brand": "Panasonic"
+    },
+    {
+      "mother_code": "adam",
+      "name": "Coleco Adam",
+      "image": "logos/adam.svg",
+      "description": null,
+      "brand": "Coleco"
+    },
+    {
+      "mother_code": "ags",
+      "name": "Game Boy Advance (AGS)",
+      "image": "logos/ags.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "amiga",
+      "name": "Amiga",
+      "image": "logos/amiga.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amiga1200",
+      "name": "Amiga 1200",
+      "image": "logos/amiga1200.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amiga600",
+      "name": "Amiga 600",
+      "image": "logos/amiga600.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amigacd32",
+      "name": "Amiga CD32",
+      "image": "logos/amigacd32.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "amstradcpc",
+      "name": "Amstrad CPC",
+      "image": "logos/amstradcpc.svg",
+      "description": null,
+      "brand": "Amstrad"
+    },
+    {
+      "mother_code": "apple2",
+      "name": "Apple II",
+      "image": "logos/apple2.svg",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "apple2gs",
+      "name": "Apple IIGS",
+      "image": "logos/apple2gs.svg",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "arcade",
+      "name": "Arcade",
+      "image": "logos/arcade.svg",
+      "description": null,
+      "brand": "Arcade"
+    },
+    {
+      "mother_code": "arcadia",
+      "name": "Arcadia",
+      "image": "logos/arcadia.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "archimedes",
+      "name": "Archimedes",
+      "image": "logos/archimedes.svg",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "arduboy",
+      "name": "Arduboy",
+      "image": "logos/arduboy.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "astrocde",
+      "name": "Astrocde",
+      "image": "logos/astrocade.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "atari2600",
+      "name": "Atari 2600",
+      "image": "logos/atari2600.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari5200",
+      "name": "Atari 5200",
+      "image": "logos/atari5200.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari7800",
+      "name": "Atari 7800",
+      "image": "logos/atari7800.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atari800",
+      "name": "Atari800",
+      "image": "logos/atari800.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarijaguar",
+      "name": "Atari Jaguar",
+      "image": "logos/atarijaguar.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarilynx",
+      "name": "Atari Lynx",
+      "image": "logos/atarilynx.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarist",
+      "name": "Atarist",
+      "image": "logos/atarist.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atarixe",
+      "name": "Atarixe",
+      "image": "logos/atarixe.svg",
+      "description": null,
+      "brand": "Atari"
+    },
+    {
+      "mother_code": "atomiswave",
+      "name": "Atomiswave",
+      "image": "logos/atomiswave.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "bbcmicro",
+      "name": "BBC Micro",
+      "image": "logos/bbcmicro.svg",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "c64",
+      "name": "Commodore 64",
+      "image": "logos/c64.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "cdimono1",
+      "name": "Cdimono1",
+      "image": "logos/cdimono1.svg",
+      "description": null,
+      "brand": "Philips"
+    },
+    {
+      "mother_code": "cdtv",
+      "name": "Commodore CDTV",
+      "image": "logos/cdtv.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "chailove",
+      "name": "Chailove",
+      "image": "logos/chailove.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "channelf",
+      "name": "Fairchild Channel F",
+      "image": "logos/channelf.svg",
+      "description": null,
+      "brand": "Fairchild"
+    },
+    {
+      "mother_code": "coco",
+      "name": "Coco",
+      "image": "logos/coco.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "colecovision",
+      "name": "ColecoVision",
+      "image": "logos/colecovision.svg",
+      "description": null,
+      "brand": "Coleco"
+    },
+    {
+      "mother_code": "consolearcade",
+      "name": "Consolearcade",
+      "image": "logos/consolearcade.svg",
+      "description": null,
+      "brand": "Arcade"
+    },
+    {
+      "mother_code": "cps",
+      "name": "Cps",
+      "image": "logos/cps.svg",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps1",
+      "name": "Capcom CPS-1",
+      "image": "logos/cps1.svg",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps2",
+      "name": "Capcom CPS-2",
+      "image": "logos/cps2.svg",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "cps3",
+      "name": "Capcom CPS-3",
+      "image": "logos/cps3.svg",
+      "description": null,
+      "brand": "Capcom"
+    },
+    {
+      "mother_code": "crvision",
+      "name": "Crvision",
+      "image": "logos/crvision.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "daphne",
+      "name": "Daphne",
+      "image": "logos/daphne.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "desktop",
+      "name": "Desktop",
+      "image": "logos/desktop.svg",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "doom",
+      "name": "Doom",
+      "image": "logos/doom.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "dos",
+      "name": "MS-DOS",
+      "image": "logos/dos.svg",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "dragon32",
+      "name": "Dragon 32",
+      "image": "logos/dragon32.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "dreamcast",
+      "name": "Dreamcast",
+      "image": "logos/dreamcast.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "easyrpg",
+      "name": "Easyrpg",
+      "image": "logos/easyrpg.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "electron",
+      "name": "Electron",
+      "image": "logos/electron.svg",
+      "description": null,
+      "brand": "Acorn"
+    },
+    {
+      "mother_code": "emulators",
+      "name": "Emulators",
+      "image": "logos/emulators.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "epic",
+      "name": "Epic",
+      "image": "logos/epic.svg",
+      "description": null,
+      "brand": "Epic Games"
+    },
+    {
+      "mother_code": "famicom",
+      "name": "Famicom",
+      "image": "logos/famicom.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "fba",
+      "name": "Fba",
+      "image": "logos/fba.svg",
+      "description": null,
+      "brand": "FinalBurn Alpha"
+    },
+    {
+      "mother_code": "fbneo",
+      "name": "Fbneo",
+      "image": "logos/fbneo.svg",
+      "description": null,
+      "brand": "FinalBurn Neo"
+    },
+    {
+      "mother_code": "fds",
+      "name": "Famicom Disk System",
+      "image": "logos/fds.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "flash",
+      "name": "Flash",
+      "image": "logos/flash.svg",
+      "description": null,
+      "brand": "Adobe"
+    },
+    {
+      "mother_code": "fm7",
+      "name": "Fm7",
+      "image": "logos/fm7.svg",
+      "description": null,
+      "brand": "Fujitsu"
+    },
+    {
+      "mother_code": "fmtowns",
+      "name": "FM Towns",
+      "image": "logos/fmtowns.svg",
+      "description": null,
+      "brand": "Fujitsu"
+    },
+    {
+      "mother_code": "gamate",
+      "name": "Gamate",
+      "image": "logos/gamate.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "gameandwatch",
+      "name": "Game & Watch",
+      "image": "logos/gameandwatch.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gamecom",
+      "name": "Gamecom",
+      "image": "logos/gamecom.svg",
+      "description": null,
+      "brand": "Tiger"
+    },
+    {
+      "mother_code": "gamegear",
+      "name": "Gamegear",
+      "image": "logos/gamegear.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "gb",
+      "name": "Game Boy",
+      "image": "logos/gb.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gba",
+      "name": "Game Boy Advance",
+      "image": "logos/gba.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gbc",
+      "name": "Game Boy Color",
+      "image": "logos/gbc.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "gc",
+      "name": "GameCube",
+      "image": "logos/gc.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "genesis",
+      "name": "Sega Genesis",
+      "image": "logos/genesis.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "gmaster",
+      "name": "Gmaster",
+      "image": "logos/gmaster.svg",
+      "description": null,
+      "brand": "Tiger"
+    },
+    {
+      "mother_code": "gx4000",
+      "name": "Gx4000",
+      "image": "logos/gx4000.svg",
+      "description": null,
+      "brand": "Amstrad"
+    },
+    {
+      "mother_code": "intellivision",
+      "name": "Intellivision",
+      "image": "logos/intellivision.svg",
+      "description": null,
+      "brand": "Mattel"
+    },
+    {
+      "mother_code": "j2me",
+      "name": "J2me",
+      "image": "logos/j2me.svg",
+      "description": null,
+      "brand": "Java"
+    },
+    {
+      "mother_code": "kodi",
+      "name": "Kodi",
+      "image": "logos/kodi.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "laserdisc",
+      "name": "Laserdisc",
+      "image": "logos/laserdisc.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lcdgames",
+      "name": "Lcdgames",
+      "image": "logos/lcdgames.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lowresnx",
+      "name": "Lowresnx",
+      "image": "logos/lowresnx.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "lutro",
+      "name": "Lutro",
+      "image": "logos/lutro.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "macintosh",
+      "name": "Macintosh",
+      "image": "logos/macintosh.svg",
+      "description": null,
+      "brand": "Apple"
+    },
+    {
+      "mother_code": "mame",
+      "name": "MAME",
+      "image": "logos/mame.svg",
+      "description": null,
+      "brand": "MAME"
+    },
+    {
+      "mother_code": "mark3",
+      "name": "Mark3",
+      "image": "logos/mark3.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "mastersystem",
+      "name": "Master System",
+      "image": "logos/mastersystem.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megacd",
+      "name": "Sega CD",
+      "image": "logos/megacd.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megacdjp",
+      "name": "Megacdjp",
+      "image": "logos/megacdjp.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megadrive",
+      "name": "Megadrive",
+      "image": "logos/megadrive.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megadrivejp",
+      "name": "Megadrivejp",
+      "image": "logos/megadrivejp.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "megaduck",
+      "name": "Megaduck",
+      "image": "logos/megaduck.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "mess",
+      "name": "Mess",
+      "image": "logos/mess.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "model2",
+      "name": "Model2",
+      "image": "logos/model2.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "model3",
+      "name": "Model3",
+      "image": "logos/model3.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "moto",
+      "name": "Moto",
+      "image": "logos/moto.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "msx",
+      "name": "MSX",
+      "image": "logos/msx.svg",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msx1",
+      "name": "Msx1",
+      "image": "logos/msx1.svg",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msx2",
+      "name": "MSX2",
+      "image": "logos/msx2.svg",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "msxturbor",
+      "name": "Msxturbor",
+      "image": "logos/msxturbor.svg",
+      "description": null,
+      "brand": "MSX"
+    },
+    {
+      "mother_code": "mugen",
+      "name": "Mugen",
+      "image": "logos/mugen.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "multivision",
+      "name": "Multivision",
+      "image": "logos/multivision.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "n3ds",
+      "name": "Nintendo 3DS",
+      "image": "logos/n3ds.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "n64",
+      "name": "Nintendo 64",
+      "image": "logos/n64.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "n64dd",
+      "name": "Nintendo 64DD",
+      "image": "logos/n64dd.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "naomi",
+      "name": "Naomi",
+      "image": "logos/naomi.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "naomi2",
+      "name": "Naomi2",
+      "image": "logos/naomi2.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "naomigd",
+      "name": "Naomigd",
+      "image": "logos/naomigd.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "nds",
+      "name": "Nintendo DS",
+      "image": "logos/nds.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "neogeo",
+      "name": "Neo Geo",
+      "image": "logos/neogeo.svg",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "neogeocd",
+      "name": "Neo Geo CD",
+      "image": "logos/neogeocd.svg",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "neogeocdjp",
+      "name": "Neogeocdjp",
+      "image": "logos/neogeocdjp.svg",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "nes",
+      "name": "Nintendo Entertainment System",
+      "image": "logos/nes.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "ngage",
+      "name": "N-Gage",
+      "image": "logos/ngage.svg",
+      "description": null,
+      "brand": "Nokia"
+    },
+    {
+      "mother_code": "ngp",
+      "name": "Neo Geo Pocket",
+      "image": "logos/ngp.svg",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "ngpc",
+      "name": "Neo Geo Pocket Color",
+      "image": "logos/ngpc.svg",
+      "description": null,
+      "brand": "SNK"
+    },
+    {
+      "mother_code": "odyssey2",
+      "name": "Magnavox Odyssey²",
+      "image": "logos/odyssey2.svg",
+      "description": null,
+      "brand": "Magnavox"
+    },
+    {
+      "mother_code": "oric",
+      "name": "Oric",
+      "image": "logos/oric.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "palm",
+      "name": "Palm",
+      "image": "logos/palm.svg",
+      "description": null,
+      "brand": "Palm"
+    },
+    {
+      "mother_code": "pc",
+      "name": "PC",
+      "image": "logos/pc.svg",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "pc88",
+      "name": "PC-88",
+      "image": "logos/pc88.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pc98",
+      "name": "PC-98",
+      "image": "logos/pc98.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcarcade",
+      "name": "Pcarcade",
+      "image": "logos/pcarcade.svg",
+      "description": null,
+      "brand": "PC"
+    },
+    {
+      "mother_code": "pcengine",
+      "name": "PC Engine",
+      "image": "logos/pcengine.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcenginecd",
+      "name": "PC Engine CD",
+      "image": "logos/pcenginecd.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pcfx",
+      "name": "PC-FX",
+      "image": "logos/pcfx.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "pico8",
+      "name": "Pico8",
+      "image": "logos/pico8.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "pippin",
+      "name": "Apple Bandai Pippin",
+      "image": "@mipmap/ic_launcher",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "plus4",
+      "name": "Plus4",
+      "image": "logos/plus4.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "pokemini",
+      "name": "Pokémon Mini",
+      "image": "logos/pokemini.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "ports",
+      "name": "Ports",
+      "image": "logos/ports.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "ps2",
+      "name": "PlayStation 2",
+      "image": "logos/ps2.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "ps3",
+      "name": "PlayStation 3",
+      "image": "logos/ps3.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "ps4",
+      "name": "Ps4",
+      "image": "logos/ps4.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psp",
+      "name": "PlayStation Portable",
+      "image": "logos/psp.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psvita",
+      "name": "PlayStation Vita",
+      "image": "logos/psvita.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "psx",
+      "name": "PlayStation",
+      "image": "logos/psx.svg",
+      "description": null,
+      "brand": "Sony"
+    },
+    {
+      "mother_code": "pv1000",
+      "name": "Pv1000",
+      "image": "logos/pv1000.svg",
+      "description": null,
+      "brand": "Casio"
+    },
+    {
+      "mother_code": "quake",
+      "name": "Quake",
+      "image": "logos/quake.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "samcoupe",
+      "name": "Samcoupe",
+      "image": "logos/samcoupe.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "satellaview",
+      "name": "Satellaview",
+      "image": "logos/satellaview.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "saturn",
+      "name": "Sega Saturn",
+      "image": "logos/saturn.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "saturnjp",
+      "name": "Saturnjp",
+      "image": "logos/saturnjp.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "scummvm",
+      "name": "Scummvm",
+      "image": "logos/scummvm.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "scv",
+      "name": "Scv",
+      "image": "logos/scv.svg",
+      "description": null,
+      "brand": "Epoch"
+    },
+    {
+      "mother_code": "sega32x",
+      "name": "Sega 32X",
+      "image": "logos/sega32x.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sg-1000",
+      "name": "Sg-1000",
+      "image": "logos/sg-1000.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sgb",
+      "name": "Sgb",
+      "image": "logos/sgb.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "snes",
+      "name": "Super Nintendo Entertainment System",
+      "image": "logos/snes.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "solarus",
+      "name": "Solarus",
+      "image": "logos/solarus.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "spectravideo",
+      "name": "Spectravideo",
+      "image": "logos/spectravideo.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "steam",
+      "name": "Steam",
+      "image": "logos/steam.svg",
+      "description": null,
+      "brand": "Valve"
+    },
+    {
+      "mother_code": "stv",
+      "name": "Stv",
+      "image": "logos/stv.svg",
+      "description": null,
+      "brand": "Sega"
+    },
+    {
+      "mother_code": "sufami",
+      "name": "Sufami",
+      "image": "logos/sufami.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "supergrafx",
+      "name": "Supergrafx",
+      "image": "logos/supergrafx.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "supervision",
+      "name": "Supervision",
+      "image": "logos/supervision.svg",
+      "description": null,
+      "brand": "Watara"
+    },
+    {
+      "mother_code": "supracan",
+      "name": "Supracan",
+      "image": "logos/supracan.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "switch",
+      "name": "Switch",
+      "image": "logos/switch.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "symbian",
+      "name": "Symbian",
+      "image": "logos/symbian.svg",
+      "description": null,
+      "brand": "Symbian"
+    },
+    {
+      "mother_code": "tanodragon",
+      "name": "Tanodragon",
+      "image": "logos/tanodragon.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "tg-cd",
+      "name": "Tg-cd",
+      "image": "logos/tg-cd.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "tg16",
+      "name": "TurboGrafx-16",
+      "image": "logos/tg16.svg",
+      "description": null,
+      "brand": "NEC"
+    },
+    {
+      "mother_code": "ti99",
+      "name": "TI-99/4A",
+      "image": "logos/ti99.svg",
+      "description": null,
+      "brand": "Texas Instruments"
+    },
+    {
+      "mother_code": "tic80",
+      "name": "Tic80",
+      "image": "logos/tic80.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "to8",
+      "name": "To8",
+      "image": "logos/to8.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "type-x",
+      "name": "Type-x",
+      "image": "logos/type-x.svg",
+      "description": null,
+      "brand": null
+    },
+    {
+      "mother_code": "uzebox",
+      "name": "Uzebox",
+      "image": "logos/uzebox.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "vectrex",
+      "name": "Vectrex",
+      "image": "logos/vectrex.svg",
+      "description": null,
+      "brand": "GCE"
+    },
+    {
+      "mother_code": "vic20",
+      "name": "Commodore VIC-20",
+      "image": "logos/vic20.svg",
+      "description": null,
+      "brand": "Commodore"
+    },
+    {
+      "mother_code": "videopac",
+      "name": "Videopac",
+      "image": "logos/videopac.svg",
+      "description": null,
+      "brand": "Philips"
+    },
+    {
+      "mother_code": "vircon32",
+      "name": "Vircon32",
+      "image": "logos/vircon32.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "virtualboy",
+      "name": "Virtualboy",
+      "image": "logos/virtualboy.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "vpinball",
+      "name": "Vpinball",
+      "image": "logos/vpinball.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "vsmile",
+      "name": "Vsmile",
+      "image": "logos/vsmile.svg",
+      "description": null,
+      "brand": "VTech"
+    },
+    {
+      "mother_code": "wasm4",
+      "name": "Wasm4",
+      "image": "logos/wasm4.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "wii",
+      "name": "Wii",
+      "image": "logos/wii.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "wiiu",
+      "name": "Wii U",
+      "image": "logos/wiiu.svg",
+      "description": null,
+      "brand": "Nintendo"
+    },
+    {
+      "mother_code": "windows",
+      "name": "Windows",
+      "image": "logos/windows.svg",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "windows3x",
+      "name": "Windows3x",
+      "image": "logos/windows3x.svg",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "windows9x",
+      "name": "Windows9x",
+      "image": "logos/windows9x.svg",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "wonderswan",
+      "name": "WonderSwan",
+      "image": "logos/wonderswan.svg",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "wonderswancolor",
+      "name": "WonderSwan Color",
+      "image": "logos/wonderswancolor.svg",
+      "description": null,
+      "brand": "Bandai"
+    },
+    {
+      "mother_code": "x1",
+      "name": "X1",
+      "image": "logos/x1.svg",
+      "description": null,
+      "brand": "Sharp"
+    },
+    {
+      "mother_code": "x68000",
+      "name": "Sharp X68000",
+      "image": "logos/x68000.svg",
+      "description": null,
+      "brand": "Sharp"
+    },
+    {
+      "mother_code": "xbox",
+      "name": "Xbox",
+      "image": "logos/xbox.svg",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "xbox360",
+      "name": "Xbox 360",
+      "image": "logos/xbox360.svg",
+      "description": null,
+      "brand": "Microsoft"
+    },
+    {
+      "mother_code": "zmachine",
+      "name": "Zmachine",
+      "image": "logos/zmachine.svg",
+      "description": null,
+      "brand": "Various"
+    },
+    {
+      "mother_code": "zx81",
+      "name": "ZX81",
+      "image": "logos/zx81.svg",
+      "description": null,
+      "brand": "Sinclair"
+    },
+    {
+      "mother_code": "zxnext",
+      "name": "Zxnext",
+      "image": "logos/zxnext.svg",
+      "description": null,
+      "brand": "Sinclair"
+    },
+    {
+      "mother_code": "zxspectrum",
+      "name": "ZX Spectrum",
+      "image": "logos/zxspectrum.svg",
+      "description": null,
+      "brand": "Sinclair"
+    }
+  ],
+  "total": 180
+}
