@@ -139,7 +139,7 @@ object NetworkModule {
             .addConverterFactory(GsonConverterFactory.create(gson))
             .build()
     }
-    
+
     @Provides
     @Singleton
     fun provideSourceServices(

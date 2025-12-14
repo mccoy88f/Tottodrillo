@@ -66,9 +66,9 @@ interface SourceServices {
     /**
      * Crea un SSL Context personalizzato
      * @param config Configurazione SSL
-     * @return SSLContext configurato
+     * @return SSLContext configurato, o null se non necessario (es. trustAll = false)
      */
-    fun createSslContext(config: SslConfig): SSLContext
+    fun createSslContext(config: SslConfig): SSLContext?
     
     /**
      * Ottiene un HTTP Client base con configurazione standard

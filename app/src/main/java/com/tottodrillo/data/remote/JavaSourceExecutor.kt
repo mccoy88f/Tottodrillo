@@ -163,9 +163,9 @@ class JavaSourceExecutor(
                     }
                 } else {
                     try {
-                        clazz.getConstructor(SourceMetadata::class.java, File::class.java)
-                    } catch (e: NoSuchMethodException) {
-                        clazz.getConstructor()
+                clazz.getConstructor(SourceMetadata::class.java, File::class.java)
+            } catch (e: NoSuchMethodException) {
+                clazz.getConstructor()
                     }
                 }
             } catch (e: Exception) {
@@ -176,7 +176,7 @@ class JavaSourceExecutor(
             val instance = when (constructor.parameterCount) {
                 3 -> if (sourceServices != null) {
                     constructor.newInstance(metadata, sourceDir, sourceServices)
-                } else {
+            } else {
                     throw IllegalStateException("Costruttore richiede SourceServices ma non fornito")
                 }
                 2 -> constructor.newInstance(metadata, sourceDir)

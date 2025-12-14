@@ -7,6 +7,10 @@ import com.tottodrillo.domain.model.WebViewConfig
 import com.tottodrillo.domain.service.SourceServices
 import com.tottodrillo.presentation.settings.SourceManagerEntryPoint
 import dagger.hilt.EntryPoints
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlin.coroutines.resume
 
@@ -18,6 +22,8 @@ class WebViewBackgroundDownloader(
     private val context: Context,
     private val sourceServices: SourceServices? = null
 ) {
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    
     /**
      * Gestisce il download in background: carica la pagina, attende (se necessario), estrae URL e cookie
      * @param delaySeconds Secondi da attendere prima di estrarre l'URL (0 per nessun delay, specificato dalla source se necessario)
@@ -31,37 +37,42 @@ class WebViewBackgroundDownloader(
         try {
             // Se SourceServices è disponibile, usalo per estrarre URL e cookie
             if (sourceServices != null && link.sourceId != null) {
-                // Recupera i pattern dalla sorgente se disponibili
-                val interceptPatterns = try {
-                    val entryPoint = EntryPoints.get(context, SourceManagerEntryPoint::class.java)
-                    val sourceManager = entryPoint.sourceManager()
-                    val metadata = sourceManager.getSourceMetadata(link.sourceId)
-                    metadata?.downloadInterceptPatterns
-                } catch (e: Exception) {
-                    Log.w("WebViewBackgroundDownloader", "⚠️ Errore nel recupero pattern dalla sorgente: ${e.message}")
-                    null
-                }
-                
-                val webViewConfig = WebViewConfig(
-                    delaySeconds = delaySeconds,
-                    extractUrlScript = null, // Usa script di default
-                    interceptPatterns = interceptPatterns, // Pattern dalla sorgente o null (userà default in SourceServicesImpl)
-                    requiresCookieExtraction = true
-                )
-                
-                kotlinx.coroutines.CoroutineScope(kotlinx.coroutines.Dispatchers.Main).launch {
-                    val result = sourceServices.extractUrlFromWebView(url, link.sourceId!!, webViewConfig)
-                    
-                    if (result.success && result.finalUrl != null) {
-                        onDownloadReady(
-                            result.finalUrl!!,
-                            result.cookies ?: "",
-                            result.originalUrl
+                scope.launch {
+                    try {
+                        // Recupera i pattern dalla sorgente se disponibili
+                        val interceptPatterns = try {
+                            val entryPoint = EntryPoints.get(context, SourceManagerEntryPoint::class.java)
+                            val sourceManager = entryPoint.sourceManager()
+                            val metadata = sourceManager.getSourceMetadata(link.sourceId)
+                            metadata?.downloadInterceptPatterns
+                        } catch (e: Exception) {
+                            Log.w("WebViewBackgroundDownloader", "⚠️ Errore nel recupero pattern dalla sorgente: ${e.message}")
+                            null
+                        }
+                        
+                        val webViewConfig = WebViewConfig(
+                            delaySeconds = delaySeconds,
+                            extractUrlScript = null, // Usa script di default
+                            interceptPatterns = interceptPatterns, // Pattern dalla sorgente o null (userà default in SourceServicesImpl)
+                            requiresCookieExtraction = true
                         )
-                        continuation.resume(Result.success(Unit))
-                    } else {
-                        Log.w("WebViewBackgroundDownloader", "⚠️ Estrazione URL fallita: ${result.error}")
-                        continuation.resume(Result.failure(Exception(result.error ?: "Errore sconosciuto")))
+                        
+                        val result = sourceServices.extractUrlFromWebView(url, link.sourceId!!, webViewConfig)
+                        
+                        if (result.success && result.finalUrl != null) {
+                            onDownloadReady(
+                                result.finalUrl!!,
+                                result.cookies ?: "",
+                                result.originalUrl
+                            )
+                            continuation.resume(Result.success(Unit))
+                        } else {
+                            Log.w("WebViewBackgroundDownloader", "⚠️ Estrazione URL fallita: ${result.error}")
+                            continuation.resume(Result.failure(Exception(result.error ?: "Errore sconosciuto")))
+                        }
+                    } catch (e: Exception) {
+                        Log.e("WebViewBackgroundDownloader", "❌ Errore nell'estrazione URL", e)
+                        continuation.resume(Result.failure(e))
                     }
                 }
             } else {
