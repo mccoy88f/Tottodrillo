@@ -20,7 +20,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,6 +42,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -67,7 +70,37 @@ fun SearchScreen(
     viewModel: SearchViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val gridState = rememberLazyGridState()
+    val searchHistory by viewModel.searchHistory.collectAsState()
+    // Usa rememberSaveable per preservare lo stato della griglia quando si naviga a una ROM
+    // Salva manualmente firstVisibleItemIndex e firstVisibleItemScrollOffset
+    var savedScrollIndex by rememberSaveable { mutableStateOf(0) }
+    var savedScrollOffset by rememberSaveable { mutableStateOf(0) }
+    val gridState = rememberLazyGridState(
+        initialFirstVisibleItemIndex = savedScrollIndex,
+        initialFirstVisibleItemScrollOffset = savedScrollOffset
+    )
+    
+    // Salva lo stato della griglia quando cambia
+    LaunchedEffect(gridState.firstVisibleItemIndex, gridState.firstVisibleItemScrollOffset) {
+        savedScrollIndex = gridState.firstVisibleItemIndex
+        savedScrollOffset = gridState.firstVisibleItemScrollOffset
+    }
+    
+    // Reset stato quando si naviga alla schermata senza parametri (dalla home)
+    // Solo se lo stato ha ancora risultati o haSearched = true
+    LaunchedEffect(initialPlatformCode, initialQuery) {
+        if (initialPlatformCode == null && initialQuery == null) {
+            val currentState = viewModel.uiState.value
+            // NON resettare se ci sono già risultati (significa che stiamo tornando indietro da una ROM)
+            // Reset solo se siamo appena arrivati dalla home (prima navigazione) e non ci sono risultati
+            if (!currentState.hasSearched && currentState.results.isEmpty()) {
+                android.util.Log.d("SearchScreen", "🔄 Reset stato: navigazione iniziale dalla home senza parametri")
+                viewModel.resetState()
+            } else {
+                android.util.Log.d("SearchScreen", "✅ Preservo stato: tornando indietro da ROM (hasSearched=${currentState.hasSearched}, results=${currentState.results.size})")
+            }
+        }
+    }
     
     // Inizializza con piattaforma se specificata
     LaunchedEffect(initialPlatformCode) {
@@ -87,6 +120,50 @@ fun SearchScreen(
     LaunchedEffect(refreshKey) {
         if (refreshKey > 0) {
             viewModel.refreshIfNeeded(refreshKey)
+        }
+    }
+    
+    // Traccia se è una nuova ricerca o se stiamo tornando indietro
+    var previousResultsSize by rememberSaveable { mutableStateOf(0) }
+    var previousQuery by rememberSaveable { mutableStateOf("") }
+    var previousFiltersHash by rememberSaveable { mutableStateOf(0) }
+    
+    // Calcola hash dei filtri per rilevare cambiamenti
+    val currentFiltersHash = remember(uiState.filters.selectedPlatforms, uiState.filters.selectedRegions, uiState.filters.selectedSources, uiState.filters.selectedFormats) {
+        (uiState.filters.selectedPlatforms.toString() + 
+         uiState.filters.selectedRegions.toString() + 
+         uiState.filters.selectedSources.toString() + 
+         uiState.filters.selectedFormats.toString()).hashCode()
+    }
+    
+    // Fai tornare la lista in alto quando cambiano i filtri (solo se è una nuova ricerca)
+    LaunchedEffect(currentFiltersHash) {
+        // Scroll in alto solo se i filtri sono cambiati (nuova ricerca)
+        if (currentFiltersHash != previousFiltersHash && uiState.hasSearched && gridState.firstVisibleItemIndex > 0) {
+            kotlinx.coroutines.delay(50) // Piccolo delay per evitare conflitti con il rendering
+            gridState.animateScrollToItem(0)
+        }
+        previousFiltersHash = currentFiltersHash
+    }
+    
+    // Fai tornare la lista in alto quando cambiano i risultati (solo se è una nuova ricerca)
+    LaunchedEffect(uiState.results.size, uiState.query) {
+        // Scroll in alto solo se è una nuova ricerca:
+        // - Risultati sono aumentati (nuova ricerca o paginazione)
+        // - Query è cambiata E non è vuota (nuova ricerca, non cancellazione)
+        // NON scrollare se i risultati sono diminuiti (significa che stiamo tornando indietro)
+        val isNewSearch = (uiState.results.size > previousResultsSize) || 
+                         (uiState.query != previousQuery && uiState.query.isNotEmpty() && previousQuery.isNotEmpty())
+        
+        if (isNewSearch && uiState.hasSearched && gridState.firstVisibleItemIndex > 0) {
+            kotlinx.coroutines.delay(50) // Piccolo delay per evitare conflitti con il rendering
+            gridState.animateScrollToItem(0)
+        }
+        
+        // Aggiorna i valori precedenti solo se non stiamo tornando indietro
+        if (uiState.results.size >= previousResultsSize || uiState.query.isNotEmpty()) {
+            previousResultsSize = uiState.results.size
+            previousQuery = uiState.query
         }
     }
 
@@ -147,6 +224,30 @@ fun SearchScreen(
                 onClear = { viewModel.updateSearchQuery("") },
                 modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp)
             )
+
+            // Cronologia ricerche (mostra quando non si sta cercando e non ci sono filtri attivi)
+            // Appare quando:
+            // 1. Si apre la schermata di ricerca dalla home (hasSearched = false)
+            // 2. Si torna indietro e si rientra (mostra sempre se non ci sono filtri attivi)
+            // 3. Si cancella la ricerca (results.isEmpty() e query vuota)
+            val shouldShowHistory = !uiState.isSearching && 
+                searchHistory.isNotEmpty() && 
+                uiState.query.isEmpty() && 
+                !uiState.filters.hasActiveFilters()
+            
+            android.util.Log.d("SearchScreen", "🔍 Condizioni cronologia: isSearching=${uiState.isSearching}, historySize=${searchHistory.size}, query='${uiState.query}', hasFilters=${uiState.filters.hasActiveFilters()}, shouldShow=$shouldShowHistory")
+            
+            if (shouldShowHistory) {
+                RecentSearchesList(
+                    searches = searchHistory,
+                    availablePlatforms = uiState.availablePlatforms,
+                    availableRegions = uiState.availableRegions,
+                    availableSources = uiState.availableSources,
+                    onSearchClick = viewModel::restoreSearch,
+                    onDeleteClick = viewModel::removeSearchFromHistory,
+                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 8.dp)
+                )
+            }
 
             // Active filters indicator
             if (uiState.filters.hasActiveFilters()) {
@@ -356,6 +457,162 @@ private fun SearchResults(
                     }
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun RecentSearchesList(
+    searches: List<com.tottodrillo.data.repository.SavedSearch>,
+    availablePlatforms: List<com.tottodrillo.domain.model.PlatformInfo>,
+    availableRegions: List<com.tottodrillo.domain.model.RegionInfo>,
+    availableSources: List<Pair<String, String>>,
+    onSearchClick: (com.tottodrillo.data.repository.SavedSearch) -> Unit,
+    onDeleteClick: (com.tottodrillo.data.repository.SavedSearch) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Column(modifier = modifier) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.History,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+                Text(
+                    text = stringResource(R.string.search_recent_searches),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        Spacer(modifier = Modifier.height(8.dp))
+        
+        searches.forEach { search ->
+            RecentSearchItem(
+                search = search,
+                availablePlatforms = availablePlatforms,
+                availableRegions = availableRegions,
+                availableSources = availableSources,
+                onClick = { onSearchClick(search) },
+                onDeleteClick = { onDeleteClick(search) },
+                modifier = Modifier.fillMaxWidth()
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+        }
+    }
+}
+
+@Composable
+private fun RecentSearchItem(
+    search: com.tottodrillo.data.repository.SavedSearch,
+    availablePlatforms: List<com.tottodrillo.domain.model.PlatformInfo>,
+    availableRegions: List<com.tottodrillo.domain.model.RegionInfo>,
+    availableSources: List<Pair<String, String>>,
+    onClick: () -> Unit,
+    onDeleteClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    // Calcola la descrizione dei filtri con i nomi effettivi
+    val filtersDesc = remember(search.filters, availablePlatforms, availableRegions, availableSources) {
+        val parts = mutableListOf<String>()
+        
+        // Piattaforme
+        if (search.filters.selectedPlatforms.isNotEmpty()) {
+            val platformNames = search.filters.selectedPlatforms.mapNotNull { code ->
+                availablePlatforms.find { it.code == code }?.displayName ?: code.uppercase()
+            }
+            if (platformNames.isNotEmpty()) {
+                parts.add(platformNames.joinToString(", "))
+            }
+        }
+        
+        // Regioni
+        if (search.filters.selectedRegions.isNotEmpty()) {
+            val regionNames = search.filters.selectedRegions.mapNotNull { code ->
+                com.tottodrillo.domain.model.RegionInfo.fromCode(code).displayName
+            }
+            if (regionNames.isNotEmpty()) {
+                parts.add(regionNames.joinToString(", "))
+            }
+        }
+        
+        // Sorgenti
+        if (search.filters.selectedSources.isNotEmpty()) {
+            val sourceNames = search.filters.selectedSources.mapNotNull { sourceId ->
+                availableSources.find { it.first == sourceId }?.second ?: sourceId
+            }
+            if (sourceNames.isNotEmpty()) {
+                parts.add(sourceNames.joinToString(", "))
+            }
+        }
+        
+        // Formati
+        if (search.filters.selectedFormats.isNotEmpty()) {
+            parts.add(search.filters.selectedFormats.joinToString(", ").uppercase())
+        }
+        
+        if (parts.isNotEmpty()) {
+            " • ${parts.joinToString(" • ")}"
+        } else {
+            ""
+        }
+    }
+    Row(
+        modifier = modifier
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp, horizontal = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween
+    ) {
+        Column(
+            modifier = Modifier.weight(1f)
+        ) {
+            if (search.query.isNotEmpty()) {
+                Text(
+                    text = search.query,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            } else {
+                Text(
+                    text = stringResource(R.string.search_filters),
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+            }
+            
+            if (filtersDesc.isNotEmpty()) {
+                Text(
+                    text = filtersDesc,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+        
+        IconButton(
+            onClick = onDeleteClick,
+            modifier = Modifier.size(24.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Delete,
+                contentDescription = stringResource(R.string.close),
+                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(18.dp)
+            )
         }
     }
 }

@@ -83,7 +83,9 @@ object NetworkModule {
     @Singleton
     fun provideLoggingInterceptor(): HttpLoggingInterceptor {
         return HttpLoggingInterceptor().apply {
-            level = HttpLoggingInterceptor.Level.BODY
+            // Disabilitato per ridurre i log in produzione
+            // Cambiare a Level.BODY solo per debug
+            level = HttpLoggingInterceptor.Level.NONE
         }
     }
 
@@ -148,6 +150,15 @@ object NetworkModule {
         okHttpClient: OkHttpClient
     ): com.tottodrillo.domain.service.SourceServices {
         return com.tottodrillo.data.service.SourceServicesImpl(context, sourceManager, okHttpClient)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSearchHistoryRepository(
+        @ApplicationContext context: Context,
+        gson: Gson
+    ): com.tottodrillo.data.repository.SearchHistoryRepository {
+        return com.tottodrillo.data.repository.SearchHistoryRepository(context, gson)
     }
 
     /**

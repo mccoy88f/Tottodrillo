@@ -83,12 +83,6 @@ fun RomCard(
                     }
                 }
                 
-                android.util.Log.d("RomCard", "🎴 [RomCard] ROM: ${rom.title}")
-                android.util.Log.d("RomCard", "   coverUrl: ${rom.coverUrl}")
-                android.util.Log.d("RomCard", "   coverUrls: ${rom.coverUrls}")
-                android.util.Log.d("RomCard", "   urlsToTry: $urlsToTry")
-                android.util.Log.d("RomCard", "   shouldLoadImage: $shouldLoadImage")
-                
                 if (shouldLoadImage && urlsToTry.isNotEmpty()) {
                     // Usa un composable ricorsivo per provare tutte le immagini in sequenza
                     TryImageUrls(
@@ -239,7 +233,6 @@ internal fun TryImageUrls(
             }
         },
         error = {
-            android.util.Log.w("RomCard", "Immagine fallita: $currentUrl, provo prossima...")
             // Prova la prossima immagine
             TryImageUrls(
                 urls = urls,

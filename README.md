@@ -4,7 +4,7 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-3.1.0-blue.svg)
 
 **Tottodrillo** is a modern and minimal Android app to explore, search, and download ROMs from multiple sources. The app supports dynamic source installation via ZIP packages, allowing you to add new ROM sources without updating the app.
 
@@ -33,12 +33,14 @@ This README is also available in other languages:
 - **Smart Matching**: View matching platforms and confirm before importing metadata
 - **Enhanced ROM Details**: Enrich your ROM collection with professional metadata and high-quality cover art from IGDB
 
-### 🔍 ROM Info Search
-- **Multiple Search Providers**: Choose between Gamefaqs and MobyGames for ROM information search
+### 🔍 ROM Info Search & Recent Searches
+- **Multiple Search Providers**: Choose between different providers for ROM information search
 - **Configurable Provider**: Select your preferred search provider in settings
-- **Gamefaqs Integration**: Search ROM information directly on Gamefaqs
-- **MobyGames Integration**: Search ROM information on MobyGames
 - **Dynamic Button Text**: Search button text changes based on selected provider
+- **Recent Searches (NEW in v3.1.0)**:
+  - Automatic history of the last searches with applied filters
+  - Quick recall of recent searches from the search screen
+  - Smart reset: when clearing the query (and no filters are active), recent searches are shown again
 
 ### 🔌 Multi-Source System (NEW in v2.0)
 - **Dynamic Source Installation**: Install new ROM sources via ZIP packages without updating the app
@@ -50,7 +52,7 @@ This README is also available in other languages:
 - **Platform Mapping**: Each source includes its own platform mapping for seamless integration
 
 ### 🔍 Exploration & Search
-- **Home Screen** with featured ROMs, popular platforms, favorites, and recent ROMs
+- **Home Screen** with featured ROMs, popular platforms, favorites, recent ROMs and downloaded ROMs
 - **Platform Exploration** organized by brand (Nintendo, PlayStation, Sega, Xbox, etc.) with collapsible/expandable sections
 - **Advanced Search** with automatic debounce (500ms) to optimize queries
 - **Multiple Filters** for platforms, regions, and sources with interactive chips
@@ -61,8 +63,9 @@ This README is also available in other languages:
 
 ### 📥 Download & Installation
 - **Background Downloads** with WorkManager for reliability
-- **Real-time Progress Tracking** with percentage, bytes downloaded, and speed
+- **Real-time Progress Tracking** with percentage, bytes downloaded, and speed (also visible from ROM detail)
 - **Interactive Notifications** with "Cancel download" and "Cancel installation" actions
+- **Multiple Concurrent Downloads** with separate progress and notifications for each task
 - **Custom Path** to save files in any folder (including external SD card)
 - **Automatic/Manual Installation**:
   - Support for ZIP archives (extraction)
@@ -264,9 +267,13 @@ The APK will be generated in: `app/build/outputs/apk/`
 - **Version Management**: Update sources with newer versions (preserves enabled state)
 - **Enable/Disable**: Toggle sources on/off without uninstalling
 - **Uninstallation**: Remove sources completely
-- **Default Sources**: Automatic installation of default sources on first launch
+- **Default Sources**: Optional automatic installation of a default set of sources on first launch
 - **Cache Management**: Automatic cache invalidation when sources change
 - **Platform Mapping**: Each source defines its own platform code mapping
+- **Advanced Source Services (NEW in v3.1.0)**:
+  - Centralized services in the app (HTTP client, cookies, SSL configuration, WebView helpers, Cloudflare-like bypass)
+  - Sources declare their needs via configuration, the app provides the implementation
+  - Strong decoupling between app and sources: the app is agnostic about which sources are installed
 
 ### Download Manager
 - Multiple simultaneous downloads

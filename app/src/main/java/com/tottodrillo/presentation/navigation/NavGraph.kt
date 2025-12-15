@@ -99,10 +99,12 @@ fun TottodrilloNavGraph(
     homeRefreshKey: Int = 0
 ) {
     var showFilters by remember { mutableStateOf(false) }
+    var romSlugFromNotification by remember { mutableStateOf<String?>(null) }
     
     // Naviga alla ROM se l'app è stata aperta da una notifica
     LaunchedEffect(initialRomSlug) {
         initialRomSlug?.let { slug ->
+            romSlugFromNotification = slug // Memorizza che stiamo navigando dalla notifica
             navController.navigate(Screen.RomDetail.createRoute(slug)) {
                 // Pulisci lo stack di navigazione fino alla home
                 popUpTo(Screen.Home.route) {
@@ -253,13 +255,17 @@ fun TottodrilloNavGraph(
 
                     RomDetailRoute(
                         romSlug = romSlug,
-                        onNavigateBack = { navController.safePopBackStack() },
+                        onNavigateBack = { 
+                            romSlugFromNotification = null // Reset quando si torna indietro
+                            navController.safePopBackStack() 
+                        },
                         onNavigateToPlatform = { platformCode ->
                             navController.navigate(Screen.Search.createRoute(platformCode))
                         },
                         onRequestExtraction = { archivePath, romTitle, romSlug, platformCode ->
                             onRequestExtraction(archivePath, romTitle, romSlug, platformCode)
-                        }
+                        },
+                        isFromNotification = romSlugFromNotification == romSlug // Indica se si sta navigando dalla notifica
                     )
         }
 

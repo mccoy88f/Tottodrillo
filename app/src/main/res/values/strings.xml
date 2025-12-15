@@ -42,6 +42,9 @@
     <string name="search_platforms">Piattaforme</string>
     <string name="search_regions">Regioni</string>
     <string name="search_sources">Sorgenti</string>
+    <string name="search_recent_searches">Ricerche recenti</string>
+    <string name="search_no_recent_searches">Nessuna ricerca recente</string>
+    <string name="search_clear_history">Cancella cronologia</string>
     
     <!-- Downloads -->
     <string name="downloads_title">Downloads</string>

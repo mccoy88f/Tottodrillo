@@ -197,6 +197,49 @@ fun WebViewDownloadDialog(
                                             // Intercetta il download anche dal popup
                                             newWebView.setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
                                                 
+                                                // Verifica se è una pagina HTML (non un file) - ignora popup annuncio
+                                                val isHtmlPage = mimetype?.contains("text/html") == true || 
+                                                                 mimetype?.contains("text/plain") == true ||
+                                                                 (mimetype == null && !url.contains(".") && !url.contains("?"))
+                                                
+                                                if (isHtmlPage) {
+                                                    // È una pagina HTML (probabilmente un annuncio), chiudi il popup e ignora
+                                                    android.util.Log.d("WebViewDownloadDialog", "🚫 Popup HTML rilevato (annuncio), chiudo popup: $url")
+                                                    try {
+                                                        (newWebView.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                                    } catch (e: Exception) {
+                                                        // Popup già chiuso
+                                                    }
+                                                    popupOpen = false
+                                                    return@setDownloadListener // Ignora, non è un download
+                                                }
+                                                
+                                                // Verifica se corrisponde ai pattern di download o ha mimetype di file
+                                                val matchesPattern = allPatterns.any { pattern ->
+                                                    url.contains(pattern) || url.endsWith(pattern)
+                                                }
+                                                val matchesMimeType = mimetype?.contains("application/octet-stream") == true ||
+                                                                      mimetype?.contains("application/x-") == true ||
+                                                                      mimetype?.contains("application/zip") == true ||
+                                                                      mimetype?.contains("application/x-zip") == true ||
+                                                                      mimetype?.contains("binary") == true ||
+                                                                      contentDisposition?.contains("attachment") == true
+                                                
+                                                if (!matchesPattern && !matchesMimeType) {
+                                                    // Non corrisponde ai pattern e non è un file, probabilmente è HTML o annuncio
+                                                    android.util.Log.d("WebViewDownloadDialog", "🚫 URL popup non corrisponde ai pattern e non è un file, chiudo popup: $url (mimetype: $mimetype)")
+                                                    try {
+                                                        (newWebView.parent as? android.view.ViewGroup)?.removeView(newWebView)
+                                                    } catch (e: Exception) {
+                                                        // Popup già chiuso
+                                                    }
+                                                    popupOpen = false
+                                                    return@setDownloadListener // Ignora
+                                                }
+                                                
+                                                // È un vero download, procedi
+                                                android.util.Log.d("WebViewDownloadDialog", "✅ Download valido rilevato nel popup: $url (mimetype: $mimetype)")
+                                                
                                                 // Chiudi il popup e resetta il flag
                                                 try {
                                                     (newWebView.parent as? android.view.ViewGroup)?.removeView(newWebView)
@@ -401,6 +444,16 @@ fun WebViewDownloadDialog(
 
                                 // Intercetta il download quando parte
                                 setDownloadListener { url, userAgent, contentDisposition, mimetype, contentLength ->
+                                    // Verifica se è una pagina HTML (non un file) - ignora pagine HTML
+                                    val isHtmlPage = mimetype?.contains("text/html") == true || 
+                                                     mimetype?.contains("text/plain") == true
+                                    
+                                    if (isHtmlPage) {
+                                        // È una pagina HTML, ignora (non è un download)
+                                        android.util.Log.d("WebViewDownloadDialog", "🚫 Download HTML ignorato nella pagina principale: $url")
+                                        return@setDownloadListener // Ignora pagine HTML
+                                    }
+                                    
                                     // Estrai i cookie dal WebView per il dominio principale e per l'URL di download
                                     val cookieManager = CookieManager.getInstance()
                                     cookieManager.setAcceptCookie(true)
@@ -507,13 +560,20 @@ fun WebViewDownloadDialog(
                                         url.contains(pattern) || url.endsWith(pattern)
                                     }
                                     val matchesMimeType = mimetype?.contains("application/octet-stream") == true ||
-                                        mimetype?.contains("application/x-") == true
+                                        mimetype?.contains("application/x-") == true ||
+                                        mimetype?.contains("application/zip") == true ||
+                                        mimetype?.contains("application/x-zip") == true ||
+                                        mimetype?.contains("binary") == true ||
+                                        contentDisposition?.contains("attachment") == true
                                     
                                     if (matchesPattern || matchesMimeType) {
                                         // URL finale trovato, passa anche i cookie al callback
+                                        android.util.Log.d("WebViewDownloadDialog", "✅ Download valido rilevato: $url (mimetype: $mimetype)")
                                         onDownloadUrlExtracted(url, updatedLink, cookies)
                                     } else {
-                                        // Se l'URL non è quello finale, prova comunque (potrebbe essere un redirect)
+                                        // Se l'URL non corrisponde ai pattern e non ha mimetype di file, potrebbe essere un redirect o HTML
+                                        // Per sicurezza, prova comunque (potrebbe essere un redirect che porta al file)
+                                        android.util.Log.d("WebViewDownloadDialog", "⚠️ URL non corrisponde ai pattern ma potrebbe essere un redirect: $url (mimetype: $mimetype)")
                                         onDownloadUrlExtracted(url, updatedLink, cookies)
                                     }
                                 }

@@ -15,6 +15,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.Job
@@ -28,11 +29,32 @@ import javax.inject.Inject
 @HiltViewModel
 class SearchViewModel @Inject constructor(
     private val repository: RomRepository,
-    private val sourceManager: SourceManager
+    private val sourceManager: SourceManager,
+    private val searchHistoryRepository: com.tottodrillo.data.repository.SearchHistoryRepository
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(SearchUiState())
     val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+
+    // Cronologia ricerche
+    val searchHistory: StateFlow<List<com.tottodrillo.data.repository.SavedSearch>> = 
+        searchHistoryRepository.searchHistory.stateIn(
+            scope = viewModelScope,
+            started = kotlinx.coroutines.flow.SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+    
+    init {
+        // Log quando la cronologia cambia
+        viewModelScope.launch {
+            searchHistory.collect { history ->
+                android.util.Log.d("SearchViewModel", "📚 Cronologia ricerche caricata: ${history.size} ricerche")
+                history.forEachIndexed { index, search ->
+                    android.util.Log.d("SearchViewModel", "  [$index] query='${search.query}', filtri=${search.filters.selectedPlatforms.size} piattaforme")
+                }
+            }
+        }
+    }
 
     private val _searchQuery = MutableStateFlow("")
     private var lastRefreshKey: Int = 0
@@ -97,7 +119,11 @@ class SearchViewModel @Inject constructor(
                 .debounce(500) // Attende 500ms dopo l'ultimo input
                 .distinctUntilChanged()
                 .collect { query ->
-                    if (query.length >= 2 || query.isEmpty()) {
+                    // Esegui ricerca solo se:
+                    // 1. La query ha almeno 2 caratteri, OPPURE
+                    // 2. La query è vuota MA ci sono filtri attivi (per non partire automaticamente dalla home)
+                    val hasActiveFilters = _uiState.value.filters.hasActiveFilters()
+                    if (query.length >= 2 || (query.isEmpty() && hasActiveFilters)) {
                         performSearch()
                     }
                 }
@@ -178,6 +204,23 @@ class SearchViewModel @Inject constructor(
                 currentPage = 1
             )
         }
+        
+        // Se la query è vuota e non ci sono filtri attivi, resetta i risultati e mostra le ricerche recenti
+        if (query.isEmpty() && !_uiState.value.filters.hasActiveFilters()) {
+            // Cancella la ricerca corrente
+            currentSearchJob?.cancel()
+            currentLoadMoreJob?.cancel()
+            
+            _uiState.update {
+                it.copy(
+                    results = emptyList(),
+                    hasSearched = false,
+                    isSearching = false,
+                    error = null,
+                    canLoadMore = false
+                )
+            }
+        }
     }
 
     /**
@@ -220,6 +263,10 @@ class SearchViewModel @Inject constructor(
                             canLoadMore = result.data.size >= 50
                         )
                     }
+                    
+                    // Salva la ricerca nella cronologia solo se ha successo
+                    android.util.Log.d("SearchViewModel", "💾 Salvataggio ricerca nella cronologia: query='${currentState.query}', risultati=${result.data.size}")
+                    searchHistoryRepository.saveSearch(currentState.query, filters)
                 }
                 is NetworkResult.Error -> {
                     // Verifica se il job è ancora attivo prima di aggiornare lo stato
@@ -352,5 +399,58 @@ class SearchViewModel @Inject constructor(
      */
     fun clearError() {
         _uiState.update { it.copy(error = null) }
+    }
+
+    /**
+     * Ripristina una ricerca dalla cronologia
+     */
+    fun restoreSearch(savedSearch: com.tottodrillo.data.repository.SavedSearch) {
+        _searchQuery.value = savedSearch.query
+        _uiState.update { state ->
+            state.copy(
+                query = savedSearch.query,
+                filters = savedSearch.filters,
+                currentPage = 1
+            )
+        }
+        performSearch()
+    }
+
+    /**
+     * Rimuove una ricerca dalla cronologia
+     */
+    fun removeSearchFromHistory(savedSearch: com.tottodrillo.data.repository.SavedSearch) {
+        viewModelScope.launch {
+            searchHistoryRepository.removeSearch(savedSearch)
+        }
+    }
+
+    /**
+     * Pulisce tutta la cronologia
+     */
+    fun clearSearchHistory() {
+        viewModelScope.launch {
+            searchHistoryRepository.clearHistory()
+        }
+    }
+
+    /**
+     * Resetta lo stato quando si naviga alla schermata senza parametri
+     */
+    fun resetState() {
+        _uiState.update { 
+            it.copy(
+                query = "",
+                results = emptyList(),
+                filters = SearchFilters(),
+                hasSearched = false,
+                isSearching = false,
+                error = null,
+                currentPage = 1,
+                canLoadMore = false
+            )
+        }
+        _searchQuery.value = ""
+        android.util.Log.d("SearchViewModel", "🔄 Stato resettato: query='', results=0, hasSearched=false")
     }
 }

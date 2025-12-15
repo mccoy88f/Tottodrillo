@@ -67,9 +67,8 @@ class HomeViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            // Pulisce la cache delle piattaforme e regioni per forzare il ricaricamento
-            // (utile quando vengono installate nuove sorgenti)
-            repository.clearCache()
+            // NON pulire la cache: usa i dati in cache per migliorare le performance
+            // La cache viene aggiornata automaticamente quando si caricano nuove ROM
 
             // Carica piattaforme disponibili
             when (val platformsResult = repository.getPlatforms()) {
@@ -81,7 +80,7 @@ class HomeViewModel @Inject constructor(
                         )
                     }
                     
-                    // Carica alcuni ROM in evidenza
+                    // Carica alcuni ROM in evidenza (sempre ricaricati ad ogni inizializzazione)
                     loadFeaturedRoms()
                     // Carica ROM scaricate/installate
                     loadDownloadedRoms()

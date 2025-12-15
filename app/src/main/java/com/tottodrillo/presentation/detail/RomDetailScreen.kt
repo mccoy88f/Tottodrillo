@@ -51,6 +51,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -87,18 +89,83 @@ fun RomDetailRoute(
     onNavigateBack: () -> Unit,
     onNavigateToPlatform: (String) -> Unit,
     onRequestExtraction: (String, String, String, String) -> Unit, // archivePath, romTitle, romSlug, platformCode
+    isFromNotification: Boolean = false, // Indica se si sta navigando dalla notifica
     viewModel: RomDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val isRefreshing = uiState.isLoading && uiState.rom != null
 
-    // Ricarica lo stato quando si rientra nella schermata
-    LaunchedEffect(romSlug) {
-        // Aspetta che la ROM sia caricata prima di fare il refresh
-        kotlinx.coroutines.delay(300)
+    // Flag per tracciare se dobbiamo fare il refresh quando i link sono pronti
+    var shouldRefreshOnLinksReady by remember { mutableStateOf(false) }
+    
+    // Quando si naviga dalla notifica, aspetta che i download links siano caricati prima di fare il refresh
+    LaunchedEffect(romSlug, isFromNotification) {
         val currentState = viewModel.uiState.value
-        if (currentState.rom != null) {
-            android.util.Log.d("RomDetailScreen", "🔄 Ricarico stato ROM al rientro nella schermata")
+        
+        if (isFromNotification) {
+            // Navigazione dalla notifica: aspetta che i download links siano caricati
+            android.util.Log.d("RomDetailScreen", "📱 Navigazione dalla notifica, attendo caricamento download links...")
+            
+            // Aspetta che la ROM sia caricata
+            kotlinx.coroutines.delay(300)
+            val stateAfterDelay = viewModel.uiState.value
+            if (stateAfterDelay.rom == null) {
+                android.util.Log.w("RomDetailScreen", "⚠️ ROM non ancora caricata dopo delay")
+                return@LaunchedEffect
+            }
+            
+            // Se i link sono già caricati, fai subito il refresh
+            if (!stateAfterDelay.isLoadingLinks && stateAfterDelay.rom?.downloadLinks?.isNotEmpty() == true) {
+                android.util.Log.d("RomDetailScreen", "✅ Download links già caricati, eseguo refresh immediato")
+                viewModel.refreshRomStatus()
+                shouldRefreshOnLinksReady = false
+            } else {
+                // Altrimenti, imposta il flag per fare il refresh quando i link saranno pronti
+                android.util.Log.d("RomDetailScreen", "⏳ Download links in caricamento, attendo...")
+                shouldRefreshOnLinksReady = true
+            }
+        } else if (currentState.rom == null) {
+            // ROM non ancora caricata, aspetta che il ViewModel la carichi (lo fa in init)
+            kotlinx.coroutines.delay(300)
+            val stateAfterDelay = viewModel.uiState.value
+            if (stateAfterDelay.rom != null) {
+                android.util.Log.d("RomDetailScreen", "🔄 Ricarico stato ROM al primo caricamento")
+                viewModel.refreshRomStatus()
+                
+                // Dopo il refresh, verifica se ci sono estrazioni attive che non stiamo osservando
+                kotlinx.coroutines.delay(500)
+                val currentRom = viewModel.uiState.value.rom
+                if (currentRom != null) {
+                    currentRom.downloadLinks.forEach { link ->
+                        val linkStatus = viewModel.uiState.value.linkStatuses[link.url]
+                        if (linkStatus?.first is com.tottodrillo.domain.model.DownloadStatus.Completed) {
+                            val completed = linkStatus.first as com.tottodrillo.domain.model.DownloadStatus.Completed
+                            val archivePath = completed.romTitle
+                            kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) {
+                                val activeExtractionWorkId = viewModel.getActiveExtractionWorkId(archivePath)
+                                if (activeExtractionWorkId != null) {
+                                    android.util.Log.d("RomDetailScreen", "🔄 Trovata estrazione attiva dopo refresh per $archivePath, avvio osservazione")
+                                    viewModel.startObservingExtractionForLink(link, activeExtractionWorkId)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        } else {
+            // ROM già caricata e non si naviga dalla notifica
+            // Significa che stiamo tornando indietro o ruotando
+            // NON ricaricare per evitare chiamate inutili
+            android.util.Log.d("RomDetailScreen", "✅ ROM già caricata, preservo stato (rotazione o ritorno indietro)")
+        }
+    }
+    
+    // Quando i download links sono pronti e dobbiamo fare il refresh (navigazione dalla notifica)
+    LaunchedEffect(uiState.isLoadingLinks, shouldRefreshOnLinksReady) {
+        if (shouldRefreshOnLinksReady && !uiState.isLoadingLinks && uiState.rom?.downloadLinks?.isNotEmpty() == true) {
+            android.util.Log.d("RomDetailScreen", "✅ Download links caricati, eseguo refresh per rilevare download in corso")
+            shouldRefreshOnLinksReady = false // Reset flag per evitare refresh multipli
+            
             viewModel.refreshRomStatus()
             
             // Dopo il refresh, verifica se ci sono estrazioni attive che non stiamo osservando

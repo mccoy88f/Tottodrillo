@@ -48,9 +48,16 @@ class DownloadWorker(
         const val PROGRESS_PERCENTAGE = "progress_percentage"
         
         private const val NOTIFICATION_CHANNEL_ID = "download_channel"
-        private const val NOTIFICATION_ID = 1001
+        private const val NOTIFICATION_ID_BASE = 1001 // ID base, ogni download aggiunge un offset univoco
         
         private const val BUFFER_SIZE = 8192
+    }
+    
+    // ID notifica univoco per questo worker (basato sul workId)
+    private val notificationId: Int by lazy {
+        // Usa l'hashCode del workId per generare un ID univoco
+        // Assicuriamoci che sia positivo e non conflitti con altri ID
+        (NOTIFICATION_ID_BASE + (id.hashCode() and 0x7FFFFFFF) % 1000).toInt()
     }
 
     private val notificationManager =
@@ -537,12 +544,12 @@ class DownloadWorker(
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
             // Android 14+ richiede un tipo esplicito per i Foreground Service
             ForegroundInfo(
-                NOTIFICATION_ID,
+                notificationId,
                 notification,
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
             )
         } else {
-            ForegroundInfo(NOTIFICATION_ID, notification)
+            ForegroundInfo(notificationId, notification)
         }
     }
 
@@ -558,7 +565,7 @@ class DownloadWorker(
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(NOTIFICATION_ID + 1, notification)
+        notificationManager.notify(notificationId + 1, notification)
     }
 
     /**
@@ -573,11 +580,12 @@ class DownloadWorker(
             .setAutoCancel(true)
             .build()
 
-        notificationManager.notify(NOTIFICATION_ID + 2, notification)
+        notificationManager.notify(notificationId + 2, notification)
     }
 
     /**
      * Crea un PendingIntent per aprire l'app alla schermata della ROM
+     * Usa un request code univoco basato sul workId per evitare conflitti tra download simultanei
      */
     private fun createPendingIntent(romSlug: String?): PendingIntent {
         val intent = Intent(appContext, com.tottodrillo.MainActivity::class.java).apply {
@@ -586,11 +594,17 @@ class DownloadWorker(
                 putExtra("romSlug", romSlug)
                 action = "OPEN_ROM_DETAIL"
             }
+            // Aggiungi anche il workId come extra per identificare univocamente il download
+            putExtra("workId", id.toString())
         }
+        
+        // Usa un request code univoco basato sul workId per evitare conflitti
+        // Converte l'UUID in un Int positivo usando hashCode
+        val requestCode = (id.hashCode() and 0x7FFFFFFF).toInt()
         
         return PendingIntent.getActivity(
             appContext,
-            0,
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
