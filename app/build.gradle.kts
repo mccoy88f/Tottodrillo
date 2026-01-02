@@ -14,8 +14,8 @@ android {
         applicationId = "com.tottodrillo"
         minSdk = 26
         targetSdk = 34
-        versionCode = 9
-        versionName = "3.0.0"
+        versionCode = 10
+        versionName = "3.1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
