@@ -4,9 +4,9 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-3.1.0-blue.svg)
 
-**Tottodrillo** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da [CrocDB](https://crocdb.net), il database pubblico di giochi retro.
+**Tottodrillo** è un'app Android moderna e minimale per esplorare, cercare e scaricare ROM da più sorgenti. L'app supporta l'installazione dinamica di sorgenti tramite pacchetti ZIP, permettendo di aggiungere nuove sorgenti ROM senza aggiornare l'app.
 
 **Repository Sorgenti**: [Tottodrillo-Source](https://github.com/mccoy88f/Tottodrillo-Source) - Contiene tutte le definizioni delle sorgenti e le guide di sviluppo.
 
@@ -33,25 +33,39 @@ Questo README è disponibile anche in altre lingue:
 - **Corrispondenza Intelligente**: Visualizza le piattaforme corrispondenti e conferma prima di importare i metadati
 - **Dettagli ROM Arricchiti**: Arricchisci la tua collezione ROM con metadati professionali e copertine di alta qualità da IGDB
 
-### 🔍 Ricerca Info ROMs
-- **Provider Multipli**: Scegli tra Gamefaqs e MobyGames per la ricerca di informazioni sulle ROM
+### 🔍 Ricerca Info ROMs e Ricerche Recenti
+- **Provider Multipli**: Scegli tra diversi provider per la ricerca di informazioni sulle ROM
 - **Provider Configurabile**: Seleziona il provider preferito nelle impostazioni
-- **Integrazione Gamefaqs**: Cerca informazioni ROM direttamente su Gamefaqs
-- **Integrazione MobyGames**: Cerca informazioni ROM su MobyGames
 - **Testo Pulsante Dinamico**: Il testo del pulsante di ricerca cambia in base al provider selezionato
+- **Ricerche Recenti (NUOVO in v3.1.0)**:
+  - Storia automatica delle ultime ricerche con filtri applicati
+  - Richiamo rapido delle ricerche recenti dalla schermata di ricerca
+  - Reset intelligente: quando si cancella la query (e non ci sono filtri attivi), vengono mostrate nuovamente le ricerche recenti
+
+### 🔌 Sistema Multi-Sorgente (NUOVO in v2.0)
+- **Installazione Dinamica Sorgenti**: Installa nuove sorgenti ROM tramite pacchetti ZIP senza aggiornare l'app
+- **Tipi di Sorgenti Multipli**: Supporto per sorgenti API, Java/Kotlin e Python
+- **Gestione Sorgenti**: Abilita/disabilita, installa, disinstalla e aggiorna sorgenti dalle impostazioni
+- **Sorgenti Predefinite**: Installazione automatica di sorgenti predefinite al primo avvio
+- **Filtro Sorgenti**: Filtra i risultati di ricerca per sorgenti selezionate
+- **Aggiornamento Automatico**: L'UI si aggiorna automaticamente quando le sorgenti vengono abilitate/disabilitate
+- **Mapping Piattaforme**: Ogni sorgente include il proprio mapping delle piattaforme per un'integrazione senza soluzione di continuità
 
 ### 🔍 Esplorazione e Ricerca
-- **Home Screen** con ROM in evidenza, piattaforme popolari, preferiti e ROM recenti
+- **Home Screen** con ROM in evidenza, piattaforme popolari, preferiti, ROM recenti e ROM scaricate
 - **Esplorazione Piattaforme** organizzate per brand (Nintendo, PlayStation, Sega, Xbox, ecc.) con sezioni collassabili/espandibili
 - **Ricerca Avanzata** con debounce automatico (500ms) per ottimizzare le query
-- **Filtri Multipli** per piattaforme e regioni con chip interattivi
+- **Filtri Multipli** per piattaforme, regioni e sorgenti con chip interattivi
 - **Paginazione Infinita** con lazy loading automatico
 - **Visualizzazione ROM** con cover art centrate e proporzionate
+- **Carosello Immagini**: Immagini multiple per ROM (box art, screenshot) con carosello scorrevole
+- **Lazy Image Loading**: Le immagini si caricano solo quando sono visibili sullo schermo per migliori prestazioni
 
 ### 📥 Download e Installazione
 - **Download in Background** con WorkManager per affidabilità
-- **Progress Tracking Real-time** con percentuale, bytes scaricati e velocità
+- **Progress Tracking Real-time** con percentuale, bytes scaricati e velocità (visibile anche dal dettaglio ROM)
 - **Notifiche Interattive** con azioni "Interrompi download" e "Interrompi installazione"
+- **Download Multipli Simultanei** con progresso e notifiche separate per ogni task
 - **Path Personalizzato** per salvare i file in qualsiasi cartella (incluso SD card esterna)
 - **Installazione Automatica/Manuale**:
   - Supporto per archivi ZIP (estrazione)
@@ -69,13 +83,16 @@ Questo README è disponibile anche in altre lingue:
   - Download solo WiFi per risparmiare dati mobili
   - Verifica spazio disponibile prima del download
   - Notifiche configurabili
+- **Gestione Sessione**: Gestione automatica dei cookie per le sorgenti che lo richiedono
 
 ### 💾 Gestione ROM
 - **Preferiti** con persistenza su file
 - **ROM Recenti** (ultime 25 aperte) con persistenza su file
 - **Stato Download/Installazione** per ogni link con aggiornamento automatico
+- **Link Download Multipli**: Supporto per più versioni e formati per ROM
+- **Identificazione Sorgente**: Ogni link di download mostra la sua sorgente
 - **Icone di Stato**:
-  - Download in corso con progresso
+  - Download in corso con indicatore di progresso
   - Installazione in corso con percentuale
   - Installazione completata (icona verde)
   - Installazione fallita (icona rossa, cliccabile per riprovare)
@@ -87,11 +104,19 @@ Questo README è disponibile anche in altre lingue:
 - **Animazioni Fluide** con Jetpack Compose
 - **Cover Art** con lazy loading (Coil) e centratura automatica
 - **Logo Piattaforme** SVG caricati da assets con fallback
-- **Badge Regioni** con emoji flags
+- **Badge Regioni** con emoji flags (mappati automaticamente dai nomi delle regioni delle sorgenti)
 - **Card ROM** con larghezza massima uniforme (180dp)
+- **Carosello Immagini**: Carosello scorrevole per immagini multiple delle ROM
 
 ### ⚙️ Impostazioni (Ridisegnato in v2.7.0)
 - **Struttura ad Albero con Gruppi Espandibili**: Impostazioni organizzate in 8 categorie collassabili per una migliore navigazione
+- **Gestione Sorgenti**:
+  - Visualizza tutte le sorgenti installate
+  - Abilita/disabilita sorgenti
+  - Installa nuove sorgenti da file ZIP
+  - Aggiorna sorgenti esistenti
+  - Disinstalla sorgenti
+  - Installa sorgenti predefinite
 - **Ricerca Info ROMs**:
   - Scegli provider di ricerca (Gamefaqs o MobyGames)
   - Gamefaqs è il provider predefinito
@@ -125,12 +150,12 @@ app/
 ├── data/
 │   ├── mapper/              # Conversione API → Domain
 │   ├── model/               # Data models (API, Platform)
-│   ├── remote/               # Retrofit, API service
+│   ├── remote/               # Retrofit, API service, Source executors
 │   ├── repository/           # Repository implementations
 │   ├── receiver/             # BroadcastReceiver per notifiche
 │   └── worker/               # WorkManager workers (Download, Extraction)
 ├── domain/
-│   ├── manager/              # Business logic managers (Download, Platform)
+│   ├── manager/              # Business logic managers (Download, Platform, Source)
 │   ├── model/                # Domain models (UI)
 │   └── repository/           # Repository interfaces
 └── presentation/
@@ -144,6 +169,7 @@ app/
     ├── platform/              # Schermata ROM per piattaforma
     ├── search/                # Schermata ricerca
     ├── settings/              # Schermata impostazioni
+    ├── sources/               # Schermate gestione sorgenti
     └── theme/                 # Theme system
 ```
 
@@ -162,7 +188,7 @@ app/
 
 ### Networking
 - **Retrofit** - HTTP client
-- **OkHttp** - Network layer
+- **OkHttp** - Network layer con gestione cookie
 - **Gson** - JSON parsing
 - **Coil** - Image loading con supporto SVG
 
@@ -179,6 +205,13 @@ app/
 - **DownloadWorker** - Download file in background con foreground service
 - **ExtractionWorker** - Estrazione/copia file in background
 - **Foreground Notifications** - Notifiche interattive con azioni
+
+### Source System
+- **SourceExecutor Interface** - Interfaccia comune per tutti i tipi di sorgenti
+- **SourceApiAdapter** - Esecutore sorgenti API
+- **JavaSourceExecutor** - Esecutore sorgenti Java/Kotlin con caricamento dinamico classi
+- **PythonSourceExecutor** - Esecutore sorgenti Python usando Chaquopy
+- **Chaquopy** - Python SDK per Android (Python 3.11)
 
 ## 🚀 Setup
 
@@ -208,9 +241,9 @@ cd Tottodrillo
 
 ### Configurazione
 
-Non è necessaria alcuna API key. L'app utilizza le API pubbliche di CrocDB:
-- Base URL: `https://api.crocdb.net/`
-- Documentazione: [CrocDB API Docs](https://github.com/cavv-dev/crocdb-api)
+Non è necessaria alcuna API key. L'app utilizza le API pubbliche delle sorgenti installate. Ogni sorgente può essere:
+- **API-based**: Endpoint HTTP REST API
+- **Python-based**: Web scraping tramite script Python
 
 ## 📦 Build
 
@@ -228,6 +261,20 @@ L'APK verrà generato in: `app/build/outputs/apk/`
 
 ## 🎯 Funzionalità Dettagliate
 
+### Source System
+- **Installazione**: Installa sorgenti da file ZIP tramite file picker
+- **Validazione**: Validazione automatica della struttura e dei metadati della sorgente
+- **Gestione Versioni**: Aggiorna sorgenti con versioni più recenti (preserva lo stato abilitato)
+- **Abilita/Disabilita**: Attiva/disattiva sorgenti senza disinstallarle
+- **Disinstallazione**: Rimuovi sorgenti completamente
+- **Sorgenti Predefinite**: Installazione automatica opzionale di un set predefinito di sorgenti al primo avvio
+- **Gestione Cache**: Invalidazione automatica della cache quando le sorgenti cambiano
+- **Mapping Piattaforme**: Ogni sorgente definisce il proprio mapping dei codici piattaforma
+- **Servizi Sorgenti Avanzati (NUOVO in v3.1.0)**:
+  - Servizi centralizzati nell'app (client HTTP, cookie, configurazione SSL, helper WebView, bypass tipo Cloudflare)
+  - Le sorgenti dichiarano le loro esigenze tramite configurazione, l'app fornisce l'implementazione
+  - Forte disaccoppiamento tra app e sorgenti: l'app è agnostica rispetto a quali sorgenti sono installate
+
 ### Download Manager
 - Download multipli simultanei
 - Tracking progresso per ogni download
@@ -235,6 +282,7 @@ L'APK verrà generato in: `app/build/outputs/apk/`
 - Gestione errori con retry automatico
 - Verifica spazio disponibile
 - Supporto SD card esterna
+- Gestione cookie di sessione per le sorgenti che lo richiedono
 
 ### Installazione
 - Estrazione archivi ZIP
@@ -243,6 +291,7 @@ L'APK verrà generato in: `app/build/outputs/apk/`
 - Gestione errori con icona rossa cliccabile per retry
 - Aggiornamento automatico UI dopo installazione
 - Apertura cartella installazione
+- Link download multipli per ROM (versioni, formati)
 
 ### Compatibilità ES-DE
 - Abilitazione/disabilitazione compatibilità
@@ -254,6 +303,32 @@ L'APK verrà generato in: `app/build/outputs/apk/`
 - File `.status` per tracking download/installazione
 - Formato multi-riga per supportare download multipli dello stesso file
 - Cancellazione storico con conferma utente
+
+## 📚 Sviluppo Sorgenti
+
+Tottodrillo supporta tre tipi di sorgenti:
+
+1. **Sorgenti API**: Endpoint HTTP REST API
+2. **Sorgenti Java/Kotlin**: Esecuzione codice Java/Kotlin locale
+3. **Sorgenti Python**: Esecuzione script Python locale (usando Chaquopy)
+
+Per documentazione dettagliata sulla creazione di sorgenti, vedi il repository [Tottodrillo-Source](https://github.com/mccoy88f/Tottodrillo-Source):
+- [🇮🇹 Guida Italiana](https://github.com/mccoy88f/Tottodrillo-Source/blob/main/SOURCE_DEVELOPMENT.md)
+- [🇬🇧 Guida Inglese](https://github.com/mccoy88f/Tottodrillo-Source/blob/main/SOURCE_DEVELOPMENT_EN.md)
+
+### Quick Start
+
+1. Crea un pacchetto ZIP con:
+   - `source.json` - Metadati sorgente (obbligatorio)
+   - `platform_mapping.json` - Mapping codici piattaforma (obbligatorio)
+   - `api_config.json` - Configurazione API (per sorgenti API)
+   - Script Python o file JAR (per sorgenti Python/Java)
+
+2. Installa la sorgente tramite Impostazioni → Sorgenti → Installa Sorgente
+
+3. Abilita la sorgente e inizia a usarla!
+
+Vedi i file di documentazione per esempi completi e dettagli dell'API.
 
 ## 🌐 Localizzazione
 
@@ -293,12 +368,14 @@ Questo progetto è rilasciato sotto licenza MIT. Vedi il file [LICENSE](LICENSE)
 ## 🙏 Ringraziamenti
 
 ### API e Database
-- [CrocDB](https://crocdb.net) per le API pubbliche e il database ROM
-- [cavv-dev](https://github.com/cavv-dev) per il database ROM e l'API
+- Varie database ROM pubblici e sorgenti
 
 ### Loghi Piattaforme
 I loghi SVG delle piattaforme sono forniti da:
 - [alekfull-nx-es-de](https://github.com/anthonycaccese/alekfull-nx-es-de) - Repository di loghi per ES-DE
+
+### Librerie
+- [Chaquopy](https://chaquo.com/chaquopy/) - Python SDK per Android
 
 ### Community
 - Community retro gaming per il supporto e i feedback
@@ -334,4 +411,3 @@ Il tuo supporto mi aiuta a continuare lo sviluppo e migliorare l'app.
 ---
 
 **Made with ❤️ for the retro gaming community**
-

@@ -4,9 +4,11 @@
 ![Kotlin](https://img.shields.io/badge/Language-Kotlin-blue.svg)
 ![MinSDK](https://img.shields.io/badge/MinSDK-26-orange.svg)
 ![License](https://img.shields.io/badge/License-MIT-yellow.svg)
-![Version](https://img.shields.io/badge/Version-2.7.0-blue.svg)
+![Version](https://img.shields.io/badge/Version-3.1.0-blue.svg)
 
-**Tottodrillo** ist eine moderne und minimale Android-App zum Erkunden, Suchen und Herunterladen von ROMs von [CrocDB](https://crocdb.net), der öffentlichen Retro-Gaming-Datenbank.
+**Tottodrillo** ist eine moderne und minimale Android-App zum Erkunden, Suchen und Herunterladen von ROMs von mehreren Quellen. Die App unterstützt die dynamische Installation von Quellen über ZIP-Pakete, sodass Sie neue ROM-Quellen hinzufügen können, ohne die App zu aktualisieren.
+
+**Quellen-Repository**: [Tottodrillo-Source](https://github.com/mccoy88f/Tottodrillo-Source) - Enthält alle Quelldefinitionen und Entwicklungsanleitungen.
 
 ## 🌍 Andere Sprachen / Other Languages
 
