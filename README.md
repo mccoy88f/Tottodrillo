@@ -404,7 +404,7 @@ If you like this project and want to support me, you can buy me a coffee! 🍺
 
 Your support helps me continue development and improve the app.
 
-<a href="https://www.buymeacoffee.com/mccoy88f">BUY ME A COFFEE!</a>
+[![Buy me a beer](https://img.buymeacoffee.com/button-api/?text=Buy%20me%20a%20beer&emoji=%F0%9F%8D%BA&slug=mccoy88f&button_colour=FFDD00&font_colour=000000&font_family=Bree&outline_colour=000000&coffee_colour=ffffff)](https://www.buymeacoffee.com/mccoy88f)
 
 [You can also buy me a coffee with PayPal 🍻](https://paypal.me/mccoy88f?country.x=IT&locale.x=it_IT)
 
